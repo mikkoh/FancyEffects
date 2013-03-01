@@ -27,8 +27,7 @@
 				{
 					var property=arguments[i];
 
-					this._setupPropery(property);
-					this._changeAmountForEffect[effectID][property]=0;
+					this._setupProperty(effectID, property);
 				}
 			}
 		},
@@ -46,13 +45,20 @@
 			this._changeAmountForEffect[effectID][property]+=amount;
 			this._itemToEffect.css(property, this._propertyValue[property]);
 		},
+		changeAdvanced: function(effectID, property, amount)
+		{
+			this._propertyValue[property].add(amount);
+			this._changeAmountForEffect[effectID][property].add(amount);
+
+			this._itemToEffect.css(property, this._propertyValue[property].getCSS());
+		},
 		reset: function(effectID, property)
 		{
 			this._propertyValue[property]-=this._changeAmountForEffect[effectID][property];
 			this._itemToEffect.css(property, this._propertyValue[property]);
 			this._changeAmountForEffect[effectID][property]=0;
 		},
-		_setupPropery: function(property)
+		_setupProperty: function(effectID, property)
 		{
 			if(!this._propertiesWatching[property])
 			{
@@ -65,7 +71,8 @@
 					var parser=new ParserClass(this._itemToEffect.css(property));
 
 					this._propertyStartValue[property]=parser.getValue();
-					this._propertyValue[property]=this._propertyStartValue[property];
+					this._propertyValue[property]=parser.getValue();
+					this._changeAmountForEffect[effectID][property]=parser.getValue();
 				}
 				else
 				{
@@ -85,6 +92,8 @@
 
 			this._parseCSSValue();
 		},
+
+		_cssValue: null,
 
 		getValue: function()
 		{
@@ -118,14 +127,12 @@
 
 	var ParserColour=new Class({
 		Extends: Parser,
-
-		_r: 0,
-		_g: 0,
-		_b: 0,
+		
+		_value: null,
 
 		getValue: function()
 		{
-			return this;
+			return this._value.clone();
 		},
 		_parseCSSValue: function()
 		{
@@ -133,9 +140,11 @@
 			{
 				var valArr=REGEX_VALUE_COLOUR_RGB.exec(this._cssValue);
 
-				this._r=parseFloat(valArr[1]);
-				this._g=parseFloat(valArr[2]);
-				this._b=parseFloat(valArr[3]);
+				this._value=new PropertyColour(parseFloat(valArr[1]), parseFloat(valArr[2]), parseFloat(valArr[3]));
+			}
+			else
+			{
+				throw new Error('Could not parse colour');
 			}
 		}
 	});
@@ -147,6 +156,167 @@
 	ParserLookUp['top']=ParseNumberValue;
 	ParserLookUp['opacity']=ParseNumberValue;
 	ParserLookUp['border-width']=ParseNumberValue;
+	ParserLookUp['background-color']=ParserColour;
+	ParserLookUp['color']=ParserColour;
+
+
+
+	var PropertyAdvanced=new Class({
+		onPropertyChange: null,
+
+		equals: function(otherAdvanced)
+		{
+			for(var i in otherAdvanced)
+			{
+				if(this[i] && typeof this[i]=='number')
+				{
+					this[i]=otherAdvanced[i];
+				}
+			}
+
+			return this;
+		},
+		add: function(otherAdvanced)
+		{
+			for(var i in otherAdvanced)
+			{
+				if(this[i] && typeof this[i]=='number')
+				{
+					this[i]+=otherAdvanced[i];
+				}
+			}
+
+			return this;
+		},
+		sub: function(otherAdvanced)
+		{
+			for(var i in otherAdvanced)
+			{
+				if(this[i] && typeof this[i]=='number')
+				{
+					this[i]-=otherAdvanced[i];
+				}
+			}
+
+			return this;
+		},
+		mulScalar: function(amount)
+		{
+			for(var i in otherAdvanced)
+			{
+				if(this[i] && typeof this[i]=='number')
+				{
+					this[i]*=amount;
+				}
+			}
+
+			return this;
+		},
+		getCSS: function()
+		{
+			throw new Error('Override this function');
+		},
+		clone: function()
+		{
+			throw new Error('Override this function');	
+		}
+	});
+
+	var PropertyColour=new Class({
+		Extends: PropertyAdvanced,
+
+		initialize: function(r, g, b)
+		{
+			this.__defineGetter__('r', this.getR);
+			this.__defineGetter__('g', this.getG);
+			this.__defineGetter__('b', this.getB);
+
+			this.__defineSetter__('r', this.setR);
+			this.__defineSetter__('g', this.setG);
+			this.__defineSetter__('b', this.setB);
+
+			this._r=r==undefined?0:r;
+			this._g=g==undefined?0:g;
+			this._b=b==undefined?0:b;
+		},
+
+		_r: 0,
+		_g: 0,
+		_b: 0,
+
+		getR: function()
+		{
+			return this._r;
+		},
+		getG: function()
+		{
+			return this._g;
+		},
+		getB: function()
+		{
+			return this._b;
+		},
+		setR: function(value)
+		{
+			this._r=value;
+
+			this.onPropertyChange();
+		},
+		setG: function(value)
+		{
+			this._g=value;
+
+			this.onPropertyChange();
+		},
+		setB: function(value)
+		{
+			this._b=value;
+
+			this.onPropertyChange();
+		},
+		equals: function(otherAdvanced)
+		{
+			this._r=otherAdvanced.r;
+			this._g=otherAdvanced.g;
+			this._b=otherAdvanced.b;
+
+			return this;
+		},
+		add: function(otherAdvanced)
+		{
+			this._r+=otherAdvanced.r;
+			this._g+=otherAdvanced.g;
+			this._b+=otherAdvanced.b;
+
+			return this;
+		},
+		sub: function(otherAdvanced)
+		{
+			this._r-=otherAdvanced.r;
+			this._g-=otherAdvanced.g;
+			this._b-=otherAdvanced.b;
+
+			return this;
+		},
+		mulScalar: function(amount)
+		{
+			this._r*=amount;
+			this._g*=amount;
+			this._b*=amount;
+
+			return this;
+		},
+		getCSS: function()
+		{
+			return 'rgb('+Math.round(this.r)+', '+Math.round(this.g)+', '+Math.round(this.b)+')';
+		},
+		clone: function()
+		{
+			var rVal=new PropertyColour(this.r, this.g, this.b);
+
+			return rVal;
+		}
+	});
 
 
 
@@ -225,8 +395,8 @@
 		initialize: function()
 		{
 			/*
-			ONE ARGUMENT: 
-							propertyToEffect
+			ONE ARGUMENT:
+							itemToEffect
 			TWO ARGUMENTS: 
 							itemToEffect, propertyToEffect
 							propertyToEffect, endValue
@@ -239,41 +409,36 @@
 			FOUR ARGUMENTS: 
 							itemToEffect, propertyToEffect, startValue, endValue
 			*/
-			if(typeof arguments[0]=='string')
-			{
-				this._propertyToEffect=arguments[0];
 
-				if(arguments[2]!==undefined)
+			if(arguments[0] instanceof jQuery)
+			{
+				if(arguments.length==3)
 				{
 					this._startValue=arguments[1];
 					this._endValue=arguments[2];
 				}
-				else if(arguments[1]!==undefined)
+				else if(arguments.length==2)
 				{
 					this._endValue=arguments[1];
 				}
 
-				this.parent();
+				this.parent(arguments[0]);
 			}
 			else
 			{
-				if(arguments.length==4)
+				if(arguments.length==2)
 				{
-					this._startValue=arguments[2];
-					this._endValue=arguments[3];
+					this._startValue=arguments[0];
+					this._endValue=arguments[1];
 				}
-				else if(arguments.length==3)
+				else if(arguments.length==1)
 				{
-					this._endValue=arguments[2];
-				}
-				else
-				{
-					this._endValue=100;
+					this._endValue=arguments[0];
 				}
 
-				this._propertyToEffect=arguments[1];
-				this.parent(arguments[0]);
+				this.parent();
 			}
+
 
 			this.__defineGetter__('start', this.getStartValue);
 			this.__defineSetter__('start', this.setStartValue);
@@ -281,30 +446,15 @@
 			this.__defineSetter__('end', this.setEndValue);
 		},
 
-		_startValue: NaN,
-		_endValue: NaN,
+		_startValue: null,
+		_endValue: null,
 		_propertyToEffect: null,
 
-		setPercentage: function(value)
-		{
-			this.parent(value);
-
-			var cValue=this._itemProperties.get(this._propertyToEffect);
-			var nValue=(this._endValue-this._startValue)*value+this._startValue;
-
-			this._itemProperties.change(this.id, this._propertyToEffect, nValue-cValue);
-		},
 		setItemToEffect: function(itemToEffect, itemProperties)
 		{
 			this.parent(itemToEffect, itemProperties);
 
 			this._itemProperties.setupEffect(this, this._propertyToEffect);
-
-			if(isNaN(this._startValue))
-				this._startValue=this._itemProperties.getStart(this._propertyToEffect);
-
-			if(isNaN(this._endValue))
-				this._endValue=this._itemProperties.getStart(this._propertyToEffect);
 		},
 		getStartValue: function()
 		{
@@ -329,84 +479,191 @@
 	});
 
 
+	var EffectChangePropNumber=new Class({
+		Extends: EffectChangeProp,
+
+		setPercentage: function(value)
+		{
+			this.parent(value);
+
+			var cValue=this._itemProperties.get(this._propertyToEffect);
+			var nValue=(this._endValue-this._startValue)*value+this._startValue;
+
+			this._itemProperties.change(this.id, this._propertyToEffect, nValue-cValue);
+		},
+		setItemToEffect: function(itemToEffect, itemProperties)
+		{
+			this.parent(itemToEffect, itemProperties);
+
+			if(this._startValue==null)
+				this._startValue=this._itemProperties.getStart(this._propertyToEffect);
+
+			if(this._endValue==null)
+				this._endValue=this._itemProperties.getStart(this._propertyToEffect);
+		}
+	});
+
+
+
+	var EffectChangePropAdvanced=new Class({
+		Extends: EffectChangeProp,
+
+		_temp: null,
+
+		setPercentage: function(value)
+		{
+			this.parent(value);
+
+			var cValue=this._itemProperties.get(this._propertyToEffect);
+
+			//temp=end
+			//(end-start)*value+start
+			_temp.equals(this._endValue);
+			_temp.sub(this._startValue);
+			_temp.mulScalar(value);
+			_temp.add(this._startValue);
+
+			//now subtract the new value from the cValue
+			_temp.sub(cValue);
+
+			this._itemProperties.changeAdvanced(this.id, this._propertyToEffect, _temp);
+		},
+		setItemToEffect: function(itemToEffect, itemProperties)
+		{
+			this.parent(itemToEffect, itemProperties);
+
+			if(this._startValue==null)
+				this._startValue=this._itemProperties.getStart(this._propertyToEffect).clone();
+
+			if(this._endValue==null)
+				this._endValue=this._itemProperties.getStart(this._propertyToEffect).clone();
+
+			this._startValue.onPropertyChange=this.applyPercentage.bind(this);
+			this._endValue.onPropertyChange=this.applyPercentage.bind(this);
+		},
+		applyPercentage: function()
+		{
+			this.setPercentage(this.percentage);
+		}
+	});
+
+
+	var EffectChangePropColour=new Class({
+		Extends: EffectChangePropAdvanced,
+
+		initialize: function()
+		{
+			var startVal=undefined;
+			var endVal=undefined;
+
+			//just end values sent
+			if(arguments.length==3)
+				endVal=new PropertyColour(arguments[0], arguments[1], arguments[2]);
+			else if(arguments.length==6)
+			{
+				startVal=new PropertyColour(arguments[0], arguments[1], arguments[2]);
+				endVal=new PropertyColour(arguments[3], arguments[4], arguments[5]);
+			}
+			else if(arguments.length==4)
+			{
+				endVal=new PropertyColour(arguments[1], arguments[2], arguments[3]);
+			}
+			else if(arguments.length==7)
+			{
+				startVal=new PropertyColour(arguments[1], arguments[2], arguments[3]);
+				endVal=new PropertyColour(arguments[4], arguments[5], arguments[6]);
+			}
+
+
+			if(typeof arguments[0]=='object')
+				this.parent.apply(this, [arguments[0], startVal, endVal]);
+			else
+				this.parent.apply(this, [startVal, endVal]);
+
+			_temp=new PropertyColour();
+		}
+	});
+
 
 
 
 	var EffectWidth=new Class({
-		Extends: EffectChangeProp,
+		Extends: EffectChangePropNumber,
 		initialize: function()
 		{
 			this._id='EffectWidth';
-
-			if(typeof arguments[0]=='object')
-				this.parent(arguments[0], 'width', arguments[1], arguments[2]);
-			else
-				this.parent('width', arguments[0], arguments[1]);
+			this._propertyToEffect='width';
+			this.parent.apply(this, arguments);
 		}
 	});
 
 	var EffectHeight=new Class({
-		Extends: EffectChangeProp,
+		Extends: EffectChangePropNumber,
 		initialize: function()
 		{
 			this._id='EffectHeight';
-
-			if(typeof arguments[0]=='object')
-				this.parent(arguments[0], 'height', arguments[1], arguments[2]);
-			else
-				this.parent('height', arguments[0], arguments[1]);
+			this._propertyToEffect='height'
+			this.parent.apply(this, arguments);
 		}
 	});
 
 	var EffectLeft=new Class({
-		Extends: EffectChangeProp,
+		Extends: EffectChangePropNumber,
 		initialize: function()
 		{
 			this._id='EffectLeft';
-
-			if(typeof arguments[0]=='object')
-				this.parent(arguments[0], 'left', arguments[1], arguments[2]);
-			else
-				this.parent('left', arguments[0], arguments[1]);
+			this._propertyToEffect='left';
+			this.parent.apply(this, arguments);
 		}
 	});
 
 	var EffectTop=new Class({
-		Extends: EffectChangeProp,
+		Extends: EffectChangePropNumber,
 		initialize: function()
 		{
 			this._id='EffectTop';
-
-			if(typeof arguments[0]=='object')
-				this.parent(arguments[0], 'top', arguments[1], arguments[2]);
-			else
-				this.parent('top', arguments[0], arguments[1]);
+			this._propertyToEffect='top';
+			this.parent.apply(this, arguments);
 		}
 	});
 
 	var EffectOpacity=new Class({
-		Extends: EffectChangeProp,
+		Extends: EffectChangePropNumber,
 		initialize: function()
 		{
 			this._id='EffectOpacity';
-
-			if(typeof arguments[0]=='object')
-				this.parent(arguments[0], 'opacity', arguments[1], arguments[2]);
-			else
-				this.parent('opacity', arguments[0], arguments[1]);
+			this._propertyToEffect='opacity';
+			this.parent.apply(this, arguments);
 		}
 	});
 
 	var EffectBorderWidth=new Class({
-		Extends: EffectChangeProp,
+		Extends: EffectChangePropNumber,
 		initialize: function()
 		{
 			this._id='EffectBorderWidth';
+			this._propertyToEffect='border-width';
+			this.parent.apply(this, arguments);
+		}
+	});
 
-			if(typeof arguments[0]=='border-width')
-				this.parent(arguments[0], 'border-width', arguments[1], arguments[2]);
-			else
-				this.parent('border-width', arguments[0], arguments[1]);
+	var EffectBackgroundColor=new Class({
+		Extends: EffectChangePropColour,
+		initialize: function()
+		{
+			this._id='EffectBackgroundColor';
+			this._propertyToEffect='background-color';
+			this.parent.apply(this, arguments);
+		}
+	});
+
+	var EffectColor=new Class({
+		Extends: EffectChangePropColour,
+		initialize: function()
+		{
+			this._id='EffectColor';
+			this._propertyToEffect='color';
+			this.parent.apply(this, arguments);
 		}
 	});
 
@@ -449,6 +706,10 @@
 	this.EffectOpacity=EffectOpacity;
 	this.EffectBorderWidth=EffectBorderWidth;
 
+	//Advanced
+	this.EffectBackgroundColor=EffectBackgroundColor;
+	this.EffectColor=EffectColor;
+
 	//Composites
 	this.EffectMoveUpAndFade=EffectMoveUpAndFade;
 
@@ -480,6 +741,7 @@ $(function(){
 	var effTop=new EffectTop();
 	var effOpacity=new EffectOpacity();
 	var effBorderWidth=new EffectBorderWidth();
+	var effBGColor=new EffectBackgroundColor();
 
 	var eff=new Effect($('#itemToEffect'));
 	eff.add(effWidth);
@@ -487,9 +749,9 @@ $(function(){
 	eff.add(effLeft);
 	eff.add(effOpacity);
 	eff.add(effBorderWidth);
+	eff.add(effBGColor);
 
 	eff.percentage=0.8;
-
 
 
 	var gui=new dat.GUI();
@@ -517,6 +779,13 @@ $(function(){
 	borderWidth.add(effBorderWidth, 'start').min(0).max(100);
 	borderWidth.add(effBorderWidth, 'end').min(0).max(100);
 
+	var backgroundColor=gui.addFolder('background color');
+	backgroundColor.add(effBGColor.start, 'r').min(0).max(255);
+	backgroundColor.add(effBGColor.start, 'g').min(0).max(255);
+	backgroundColor.add(effBGColor.start, 'b').min(0).max(255);
+	backgroundColor.add(effBGColor.end, 'r').min(0).max(255);
+	backgroundColor.add(effBGColor.end, 'g').min(0).max(255);
+	backgroundColor.add(effBGColor.end, 'b').min(0).max(255);
 
 	//*/
 
