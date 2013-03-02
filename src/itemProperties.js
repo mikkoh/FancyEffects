@@ -117,23 +117,27 @@ var PropertyAdvanced = new Class({
 var PropertyColour = new Class({
 	Extends: PropertyAdvanced,
 
-	initialize: function(r, g, b) {
+	initialize: function(r, g, b, a) {
 		this.__defineGetter__('r', this.getR);
 		this.__defineGetter__('g', this.getG);
 		this.__defineGetter__('b', this.getB);
+		this.__defineGetter__('a', this.getA);
 
 		this.__defineSetter__('r', this.setR);
 		this.__defineSetter__('g', this.setG);
 		this.__defineSetter__('b', this.setB);
+		this.__defineSetter__('a', this.setA);
 
 		this._r = r == undefined ? 0 : r;
 		this._g = g == undefined ? 0 : g;
 		this._b = b == undefined ? 0 : b;
+		this._a = a == undefined || isNaN(a) ? 1 : a;
 	},
 
 	_r: 0,
 	_g: 0,
 	_b: 0,
+	_a: 1,
 
 	getR: function() {
 		return this._r;
@@ -143,6 +147,9 @@ var PropertyColour = new Class({
 	},
 	getB: function() {
 		return this._b;
+	},
+	getA: function() {
+		return this._a;
 	},
 	setR: function(value) {
 		this._r = value;
@@ -159,10 +166,16 @@ var PropertyColour = new Class({
 
 		this.onPropertyChange();
 	},
+	setA: function(value) {
+		this._a = value;
+
+		this.onPropertyChange();
+	},
 	equals: function(otherAdvanced) {
 		this._r = otherAdvanced.r;
 		this._g = otherAdvanced.g;
 		this._b = otherAdvanced.b;
+		this._a = otherAdvanced.a;
 
 		return this;
 	},
@@ -170,6 +183,7 @@ var PropertyColour = new Class({
 		this._r += otherAdvanced.r;
 		this._g += otherAdvanced.g;
 		this._b += otherAdvanced.b;
+		this._a += otherAdvanced.a;
 
 		return this;
 	},
@@ -177,6 +191,7 @@ var PropertyColour = new Class({
 		this._r -= otherAdvanced.r;
 		this._g -= otherAdvanced.g;
 		this._b -= otherAdvanced.b;
+		this._a -= otherAdvanced.a;
 
 		return this;
 	},
@@ -184,14 +199,15 @@ var PropertyColour = new Class({
 		this._r *= amount;
 		this._g *= amount;
 		this._b *= amount;
+		this._a += amount;
 
 		return this;
 	},
 	getCSS: function() {
-		return 'rgb(' + Math.round(this.r) + ', ' + Math.round(this.g) + ', ' + Math.round(this.b) + ')';
+		return 'rgba(' + Math.round(this.r) + ', ' + Math.round(this.g) + ', ' + Math.round(this.b) + ', '+ this.a +')';
 	},
 	clone: function() {
-		var rVal = new PropertyColour(this.r, this.g, this.b);
+		var rVal = new PropertyColour(this.r, this.g, this.b, this.a);
 
 		return rVal;
 	}

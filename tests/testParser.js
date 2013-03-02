@@ -10,8 +10,8 @@ test( "Parser", function() {
 	var colourParserGreen=new ParserColour(boxGreen.css('background-color'));
 	var colourParserAlpha=new ParserColour(boxAlpha.css('background-color'));
 
-	ok(colourParserPink.getValue().getCSS()=="rgb(255, 0, 255)", "Pink Background-Color Parse" );
-	ok(colourParserBlue.getValue().getCSS()=="rgb(0, 0, 153)", "Blue Background-Color Parse" );
-	ok(colourParserGreen.getValue().getCSS()=="rgb(127, 255, 0)", "Green Background-Color Parse" );
-	ok(colourParserAlpha.getValue().getCSS()=="rgb(255, 255, 0)", "Green Background-Color Parse" );
+	ok(colourParserPink.getValue().getCSS()=="rgba(255, 0, 255, 1)", "Pink Background-Color Parse" );
+	ok(colourParserBlue.getValue().getCSS()=="rgba(0, 0, 153, 1)", "Blue Background-Color Parse" );
+	ok(colourParserGreen.getValue().getCSS()=="rgba(127, 255, 0, 1)", "Green Background-Color Parse" );
+	ok(colourParserAlpha.getValue().getCSS()=="rgba(255, 255, 0, 0.5)", "Alpha Background-Color Parse" );
 });

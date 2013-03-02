@@ -430,23 +430,27 @@ var PropertyAdvanced = new Class({
 var PropertyColour = new Class({
 	Extends: PropertyAdvanced,
 
-	initialize: function(r, g, b) {
+	initialize: function(r, g, b, a) {
 		this.__defineGetter__('r', this.getR);
 		this.__defineGetter__('g', this.getG);
 		this.__defineGetter__('b', this.getB);
+		this.__defineGetter__('a', this.getA);
 
 		this.__defineSetter__('r', this.setR);
 		this.__defineSetter__('g', this.setG);
 		this.__defineSetter__('b', this.setB);
+		this.__defineSetter__('a', this.setA);
 
 		this._r = r == undefined ? 0 : r;
 		this._g = g == undefined ? 0 : g;
 		this._b = b == undefined ? 0 : b;
+		this._a = a == undefined || isNaN(a) ? 1 : a;
 	},
 
 	_r: 0,
 	_g: 0,
 	_b: 0,
+	_a: 1,
 
 	getR: function() {
 		return this._r;
@@ -456,6 +460,9 @@ var PropertyColour = new Class({
 	},
 	getB: function() {
 		return this._b;
+	},
+	getA: function() {
+		return this._a;
 	},
 	setR: function(value) {
 		this._r = value;
@@ -472,10 +479,16 @@ var PropertyColour = new Class({
 
 		this.onPropertyChange();
 	},
+	setA: function(value) {
+		this._a = value;
+
+		this.onPropertyChange();
+	},
 	equals: function(otherAdvanced) {
 		this._r = otherAdvanced.r;
 		this._g = otherAdvanced.g;
 		this._b = otherAdvanced.b;
+		this._a = otherAdvanced.a;
 
 		return this;
 	},
@@ -483,6 +496,7 @@ var PropertyColour = new Class({
 		this._r += otherAdvanced.r;
 		this._g += otherAdvanced.g;
 		this._b += otherAdvanced.b;
+		this._a += otherAdvanced.a;
 
 		return this;
 	},
@@ -490,6 +504,7 @@ var PropertyColour = new Class({
 		this._r -= otherAdvanced.r;
 		this._g -= otherAdvanced.g;
 		this._b -= otherAdvanced.b;
+		this._a -= otherAdvanced.a;
 
 		return this;
 	},
@@ -497,91 +512,80 @@ var PropertyColour = new Class({
 		this._r *= amount;
 		this._g *= amount;
 		this._b *= amount;
+		this._a += amount;
 
 		return this;
 	},
 	getCSS: function() {
-		return 'rgb(' + Math.round(this.r) + ', ' + Math.round(this.g) + ', ' + Math.round(this.b) + ')';
+		return 'rgba(' + Math.round(this.r) + ', ' + Math.round(this.g) + ', ' + Math.round(this.b) + ', '+ this.a +')';
 	},
 	clone: function() {
-		var rVal = new PropertyColour(this.r, this.g, this.b);
+		var rVal = new PropertyColour(this.r, this.g, this.b, this.a);
 
 		return rVal;
 	}
 });
-var REGEX_VALUE_EXTENSION=/^(\d+\.?\d*)((px)?(%)?)$/;
-var REGEX_VALUE_COLOUR_RGB=/^rgb\((\d+), *(\d+), *(\d+)\)$/
+var REGEX_VALUE_EXTENSION = /^(\d+\.?\d*)((px)?(%)?)$/;
+var REGEX_VALUE_COLOUR_RGB = /^rgba?\((\d+), *(\d+), *(\d+)(, *(\d+\.?\d*))?\)$/
 
-var Parser=new Class({
-	initialize: function(cssValue)
-	{
-		this._cssValue=cssValue;
+var Parser = new Class({
+	initialize: function(cssValue) {
+		this._cssValue = cssValue;
 
 		this._parseCSSValue();
 	},
 
 	_cssValue: null,
 
-	getValue: function()
-	{
+	getValue: function() {
 		throw new Error('You need to override this function');
 	},
-	_parseCSSValue: function()
-	{
+	_parseCSSValue: function() {
 		throw new Error('You need to override this function');
 	}
 });
 
-var ParseNumberValue=new Class({
+var ParseNumberValue = new Class({
 	Extends: Parser,
 
 	_value: 0,
 
-	getValue: function()
-	{
+	getValue: function() {
 		return this._value;
 	},
-	_parseCSSValue: function()
-	{
-		var valueResult=REGEX_VALUE_EXTENSION.exec(this._cssValue);
+	_parseCSSValue: function() {
+		var valueResult = REGEX_VALUE_EXTENSION.exec(this._cssValue);
 
-		if(valueResult)
-			this._value=parseFloat(valueResult[1]);
-		else
-			this._value=0;	
+		if (valueResult) this._value = parseFloat(valueResult[1]);
+		else this._value = 0;
 	}
 });
 
-var ParserColour=new Class({
+var ParserColour = new Class({
 	Extends: Parser,
-	
+
 	_value: null,
 
-	getValue: function()
-	{
+	getValue: function() {
 		return this._value.clone();
 	},
-	_parseCSSValue: function()
-	{
-		if(REGEX_VALUE_COLOUR_RGB.test(this._cssValue))
-		{
-			var valArr=REGEX_VALUE_COLOUR_RGB.exec(this._cssValue);
+	_parseCSSValue: function() {
+		if (REGEX_VALUE_COLOUR_RGB.test(this._cssValue)) {
+			var valArr = REGEX_VALUE_COLOUR_RGB.exec(this._cssValue);
 
-			this._value=new PropertyColour(parseFloat(valArr[1]), parseFloat(valArr[2]), parseFloat(valArr[3]));
-		}
-		else
-		{
+			this._value = new PropertyColour(parseFloat(valArr[1]), parseFloat(valArr[2]), parseFloat(valArr[3]), parseFloat(parseFloat(valArr[5]).toPrecision(2)));
+		} else {
 			throw new Error('Could not parse colour:', this._cssValue);
 		}
 	}
 });
 
-var ParserLookUp={};
-ParserLookUp['width']=ParseNumberValue;
-ParserLookUp['height']=ParseNumberValue;
-ParserLookUp['left']=ParseNumberValue;
-ParserLookUp['top']=ParseNumberValue;
-ParserLookUp['opacity']=ParseNumberValue;
-ParserLookUp['border-width']=ParseNumberValue;
-ParserLookUp['background-color']=ParserColour;
-ParserLookUp['color']=ParserColour;
+var ParserLookUp = {};
+ParserLookUp['width'] = ParseNumberValue;
+ParserLookUp['height'] = ParseNumberValue;
+ParserLookUp['left'] = ParseNumberValue;
+ParserLookUp['top'] = ParseNumberValue;
+ParserLookUp['opacity'] = ParseNumberValue;
+ParserLookUp['border-width'] = ParseNumberValue;
+ParserLookUp['background-color'] = ParserColour;
+ParserLookUp['color'] = ParserColour;
