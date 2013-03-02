@@ -18,11 +18,16 @@ module.exports = function(grunt) {
 		watch: {
 			files: ['Gruntfile.js', 'src/**/*.js'],
 			tasks: ['concat']
+		},
+		qunit: {
+  			files: ['tests/**/*.html']
 		}
 	});
 	
 	grunt.loadNpmTasks('grunt-contrib-watch');
 	grunt.loadNpmTasks('grunt-contrib-concat');
+	grunt.loadNpmTasks('grunt-contrib-qunit');
 
+	grunt.registerTask('test', ['qunit']);
 	grunt.registerTask('default', ['concat', 'watch']);
 }
