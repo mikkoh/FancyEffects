@@ -204,7 +204,10 @@ var PropertyColour = new Class({
 		return this;
 	},
 	getCSS: function() {
-		return 'rgba(' + Math.round(this.r) + ', ' + Math.round(this.g) + ', ' + Math.round(this.b) + ', '+ this.a +')';
+		if(this.a==1)
+			return 'rgb(' + Math.round(this.r) + ', ' + Math.round(this.g) + ', ' + Math.round(this.b) + ')';
+		else
+			return 'rgba(' + Math.round(this.r) + ', ' + Math.round(this.g) + ', ' + Math.round(this.b) + ', '+ this.a +')';
 	},
 	clone: function() {
 		var rVal = new PropertyColour(this.r, this.g, this.b, this.a);
