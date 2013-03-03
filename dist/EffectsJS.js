@@ -150,7 +150,6 @@ var EffectChangePropAdvanced = new Class({
 
 		var cValue = this._itemProperties.get(this._propertyToEffect);
 
-		//temp=end
 		//(end-start)*value+start
 		_temp.equals(this._endValue);
 		_temp.sub(this._startValue);
@@ -165,9 +164,13 @@ var EffectChangePropAdvanced = new Class({
 	setItemToEffect: function(itemToEffect, itemProperties) {
 		this.parent(itemToEffect, itemProperties);
 
-		if (this._startValue == null) this._startValue = this._itemProperties.getStart(this._propertyToEffect).clone();
+		if (this._startValue == null) {
+			this._startValue = this._itemProperties.getStart(this._propertyToEffect).clone();
+		}
 
-		if (this._endValue == null) this._endValue = this._itemProperties.getStart(this._propertyToEffect).clone();
+		if (this._endValue == null) {
+			this._endValue = this._itemProperties.getStart(this._propertyToEffect).clone();
+		}
 
 		this._startValue.onPropertyChange = this.applyPercentage.bind(this);
 		this._endValue.onPropertyChange = this.applyPercentage.bind(this);
@@ -186,20 +189,35 @@ var EffectChangePropColour = new Class({
 		var endVal = undefined;
 
 		//just end values sent
-		if (arguments.length == 3) endVal = new PropertyColour(arguments[0], arguments[1], arguments[2]);
-		else if (arguments.length == 6) {
-			startVal = new PropertyColour(arguments[0], arguments[1], arguments[2]);
-			endVal = new PropertyColour(arguments[3], arguments[4], arguments[5]);
-		} else if (arguments.length == 4) {
-			endVal = new PropertyColour(arguments[1], arguments[2], arguments[3]);
-		} else if (arguments.length == 7) {
-			startVal = new PropertyColour(arguments[1], arguments[2], arguments[3]);
-			endVal = new PropertyColour(arguments[4], arguments[5], arguments[6]);
+		if (typeof arguments[0] == 'object') {
+			if (arguments.length == 4) {
+				endVal = new PropertyColour(arguments[1], arguments[2], arguments[3]);
+			} else if (arguments.length == 7) {
+				startVal = new PropertyColour(arguments[1], arguments[2], arguments[3]);
+				endVal = new PropertyColour(arguments[4], arguments[5], arguments[6]);
+			} else if (arguments.length == 5) {
+				endVal = new PropertyColour(arguments[1], arguments[2], arguments[3], arguments[4]);
+			} else if (arguments.length == 9) {
+				startVal = new PropertyColour(arguments[1], arguments[2], arguments[3], arguments[4]);
+				endVal = new PropertyColour(arguments[5], arguments[6], arguments[7], arguments[8]);
+			}
+
+			this.parent.apply(this, [arguments[0], startVal, endVal]);
+		} else {
+			if (arguments.length == 3) {
+				endVal = new PropertyColour(arguments[0], arguments[1], arguments[2]);
+			} else if (arguments.length == 6) {
+				startVal = new PropertyColour(arguments[0], arguments[1], arguments[2]);
+				endVal = new PropertyColour(arguments[3], arguments[4], arguments[5]);
+			} else if (arguments.length == 4) {
+				endVal = new PropertyColour(arguments[0], arguments[1], arguments[2], arguments[3]);
+			} else if (arguments.length == 8) {
+				startVal = new PropertyColour(arguments[0], arguments[1], arguments[2], arguments[3]);
+				endVal = new PropertyColour(arguments[4], arguments[5], arguments[6], arguments[7]);
+			}
+
+			this.parent.apply(this, [startVal, endVal]);
 		}
-
-
-		if (typeof arguments[0] == 'object') this.parent.apply(this, [arguments[0], startVal, endVal]);
-		else this.parent.apply(this, [startVal, endVal]);
 
 		_temp = new PropertyColour();
 	}
@@ -298,19 +316,6 @@ var EffectMoveUpAndFade = new Class({
 		this._effMove.percentage = 1 - value;
 	}
 });
-
-
-/* TODO:
-	-parse out things like transform, filter
-	-write a property manager for colours
-	-implement destroying effects
-	-handle changing properties like position
-		-have a counter for when the property should be reset to start value
-	-handle changing the start value
-		-effects that did not have a start value sent to them should be updated
-	-create a timeline of effects
-	-create curves for effects
-*/
 var ItemProperties = new Class({
 	initialize: function(itemToEffect) {
 		this._itemToEffect = itemToEffect;
@@ -351,6 +356,7 @@ var ItemProperties = new Class({
 	},
 	changeAdvanced: function(effectID, property, amount) {
 		this._propertyValue[property].add(amount);
+
 		this._changeAmountForEffect[effectID][property].add(amount);
 
 		this._itemToEffect.css(property, this._propertyValue[property].getCSS());
@@ -512,12 +518,16 @@ var PropertyColour = new Class({
 		this._r *= amount;
 		this._g *= amount;
 		this._b *= amount;
-		this._a += amount;
+		this._a *= amount;
 
 		return this;
 	},
 	getCSS: function() {
-		return 'rgba(' + Math.round(this.r) + ', ' + Math.round(this.g) + ', ' + Math.round(this.b) + ', '+ this.a +')';
+		if (this.a == 1) {
+			return 'rgb(' + Math.round(this.r) + ', ' + Math.round(this.g) + ', ' + Math.round(this.b) + ')';
+		} else {
+			return 'rgba(' + Math.round(this.r) + ', ' + Math.round(this.g) + ', ' + Math.round(this.b) + ', ' + this.a + ')';
+		}
 	},
 	clone: function() {
 		var rVal = new PropertyColour(this.r, this.g, this.b, this.a);
@@ -525,8 +535,133 @@ var PropertyColour = new Class({
 		return rVal;
 	}
 });
+
+var PropertyFilter = new Class({
+	Extends: PropertyAdvanced,
+
+	initialize: function(blur, brightness, contrast, dropShadow, grayScale, hueRotation, invert, opacity, saturate, sepia) {
+		this._blur=blur;
+		this._brightness=brightness;
+		this._contrast=contrast;
+		this._dropShadow=dropShadow;
+		this._grayScale=grayScale;
+		this._hueRotation=hueRotation;
+		this._invert=invert;
+		this._opacity=opacity;
+		this._saturate=saturate;
+		this._sepia=sepia;
+
+		this.__defineGetter__('blur', this.getBlur);
+		this.__defineGetter__('brightness', this.getBrightness);
+		this.__defineGetter__('contrast', this.getContrast);
+		this.__defineGetter__('dropShadow', this.getDropShadow);
+		this.__defineGetter__('grayScale', this.getGrayScale);
+		this.__defineGetter__('hueRotation', this.getHueRotation);
+		this.__defineGetter__('invert', this.getInvert);
+		this.__defineGetter__('opacity', this.getOpacity);
+		this.__defineGetter__('saturate', this.getSaturate);
+		this.__defineGetter__('sepia', this.getSepia);
+
+		this.__defineSetter__('blur', this.setBlur);
+		this.__defineSetter__('brightness', this.setBrightness);
+		this.__defineSetter__('contrast', this.setContrast);
+		this.__defineSetter__('dropShadow', this.setDropShadow);
+		this.__defineSetter__('grayScale', this.setGrayScale);
+		this.__defineSetter__('hueRotation', this.setHueRotation);
+		this.__defineSetter__('invert', this.setInvert);
+		this.__defineSetter__('opacity', this.setOpacity);
+		this.__defineSetter__('saturate', this.setSaturate);
+		this.__defineSetter__('sepia', this.setSepia);
+	},
+
+	_blur: 0,
+	_brightness: 0,
+	_contrast: 0,
+	_dropShadow: null,
+	_grayScale: 0,
+	_hueRotation: 0,
+	_invert: 0,
+	_opacity: 1,
+	_saturate: 0,
+	_sepia: 0,
+
+	getBlur: function() function() { return this._blur; },
+	getBrightness: function() { return this._brightness; },
+	getContrast: function() { return this._contrast; },
+	getDropShadow: function() { return this._dropShadow; },
+	getGrayScale: function() { return this._grayScale; },
+	getHueRotation: function() { return this._hueRotation; },
+	getInvert: function() { return this._invert; },
+	getOpacity: function() { return this._opacity; },
+	getSaturate: function() { return this._saturate; },
+	getSepia: function() { return this._sepia; },
+	setBlur: function(value) {
+		this._g = value;
+
+		this.onPropertyChange();
+	},
+	setBrightness: function(value) {
+		this._blur = value;
+		this.onPropertyChange();
+	},
+	setContrast: function(value) {
+		this._brightness = value;
+		this.onPropertyChange();
+	},
+	setDropShadow: function(value) {
+		this._dropShadow = value;
+		this.onPropertyChange();
+	},
+	setGrayScale: function(value) {
+		this._grayScale = value;
+		this.onPropertyChange();
+	},
+	setHueRotation: function(value) {
+		this._hueRotation = value;
+		this.onPropertyChange();
+	},
+	setInvert: function(value) {
+		this._invert = value;
+		this.onPropertyChange();
+	},
+	setOpacity: function(value) {
+		this._opacity = value;
+		this.onPropertyChange();
+	},
+	setSaturate: function(value) {
+		this._saturate = value;
+		this.onPropertyChange();
+	},
+	setSepia: function(value) {
+		this._sepia = value;
+		this.onPropertyChange();
+	},
+	getCSS: function() {
+		return 'blur(' + this._blur + 'px); '+ 
+			   'brightness(' + this._brightness + '); ' +
+			   'contrast(' + this._contrast + '); ' +
+			   //'dropShadow'
+			   'grayscale(' + this._grayScale + '); ' +
+			   'hue-rotate(' + this._hueRotation + 'deg); ' +
+			   'invert(' + this._invert + '); ' +
+			   'opacity(' + this._opacity + '); ' +
+			   'saturate(' + this._saturate + '); ' +
+			   'sepia(' + this._sepia + ');'
+	}
+});
 var REGEX_VALUE_EXTENSION = /^(\d+\.?\d*)((px)?(%)?)$/;
-var REGEX_VALUE_COLOUR_RGB = /^rgba?\((\d+), *(\d+), *(\d+)(, *(\d+\.?\d*))?\)$/
+var REGEX_VALUE_COLOUR_RGB = /^rgba?\((\d+), *(\d+), *(\d+)(, *(\d+\.?\d*))?\)$/;
+var REGEX_VALUE_FILTER_BLUR = /blur\((\d+)px\)/;
+var REGEX_VALUE_FILTER_BRIGHTNESS = /brightness\((\d+\.?\d*)\)/;
+var REGEX_VALUE_FILTER_CONTRAST = /contrast\((\d+\.?\d*)\)/;
+var REGEX_VALUE_FILTER_DROP_SHADOW = /$$$/; //TODO
+var REGEX_VALUE_FILTER_GRAY_SCALE = /grayscale\((\d+\.?\d*)\)/;
+var REGEX_VALUE_FILTER_HUE_ROTATION = /hue-rotate\((\d)+deg\)/;
+var REGEX_VALUE_FILTER_INVERT = /invert\((\d+\.?\d*)\)/;
+var REGEX_VALUE_FILTER_OPACITY = /opacity\((\d+\.?\d*)\)/;
+var REGEX_VALUE_FILTER_SATURATE = /saturate\((\d+\.?\d*)\)/;
+var REGEX_VALUE_FILTER_SEPIA = /sepia\((\d+\.?\d*)\)/;
+
 
 var Parser = new Class({
 	initialize: function(cssValue) {
@@ -573,10 +708,50 @@ var ParserColour = new Class({
 		if (REGEX_VALUE_COLOUR_RGB.test(this._cssValue)) {
 			var valArr = REGEX_VALUE_COLOUR_RGB.exec(this._cssValue);
 
-			this._value = new PropertyColour(parseFloat(valArr[1]), parseFloat(valArr[2]), parseFloat(valArr[3]), parseFloat(parseFloat(valArr[5]).toPrecision(2)));
+			//we're doing something funky here with ALPHA because jquery may have a bug
+			//when css is set to 0.5 jQuery returns 0.498046875 which is 127.5/255
+			//we just drop the precision slightly in hopes that it will be more acurate
+			//I know it's sort of bad
+			this._value = new PropertyColour(parseFloat(valArr[1]), 
+											 parseFloat(valArr[2]), 
+											 parseFloat(valArr[3]), 
+											 parseFloat(parseFloat(valArr[5]).toPrecision(2)));
 		} else {
 			throw new Error('Could not parse colour:', this._cssValue);
 		}
+	}
+});
+
+var ParserFilter = new Class({
+	Extends: Parser,
+
+	_value: null,
+
+	getValue: function() {
+		return this._value.clone();
+	},
+	_parseCSSValue: function() {
+		var blur = REGEX_VALUE_FILTER_BLUR.exec(this._cssValue);
+		var brightness = REGEX_VALUE_FILTER_BRIGHTNESS.exec(this._cssValue);
+		var contrast = REGEX_VALUE_FILTER_CONTRAST.exec(this._cssValue);
+		var dropShadow = REGEX_VALUE_FILTER_DROP_SHADOW.exec(this._cssValue);
+		var grayScale = REGEX_VALUE_FILTER_GRAY_SCALE.exec(this._cssValue);
+		var hueRotation = REGEX_VALUE_FILTER_HUE_ROTATION.exec(this._cssValue);
+		var invert = REGEX_VALUE_FILTER_INVERT.exec(this._cssValue);
+		var opacity = REGEX_VALUE_FILTER_OPACITY.exec(this._cssValue);
+		var saturate = REGEX_VALUE_FILTER_SATURATE.exec(this._cssValue);
+		var sepia = REGEX_VALUE_FILTER_SEPIA.exec(this._cssValue);
+
+		this._value = new PropertyColour(blur==undefined ? 0 : parseFloat(blur[1]),
+										 brightness == undefined ? 0 : parseFloat(brightness[1]),
+										 contrast == undefined ? 0 : parseFloat(contrast[1]),
+										 dropShadow == undefined ? undefined : parseFloat(dropShadow[1]),
+										 grayscale == undefined ? 0 : parseFloat(grayscale[1]),
+										 hueRotation == undefined ? 0 : parseFloat(hueRotation[1]),
+										 invert == undefined ? 0 : parseFloat(invert[1]),
+										 opacity == undefined ? 0 : parseFloat(opacity[1]),
+										 saturate == undefined ? 0 : parseFloat(saturate[1]),
+										 sepia == undefined ? 0 : parseFloat(sepia[1]));
 	}
 });
 

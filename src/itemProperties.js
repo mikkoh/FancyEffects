@@ -205,12 +205,129 @@ var PropertyColour = new Class({
 		return this;
 	},
 	getCSS: function() {
-		if (this.a == 1) return 'rgb(' + Math.round(this.r) + ', ' + Math.round(this.g) + ', ' + Math.round(this.b) + ')';
-		else return 'rgba(' + Math.round(this.r) + ', ' + Math.round(this.g) + ', ' + Math.round(this.b) + ', ' + this.a + ')';
+		if (this.a == 1) {
+			return 'rgb(' + Math.round(this.r) + ', ' + Math.round(this.g) + ', ' + Math.round(this.b) + ')';
+		} else {
+			return 'rgba(' + Math.round(this.r) + ', ' + Math.round(this.g) + ', ' + Math.round(this.b) + ', ' + this.a + ')';
+		}
 	},
 	clone: function() {
 		var rVal = new PropertyColour(this.r, this.g, this.b, this.a);
 
 		return rVal;
+	}
+});
+
+var PropertyFilter = new Class({
+	Extends: PropertyAdvanced,
+
+	initialize: function(blur, brightness, contrast, dropShadow, grayScale, hueRotation, invert, opacity, saturate, sepia) {
+		this._blur=blur;
+		this._brightness=brightness;
+		this._contrast=contrast;
+		this._dropShadow=dropShadow;
+		this._grayScale=grayScale;
+		this._hueRotation=hueRotation;
+		this._invert=invert;
+		this._opacity=opacity;
+		this._saturate=saturate;
+		this._sepia=sepia;
+
+		this.__defineGetter__('blur', this.getBlur);
+		this.__defineGetter__('brightness', this.getBrightness);
+		this.__defineGetter__('contrast', this.getContrast);
+		this.__defineGetter__('dropShadow', this.getDropShadow);
+		this.__defineGetter__('grayScale', this.getGrayScale);
+		this.__defineGetter__('hueRotation', this.getHueRotation);
+		this.__defineGetter__('invert', this.getInvert);
+		this.__defineGetter__('opacity', this.getOpacity);
+		this.__defineGetter__('saturate', this.getSaturate);
+		this.__defineGetter__('sepia', this.getSepia);
+
+		this.__defineSetter__('blur', this.setBlur);
+		this.__defineSetter__('brightness', this.setBrightness);
+		this.__defineSetter__('contrast', this.setContrast);
+		this.__defineSetter__('dropShadow', this.setDropShadow);
+		this.__defineSetter__('grayScale', this.setGrayScale);
+		this.__defineSetter__('hueRotation', this.setHueRotation);
+		this.__defineSetter__('invert', this.setInvert);
+		this.__defineSetter__('opacity', this.setOpacity);
+		this.__defineSetter__('saturate', this.setSaturate);
+		this.__defineSetter__('sepia', this.setSepia);
+	},
+
+	_blur: 0,
+	_brightness: 0,
+	_contrast: 0,
+	_dropShadow: null,
+	_grayScale: 0,
+	_hueRotation: 0,
+	_invert: 0,
+	_opacity: 1,
+	_saturate: 0,
+	_sepia: 0,
+
+	getBlur: function() function() { return this._blur; },
+	getBrightness: function() { return this._brightness; },
+	getContrast: function() { return this._contrast; },
+	getDropShadow: function() { return this._dropShadow; },
+	getGrayScale: function() { return this._grayScale; },
+	getHueRotation: function() { return this._hueRotation; },
+	getInvert: function() { return this._invert; },
+	getOpacity: function() { return this._opacity; },
+	getSaturate: function() { return this._saturate; },
+	getSepia: function() { return this._sepia; },
+	setBlur: function(value) {
+		this._g = value;
+
+		this.onPropertyChange();
+	},
+	setBrightness: function(value) {
+		this._blur = value;
+		this.onPropertyChange();
+	},
+	setContrast: function(value) {
+		this._brightness = value;
+		this.onPropertyChange();
+	},
+	setDropShadow: function(value) {
+		this._dropShadow = value;
+		this.onPropertyChange();
+	},
+	setGrayScale: function(value) {
+		this._grayScale = value;
+		this.onPropertyChange();
+	},
+	setHueRotation: function(value) {
+		this._hueRotation = value;
+		this.onPropertyChange();
+	},
+	setInvert: function(value) {
+		this._invert = value;
+		this.onPropertyChange();
+	},
+	setOpacity: function(value) {
+		this._opacity = value;
+		this.onPropertyChange();
+	},
+	setSaturate: function(value) {
+		this._saturate = value;
+		this.onPropertyChange();
+	},
+	setSepia: function(value) {
+		this._sepia = value;
+		this.onPropertyChange();
+	},
+	getCSS: function() {
+		return 'blur(' + this._blur + 'px); '+ 
+			   'brightness(' + this._brightness + '); ' +
+			   'contrast(' + this._contrast + '); ' +
+			   //'dropShadow'
+			   'grayscale(' + this._grayScale + '); ' +
+			   'hue-rotate(' + this._hueRotation + 'deg); ' +
+			   'invert(' + this._invert + '); ' +
+			   'opacity(' + this._opacity + '); ' +
+			   'saturate(' + this._saturate + '); ' +
+			   'sepia(' + this._sepia + ');'
 	}
 });
