@@ -63,17 +63,21 @@
 		color.add(effColor.start, 'r').min(0).max(255);
 		color.add(effColor.start, 'g').min(0).max(255);
 		color.add(effColor.start, 'b').min(0).max(255);
+		color.add(effColor.start, 'a').min(0).max(1);
 		color.add(effColor.end, 'r').min(0).max(255);
 		color.add(effColor.end, 'g').min(0).max(255);
 		color.add(effColor.end, 'b').min(0).max(255);
+		color.add(effColor.end, 'a').min(0).max(1);
 
 		var backgroundColor = gui.addFolder('background color');
 		backgroundColor.add(effBGColor.start, 'r').min(0).max(255);
 		backgroundColor.add(effBGColor.start, 'g').min(0).max(255);
 		backgroundColor.add(effBGColor.start, 'b').min(0).max(255);
+		backgroundColor.add(effBGColor.start, 'a').min(0).max(1);
 		backgroundColor.add(effBGColor.end, 'r').min(0).max(255);
 		backgroundColor.add(effBGColor.end, 'g').min(0).max(255);
 		backgroundColor.add(effBGColor.end, 'b').min(0).max(255);
+		backgroundColor.add(effBGColor.end, 'a').min(0).max(1);
 	});	
 	</script>
 
@@ -87,7 +91,7 @@
 
 		#itemToEffect
 		{
-			background-color: rgba(10, 255, 255, 0.1);
+			background-color: rgba(10, 255, 255, 0.5);
 			width: 100px;
 			height: 100px;
 			

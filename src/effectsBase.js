@@ -150,7 +150,6 @@ var EffectChangePropAdvanced = new Class({
 
 		var cValue = this._itemProperties.get(this._propertyToEffect);
 
-		//temp=end
 		//(end-start)*value+start
 		_temp.equals(this._endValue);
 		_temp.sub(this._startValue);
@@ -165,9 +164,13 @@ var EffectChangePropAdvanced = new Class({
 	setItemToEffect: function(itemToEffect, itemProperties) {
 		this.parent(itemToEffect, itemProperties);
 
-		if (this._startValue == null) this._startValue = this._itemProperties.getStart(this._propertyToEffect).clone();
+		if (this._startValue == null) {
+			this._startValue = this._itemProperties.getStart(this._propertyToEffect).clone();
+		}
 
-		if (this._endValue == null) this._endValue = this._itemProperties.getStart(this._propertyToEffect).clone();
+		if (this._endValue == null) {
+			this._endValue = this._itemProperties.getStart(this._propertyToEffect).clone();
+		}
 
 		this._startValue.onPropertyChange = this.applyPercentage.bind(this);
 		this._endValue.onPropertyChange = this.applyPercentage.bind(this);
@@ -186,20 +189,35 @@ var EffectChangePropColour = new Class({
 		var endVal = undefined;
 
 		//just end values sent
-		if (arguments.length == 3) endVal = new PropertyColour(arguments[0], arguments[1], arguments[2]);
-		else if (arguments.length == 6) {
-			startVal = new PropertyColour(arguments[0], arguments[1], arguments[2]);
-			endVal = new PropertyColour(arguments[3], arguments[4], arguments[5]);
-		} else if (arguments.length == 4) {
-			endVal = new PropertyColour(arguments[1], arguments[2], arguments[3]);
-		} else if (arguments.length == 7) {
-			startVal = new PropertyColour(arguments[1], arguments[2], arguments[3]);
-			endVal = new PropertyColour(arguments[4], arguments[5], arguments[6]);
+		if (typeof arguments[0] == 'object') {
+			if (arguments.length == 4) {
+				endVal = new PropertyColour(arguments[1], arguments[2], arguments[3]);
+			} else if (arguments.length == 7) {
+				startVal = new PropertyColour(arguments[1], arguments[2], arguments[3]);
+				endVal = new PropertyColour(arguments[4], arguments[5], arguments[6]);
+			} else if (arguments.length == 5) {
+				endVal = new PropertyColour(arguments[1], arguments[2], arguments[3], arguments[4]);
+			} else if (arguments.length == 9) {
+				startVal = new PropertyColour(arguments[1], arguments[2], arguments[3], arguments[4]);
+				endVal = new PropertyColour(arguments[5], arguments[6], arguments[7], arguments[8]);
+			}
+
+			this.parent.apply(this, [arguments[0], startVal, endVal]);
+		} else {
+			if (arguments.length == 3) {
+				endVal = new PropertyColour(arguments[0], arguments[1], arguments[2]);
+			} else if (arguments.length == 6) {
+				startVal = new PropertyColour(arguments[0], arguments[1], arguments[2]);
+				endVal = new PropertyColour(arguments[3], arguments[4], arguments[5]);
+			} else if (arguments.length == 4) {
+				endVal = new PropertyColour(arguments[0], arguments[1], arguments[2], arguments[3]);
+			} else if (arguments.length == 8) {
+				startVal = new PropertyColour(arguments[0], arguments[1], arguments[2], arguments[3]);
+				endVal = new PropertyColour(arguments[4], arguments[5], arguments[6], arguments[7]);
+			}
+
+			this.parent.apply(this, [startVal, endVal]);
 		}
-
-
-		if (typeof arguments[0] == 'object') this.parent.apply(this, [arguments[0], startVal, endVal]);
-		else this.parent.apply(this, [startVal, endVal]);
 
 		_temp = new PropertyColour();
 	}

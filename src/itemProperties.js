@@ -38,6 +38,7 @@ var ItemProperties = new Class({
 	},
 	changeAdvanced: function(effectID, property, amount) {
 		this._propertyValue[property].add(amount);
+
 		this._changeAmountForEffect[effectID][property].add(amount);
 
 		this._itemToEffect.css(property, this._propertyValue[property].getCSS());
@@ -199,15 +200,13 @@ var PropertyColour = new Class({
 		this._r *= amount;
 		this._g *= amount;
 		this._b *= amount;
-		this._a += amount;
+		this._a *= amount;
 
 		return this;
 	},
 	getCSS: function() {
-		if(this.a==1)
-			return 'rgb(' + Math.round(this.r) + ', ' + Math.round(this.g) + ', ' + Math.round(this.b) + ')';
-		else
-			return 'rgba(' + Math.round(this.r) + ', ' + Math.round(this.g) + ', ' + Math.round(this.b) + ', '+ this.a +')';
+		if (this.a == 1) return 'rgb(' + Math.round(this.r) + ', ' + Math.round(this.g) + ', ' + Math.round(this.b) + ')';
+		else return 'rgba(' + Math.round(this.r) + ', ' + Math.round(this.g) + ', ' + Math.round(this.b) + ', ' + this.a + ')';
 	},
 	clone: function() {
 		var rVal = new PropertyColour(this.r, this.g, this.b, this.a);
