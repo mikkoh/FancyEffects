@@ -150,7 +150,12 @@ var EffectChangePropAdvanced = new Class({
 
 		var cValue = this._itemProperties.get(this._propertyToEffect);
 
+		this._itemProperties.changeAdvanced(this.id, 
+											this._propertyToEffect, 
+											this._temp.getChange(value, cValue, this._startValue, this._endValue));
+
 		//(end-start)*value+start
+		/*
 		_temp.equals(this._endValue);
 		_temp.sub(this._startValue);
 		_temp.mulScalar(value);
@@ -158,8 +163,9 @@ var EffectChangePropAdvanced = new Class({
 
 		//now subtract the new value from the cValue
 		_temp.sub(cValue);
-
+		
 		this._itemProperties.changeAdvanced(this.id, this._propertyToEffect, _temp);
+		*/
 	},
 	setItemToEffect: function(itemToEffect, itemProperties) {
 		this.parent(itemToEffect, itemProperties);
@@ -183,6 +189,8 @@ var EffectChangePropAdvanced = new Class({
 
 var EffectChangePropColour = new Class({
 	Extends: EffectChangePropAdvanced,
+
+	_temp: null,
 
 	initialize: function() {
 		var startVal = undefined;
@@ -219,6 +227,6 @@ var EffectChangePropColour = new Class({
 			this.parent.apply(this, [startVal, endVal]);
 		}
 
-		_temp = new PropertyColour();
+		this._temp = new PropertyColour();
 	}
 });

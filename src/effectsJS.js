@@ -70,6 +70,20 @@ var EffectColor = new Class({
 	}
 });
 
+var EffectFilter = new Class({
+	Extends: EffectChangePropAdvanced,
+
+	_temp: null,
+
+	initialize: function() {
+		this._id = 'EffectFilter';
+		this._propertyToEffect = '-webkit-filter';
+		this._temp = new PropertyFilter();
+
+		this.parent.apply(this, arguments);
+	}
+});
+
 
 /* COMPOSITE EFFECTS */
 var EffectMoveUpAndFade = new Class({

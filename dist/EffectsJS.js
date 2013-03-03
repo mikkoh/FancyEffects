@@ -150,7 +150,12 @@ var EffectChangePropAdvanced = new Class({
 
 		var cValue = this._itemProperties.get(this._propertyToEffect);
 
+		this._itemProperties.changeAdvanced(this.id, 
+											this._propertyToEffect, 
+											this._temp.getChange(value, cValue, this._startValue, this._endValue));
+
 		//(end-start)*value+start
+		/*
 		_temp.equals(this._endValue);
 		_temp.sub(this._startValue);
 		_temp.mulScalar(value);
@@ -158,8 +163,9 @@ var EffectChangePropAdvanced = new Class({
 
 		//now subtract the new value from the cValue
 		_temp.sub(cValue);
-
+		
 		this._itemProperties.changeAdvanced(this.id, this._propertyToEffect, _temp);
+		*/
 	},
 	setItemToEffect: function(itemToEffect, itemProperties) {
 		this.parent(itemToEffect, itemProperties);
@@ -183,6 +189,8 @@ var EffectChangePropAdvanced = new Class({
 
 var EffectChangePropColour = new Class({
 	Extends: EffectChangePropAdvanced,
+
+	_temp: null,
 
 	initialize: function() {
 		var startVal = undefined;
@@ -219,7 +227,7 @@ var EffectChangePropColour = new Class({
 			this.parent.apply(this, [startVal, endVal]);
 		}
 
-		_temp = new PropertyColour();
+		this._temp = new PropertyColour();
 	}
 });
 var EffectWidth = new Class({
@@ -290,6 +298,20 @@ var EffectColor = new Class({
 	initialize: function() {
 		this._id = 'EffectColor';
 		this._propertyToEffect = 'color';
+		this.parent.apply(this, arguments);
+	}
+});
+
+var EffectFilter = new Class({
+	Extends: EffectChangePropAdvanced,
+
+	_temp: null,
+
+	initialize: function() {
+		this._id = 'EffectFilter';
+		this._propertyToEffect = '-webkit-filter';
+		this._temp = new PropertyFilter();
+
 		this.parent.apply(this, arguments);
 	}
 });
@@ -389,37 +411,18 @@ var ItemProperties = new Class({
 var PropertyAdvanced = new Class({
 	onPropertyChange: null,
 
-	equals: function(otherAdvanced) {
-		for (var i in otherAdvanced) {
-			if (this[i] && typeof this[i] == 'number') {
-				this[i] = otherAdvanced[i];
+	add: function(otherItem) {
+		for (var i in this) {
+			if (typeof this[i] == 'number') {
+				this[i] += otherItem[i];
 			}
 		}
-
-		return this;
 	},
-	add: function(otherAdvanced) {
-		for (var i in otherAdvanced) {
-			if (this[i] && typeof this[i] == 'number') {
-				this[i] += otherAdvanced[i];
-			}
-		}
-
-		return this;
-	},
-	sub: function(otherAdvanced) {
-		for (var i in otherAdvanced) {
-			if (this[i] && typeof this[i] == 'number') {
-				this[i] -= otherAdvanced[i];
-			}
-		}
-
-		return this;
-	},
-	mulScalar: function(amount) {
-		for (var i in otherAdvanced) {
-			if (this[i] && typeof this[i] == 'number') {
-				this[i] *= amount;
+	getChange: function(percentage, curValue, startValue, endValue) {
+		for (var i in this) {
+			if (typeof this[i] == 'number') {
+				this[i] = (endValue[i] - startValue[i]) * percentage + startValue[i];
+				this[i] -= curValue[i];
 			}
 		}
 
@@ -472,7 +475,7 @@ var PropertyColour = new Class({
 	},
 	setR: function(value) {
 		this._r = value;
-
+	
 		this.onPropertyChange();
 	},
 	setG: function(value) {
@@ -490,35 +493,22 @@ var PropertyColour = new Class({
 
 		this.onPropertyChange();
 	},
-	equals: function(otherAdvanced) {
-		this._r = otherAdvanced.r;
-		this._g = otherAdvanced.g;
-		this._b = otherAdvanced.b;
-		this._a = otherAdvanced.a;
-
-		return this;
+	add: function(otherItem) {
+		this._r += otherItem.r;
+		this._g += otherItem.g;
+		this._b += otherItem.b;
+		this._a += otherItem.a;
 	},
-	add: function(otherAdvanced) {
-		this._r += otherAdvanced.r;
-		this._g += otherAdvanced.g;
-		this._b += otherAdvanced.b;
-		this._a += otherAdvanced.a;
+	getChange: function(percentage, curValue, startValue, endValue) {
+		this._r = (endValue.r - startValue.r) * percentage + startValue.r;
+		this._g = (endValue.g - startValue.g) * percentage + startValue.g;
+		this._b = (endValue.b - startValue.b) * percentage + startValue.b;
+		this._a = (endValue.a - startValue.a) * percentage + startValue.a;
 
-		return this;
-	},
-	sub: function(otherAdvanced) {
-		this._r -= otherAdvanced.r;
-		this._g -= otherAdvanced.g;
-		this._b -= otherAdvanced.b;
-		this._a -= otherAdvanced.a;
-
-		return this;
-	},
-	mulScalar: function(amount) {
-		this._r *= amount;
-		this._g *= amount;
-		this._b *= amount;
-		this._a *= amount;
+		this._r -= curValue.r;
+		this._g -= curValue.g;
+		this._b -= curValue.b;
+		this._a -= curValue.a;
 
 		return this;
 	},
@@ -585,7 +575,7 @@ var PropertyFilter = new Class({
 	_saturate: 0,
 	_sepia: 0,
 
-	getBlur: function() function() { return this._blur; },
+	getBlur: function() { return this._blur; },
 	getBrightness: function() { return this._brightness; },
 	getContrast: function() { return this._contrast; },
 	getDropShadow: function() { return this._dropShadow; },
@@ -596,16 +586,16 @@ var PropertyFilter = new Class({
 	getSaturate: function() { return this._saturate; },
 	getSepia: function() { return this._sepia; },
 	setBlur: function(value) {
-		this._g = value;
+		this._blur = value;
 
 		this.onPropertyChange();
 	},
 	setBrightness: function(value) {
-		this._blur = value;
+		this._brightness = value;
 		this.onPropertyChange();
 	},
 	setContrast: function(value) {
-		this._brightness = value;
+		this._contrast = value;
 		this.onPropertyChange();
 	},
 	setDropShadow: function(value) {
@@ -614,6 +604,7 @@ var PropertyFilter = new Class({
 	},
 	setGrayScale: function(value) {
 		this._grayScale = value;
+
 		this.onPropertyChange();
 	},
 	setHueRotation: function(value) {
@@ -636,17 +627,63 @@ var PropertyFilter = new Class({
 		this._sepia = value;
 		this.onPropertyChange();
 	},
+	add: function(otherItem) {
+		this._blur += otherItem.blur;
+		this._brightness += otherItem.brightness;
+		this._contrast += otherItem.contrast;
+		this._grayScale += otherItem.grayScale;
+		this._hueRotation += otherItem.hueRotation;
+		this._invert += otherItem.invert;
+		this._opacity += otherItem.opacity;
+		this._saturate+= otherItem.saturate;
+		this._sepia += otherItem.sepia;
+	},
+	getChange: function(percentage, curValue, startValue, endValue) {
+		this._blur = (endValue.blur - startValue.blur) * percentage + startValue.blur;
+		this._brightness = (endValue.brightness - startValue.brightness) * percentage + startValue.brightness;
+		this._contrast = (endValue.contrast - startValue.contrast) * percentage + startValue.contrast;
+		this._grayScale = (endValue.grayScale - startValue.grayScale) * percentage + startValue.grayScale;
+		this._hueRotation = (endValue.hueRotation - startValue.hueRotation) * percentage + startValue.hueRotation;
+		this._invert = (endValue.invert - startValue.invert) * percentage + startValue.invert;
+		this._opacity = (endValue.opacity - startValue.opacity) * percentage + startValue.opacity;
+		this._saturate = (endValue.saturate - startValue.saturate) * percentage + startValue.saturate;
+		this._sepia = (endValue.sepia - startValue.sepia) * percentage + startValue.sepia;
+
+		this._blur -= curValue.blur;
+		this._brightness -= curValue.brightness;
+		this._contrast -= curValue.contrast;
+		this._grayScale -= curValue.grayScale;
+		this._hueRotation -= curValue.hueRotation;
+		this._invert -= curValue.invert;
+		this._opacity -= curValue.opacity;
+		this._saturate-= curValue.saturate;
+		this._sepia -= curValue.sepia;
+
+		return this;
+	},
 	getCSS: function() {
-		return 'blur(' + this._blur + 'px); '+ 
-			   'brightness(' + this._brightness + '); ' +
-			   'contrast(' + this._contrast + '); ' +
+		return 'blur(' + this._blur + 'px) '+ 
+			   'brightness(' + this._brightness + ') ' +
+			   'contrast(' + this._contrast + ') ' +
 			   //'dropShadow'
-			   'grayscale(' + this._grayScale + '); ' +
-			   'hue-rotate(' + this._hueRotation + 'deg); ' +
-			   'invert(' + this._invert + '); ' +
-			   'opacity(' + this._opacity + '); ' +
-			   'saturate(' + this._saturate + '); ' +
-			   'sepia(' + this._sepia + ');'
+			   'grayscale(' + this._grayScale + ') ' +
+			   'hue-rotate(' + this._hueRotation + 'deg) ' +
+			   'invert(' + this._invert + ') ' +
+			   'opacity(' + this._opacity + ') ' +
+			   'saturate(' + this._saturate + ') ' +
+			   'sepia(' + this._sepia + ')'
+	},
+	clone: function() {
+		return new PropertyFilter( this._blur,
+								   this._brightness,
+								   this._contrast,
+								   this._dropShadow,
+								   this._grayScale,
+								   this._hueRotation,
+								   this._invert,
+								   this._opacity,
+								   this._saturate,
+								   this._sepia );
 	}
 });
 var REGEX_VALUE_EXTENSION = /^(\d+\.?\d*)((px)?(%)?)$/;
@@ -742,15 +779,15 @@ var ParserFilter = new Class({
 		var saturate = REGEX_VALUE_FILTER_SATURATE.exec(this._cssValue);
 		var sepia = REGEX_VALUE_FILTER_SEPIA.exec(this._cssValue);
 
-		this._value = new PropertyColour(blur==undefined ? 0 : parseFloat(blur[1]),
+		this._value = new PropertyFilter(blur==undefined ? 0 : parseFloat(blur[1]),
 										 brightness == undefined ? 0 : parseFloat(brightness[1]),
-										 contrast == undefined ? 0 : parseFloat(contrast[1]),
+										 contrast == undefined ? 1 : parseFloat(contrast[1]),
 										 dropShadow == undefined ? undefined : parseFloat(dropShadow[1]),
-										 grayscale == undefined ? 0 : parseFloat(grayscale[1]),
+										 grayScale == undefined ? 0 : parseFloat(grayScale[1]),
 										 hueRotation == undefined ? 0 : parseFloat(hueRotation[1]),
 										 invert == undefined ? 0 : parseFloat(invert[1]),
-										 opacity == undefined ? 0 : parseFloat(opacity[1]),
-										 saturate == undefined ? 0 : parseFloat(saturate[1]),
+										 opacity == undefined ? 1 : parseFloat(opacity[1]),
+										 saturate == undefined ? 1 : parseFloat(saturate[1]),
 										 sepia == undefined ? 0 : parseFloat(sepia[1]));
 	}
 });
@@ -762,5 +799,6 @@ ParserLookUp['left'] = ParseNumberValue;
 ParserLookUp['top'] = ParseNumberValue;
 ParserLookUp['opacity'] = ParseNumberValue;
 ParserLookUp['border-width'] = ParseNumberValue;
-ParserLookUp['background-color'] = ParserColour;
 ParserLookUp['color'] = ParserColour;
+ParserLookUp['background-color'] = ParserColour;
+ParserLookUp['-webkit-filter'] = ParserFilter;

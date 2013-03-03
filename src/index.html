@@ -19,6 +19,7 @@
 		var effBorderWidth = new EffectBorderWidth();
 		var effColor = new EffectColor();
 		var effBGColor = new EffectBackgroundColor();
+		var effFilter = new EffectFilter();
 
 		var eff = new Effect($('#itemToEffect'));
 		eff.add(effWidth);
@@ -29,6 +30,7 @@
 		eff.add(effBorderWidth);
 		eff.add(effColor);
 		eff.add(effBGColor);
+		eff.add(effFilter);
 
 		var gui = new dat.GUI();
 		var folderMain = gui.addFolder('Main Controller');
@@ -78,6 +80,26 @@
 		backgroundColor.add(effBGColor.end, 'g').min(0).max(255);
 		backgroundColor.add(effBGColor.end, 'b').min(0).max(255);
 		backgroundColor.add(effBGColor.end, 'a').min(0).max(1);
+
+		var filter = gui.addFolder('filter');
+		filter.add(effFilter.start, 'blur').min(0).max(20);
+		filter.add(effFilter.end, 'blur').min(0).max(20);
+		filter.add(effFilter.start, 'brightness').min(0).max(1);
+		filter.add(effFilter.end, 'brightness').min(0).max(1);
+		filter.add(effFilter.start, 'contrast').min(0).max(1);
+		filter.add(effFilter.end, 'contrast').min(0).max(1);
+		filter.add(effFilter.start, 'grayScale').min(0).max(1);
+		filter.add(effFilter.end, 'grayScale').min(0).max(1);
+		filter.add(effFilter.start, 'hueRotation').min(0).max(360);
+		filter.add(effFilter.end, 'hueRotation').min(0).max(360);
+		filter.add(effFilter.start, 'opacity').min(0).max(1);
+		filter.add(effFilter.end, 'opacity').min(0).max(1);
+		filter.add(effFilter.start, 'saturate').min(0).max(1);
+		filter.add(effFilter.end, 'saturate').min(0).max(1);
+		filter.add(effFilter.start, 'invert').min(0).max(1);
+		filter.add(effFilter.end, 'invert').min(0).max(1);
+		filter.add(effFilter.start, 'sepia').min(0).max(1);
+		filter.add(effFilter.end, 'sepia').min(0).max(1);
 	});	
 	</script>
 

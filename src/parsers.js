@@ -91,15 +91,15 @@ var ParserFilter = new Class({
 		var saturate = REGEX_VALUE_FILTER_SATURATE.exec(this._cssValue);
 		var sepia = REGEX_VALUE_FILTER_SEPIA.exec(this._cssValue);
 
-		this._value = new PropertyColour(blur==undefined ? 0 : parseFloat(blur[1]),
+		this._value = new PropertyFilter(blur==undefined ? 0 : parseFloat(blur[1]),
 										 brightness == undefined ? 0 : parseFloat(brightness[1]),
-										 contrast == undefined ? 0 : parseFloat(contrast[1]),
+										 contrast == undefined ? 1 : parseFloat(contrast[1]),
 										 dropShadow == undefined ? undefined : parseFloat(dropShadow[1]),
-										 grayscale == undefined ? 0 : parseFloat(grayscale[1]),
+										 grayScale == undefined ? 0 : parseFloat(grayScale[1]),
 										 hueRotation == undefined ? 0 : parseFloat(hueRotation[1]),
 										 invert == undefined ? 0 : parseFloat(invert[1]),
-										 opacity == undefined ? 0 : parseFloat(opacity[1]),
-										 saturate == undefined ? 0 : parseFloat(saturate[1]),
+										 opacity == undefined ? 1 : parseFloat(opacity[1]),
+										 saturate == undefined ? 1 : parseFloat(saturate[1]),
 										 sepia == undefined ? 0 : parseFloat(sepia[1]));
 	}
 });
@@ -111,5 +111,6 @@ ParserLookUp['left'] = ParseNumberValue;
 ParserLookUp['top'] = ParseNumberValue;
 ParserLookUp['opacity'] = ParseNumberValue;
 ParserLookUp['border-width'] = ParseNumberValue;
-ParserLookUp['background-color'] = ParserColour;
 ParserLookUp['color'] = ParserColour;
+ParserLookUp['background-color'] = ParserColour;
+ParserLookUp['-webkit-filter'] = ParserFilter;
