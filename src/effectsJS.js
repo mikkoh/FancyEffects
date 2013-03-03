@@ -92,16 +92,3 @@ var EffectMoveUpAndFade = new Class({
 		this._effMove.percentage = 1 - value;
 	}
 });
-
-
-/* TODO:
-	-parse out things like transform, filter
-	-write a property manager for colours
-	-implement destroying effects
-	-handle changing properties like position
-		-have a counter for when the property should be reset to start value
-	-handle changing the start value
-		-effects that did not have a start value sent to them should be updated
-	-create a timeline of effects
-	-create curves for effects
-*/
