@@ -1,15 +1,22 @@
 var REGEX_VALUE_EXTENSION = /^(\d+\.?\d*)((px)?(%)?)$/;
 var REGEX_VALUE_COLOUR_RGB = /^rgba?\((\d+), *(\d+), *(\d+)(, *(\d+\.?\d*))?\)$/;
+var REGEX_VALUE_BOX_SHADOW = /^rgba?\((\d+), *(\d+), *(\d+)(, *(\d+\.?\d*))?\) (\d+)px (\d+)px (\d+)px( (\d+)px( inset)?)?$/;
+
 var REGEX_VALUE_FILTER_BLUR = /blur\((\d+)px\)/;
 var REGEX_VALUE_FILTER_BRIGHTNESS = /brightness\((\d+\.?\d*)\)/;
 var REGEX_VALUE_FILTER_CONTRAST = /contrast\((\d+\.?\d*)\)/;
-var REGEX_VALUE_FILTER_DROP_SHADOW = /$$$/; //TODO
+var REGEX_VALUE_FILTER_DROP_SHADOW = /drop-shadow\((.+)\)/;
 var REGEX_VALUE_FILTER_GRAY_SCALE = /grayscale\((\d+\.?\d*)\)/;
 var REGEX_VALUE_FILTER_HUE_ROTATION = /hue-rotate\((\d)+deg\)/;
 var REGEX_VALUE_FILTER_INVERT = /invert\((\d+\.?\d*)\)/;
 var REGEX_VALUE_FILTER_OPACITY = /opacity\((\d+\.?\d*)\)/;
 var REGEX_VALUE_FILTER_SATURATE = /saturate\((\d+\.?\d*)\)/;
 var REGEX_VALUE_FILTER_SEPIA = /sepia\((\d+\.?\d*)\)/;
+
+//drop-shadow(rgb(255, 0, 0) 35px 35px 20px) 
+//box-shadow: rgb(255, 0, 0) 35px 35px 20px 0px [inset]
+//box-shadow: rgba(255, 0, 0, 0.5) 35px 35px 20px 0px [inset]
+
 
 
 var Parser = new Class({
@@ -54,9 +61,9 @@ var ParserColour = new Class({
 		return this._value.clone();
 	},
 	_parseCSSValue: function() {
-		if (REGEX_VALUE_COLOUR_RGB.test(this._cssValue)) {
-			var valArr = REGEX_VALUE_COLOUR_RGB.exec(this._cssValue);
+		var valArr = REGEX_VALUE_COLOUR_RGB.exec(this._cssValue);
 
+		if (valArr != undefined) {
 			//we're doing something funky here with ALPHA because jquery may have a bug
 			//when css is set to 0.5 jQuery returns 0.498046875 which is 127.5/255
 			//we just drop the precision slightly in hopes that it will be more acurate
@@ -104,6 +111,33 @@ var ParserFilter = new Class({
 	}
 });
 
+var ParseDropShadow = new Class({
+	Extends: Parser,
+
+	_value: null,
+
+	getValue: function() {
+		return this._value.clone();
+	},
+	_parseCSSValue: function() {
+		var valArr = REGEX_VALUE_BOX_SHADOW.exec(this._cssValue);
+
+		if (valArr != undefined) {
+			this._value = new PropertyBoxShadow( valArr[1], //r
+												 valArr[2], //g
+												 valArr[3], //b
+												 valArr[5], //a
+												 valArr[6], //offX
+												 valArr[7], //offY
+												 valArr[8], //blur
+												 valArr[10], //spread
+												 valArr[11] ); //inset
+		} else {
+			throw new Error('Could not parse drop shadow:', this._cssValue);
+		}
+	}
+});
+
 var ParserLookUp = {};
 ParserLookUp['width'] = ParseNumberValue;
 ParserLookUp['height'] = ParseNumberValue;
@@ -114,3 +148,4 @@ ParserLookUp['border-width'] = ParseNumberValue;
 ParserLookUp['color'] = ParserColour;
 ParserLookUp['background-color'] = ParserColour;
 ParserLookUp['-webkit-filter'] = ParserFilter;
+ParserLookUp['box-shadow'] = ParseDropShadow;

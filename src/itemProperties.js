@@ -110,10 +110,10 @@ var PropertyColour = new Class({
 		this.__defineSetter__('b', this.setB);
 		this.__defineSetter__('a', this.setA);
 
-		this._r = r == undefined ? 0 : r;
-		this._g = g == undefined ? 0 : g;
-		this._b = b == undefined ? 0 : b;
-		this._a = a == undefined || isNaN(a) ? 1 : a;
+		this._r = r == undefined ? 0 : parseFloat(r);
+		this._g = g == undefined ? 0 : parseFloat(g);
+		this._b = b == undefined ? 0 : parseFloat(b);
+		this._a = a == undefined || isNaN(a) ? 1 : parseFloat(a);
 	},
 
 	_r: 0,
@@ -190,17 +190,6 @@ var PropertyFilter = new Class({
 	Extends: PropertyAdvanced,
 
 	initialize: function(blur, brightness, contrast, dropShadow, grayScale, hueRotation, invert, opacity, saturate, sepia) {
-		this._blur=blur;
-		this._brightness=brightness;
-		this._contrast=contrast;
-		this._dropShadow=dropShadow;
-		this._grayScale=grayScale;
-		this._hueRotation=hueRotation;
-		this._invert=invert;
-		this._opacity=opacity;
-		this._saturate=saturate;
-		this._sepia=sepia;
-
 		this.__defineGetter__('blur', this.getBlur);
 		this.__defineGetter__('brightness', this.getBrightness);
 		this.__defineGetter__('contrast', this.getContrast);
@@ -222,6 +211,17 @@ var PropertyFilter = new Class({
 		this.__defineSetter__('opacity', this.setOpacity);
 		this.__defineSetter__('saturate', this.setSaturate);
 		this.__defineSetter__('sepia', this.setSepia);
+
+		this._blur=blur;
+		this._brightness=brightness;
+		this._contrast=contrast;
+		this._dropShadow=dropShadow;
+		this._grayScale=grayScale;
+		this._hueRotation=hueRotation;
+		this._invert=invert;
+		this._opacity=opacity;
+		this._saturate=saturate;
+		this._sepia=sepia;
 	},
 
 	_blur: 0,
@@ -344,5 +344,114 @@ var PropertyFilter = new Class({
 								   this._opacity,
 								   this._saturate,
 								   this._sepia );
+	}
+});
+
+var PropertyBoxShadow=new Class({
+	Extends: PropertyColour,
+
+	initialize: function(r, g, b, a, offX, offY, blur, spread, inset) {
+		this.__defineGetter__( 'offX', this.getOffX );
+		this.__defineGetter__( 'offY', this.getOffY );
+		this.__defineGetter__( 'blur', this.getBlur );
+		this.__defineGetter__( 'spread', this.getSpread );
+		this.__defineGetter__( 'inset', this.getInset );
+		this.__defineSetter__( 'offX', this.setOffX );
+		this.__defineSetter__( 'offY', this.setOffY );
+		this.__defineSetter__( 'blur', this.setBlur );
+		this.__defineSetter__( 'spread', this.setSpread );
+		this.__defineSetter__( 'inset', this.setInset );
+
+		this._offX = offX == undefined ? 0 : parseFloat(offX);
+		this._offY = offY == undefined ? 0 : parseFloat(offY);
+		this._blur = blur == undefined ? 0 : parseFloat(blur);
+		this._spread = spread == undefined ? 0 : parseFloat(spread);
+		this._inset = inset == 'inset';
+
+		this.parent(r, g, b, a);
+
+		console.log(this.getCSS());
+	},
+
+	_offX: 0,
+	_offY: 0,
+	_blur: 0,
+	_spread: 0,
+	_inset: false,
+
+	getOffX: function() { return this._offX },
+	getOffY: function() { return this._offY },
+	getBlur: function() { return this._blur },
+	getSpread: function() { return this._spread },
+	getInset: function() { return this._inset },
+	setOffX: function(value) { 
+		this._offX = value;
+		this.onPropertyChange();
+	},
+	setOffY: function(value) {
+		this._offY = value;
+		this.onPropertyChange();
+	},
+	setBlur: function(value) {
+		this._blur = value;
+		this.onPropertyChange();
+	},
+	setSpread: function(value) {
+		this._spread = value;
+		this.onPropertyChange();
+	},
+	setInset: function(value) {
+		this._inset = value;
+		this.onPropertyChange();
+	},
+	add: function(otherItem) {
+		this.parent(otherItem);
+		
+		this._offX += otherItem.offX;
+		this._offY += otherItem.offY;
+		this._blur += otherItem.blur;
+		this._spread += otherItem.spread;
+	},
+	getChange: function(percentage, curValue, startValue, endValue) {
+		this.parent(percentage, curValue, startValue, endValue);
+
+		this._offX = ( endValue.offX - startValue.offX ) * percentage + startValue.offX;
+		this._offY = ( endValue.offY - startValue.offY ) * percentage + startValue.offY;
+		this._blur = ( endValue.blur - startValue.blur ) * percentage + startValue.blur;
+		this._spread = ( endValue.spread - startValue.spread ) * percentage + startValue.spread;
+
+		this._offX -= curValue.offX;
+		this._offY -= curValue.offY;
+		this._blur -= curValue.blur;
+		this._spread -= curValue.spread;
+	
+		return this;
+	},
+	getCSS: function() { 
+		var rVal = this.parent() + ' ';
+
+		rVal += Math.round(this.offX) + 'px ' + Math.round(this.offY) + 'px ';
+
+		if( this.blur > 0 )
+			rVal += Math.round(this.blur) + 'px ';
+
+		if( this.spread > 0 )
+			rVal += Math.round(this.spread) + 'px ';
+
+		if( this.inset )
+			rVal += 'inset';
+
+		return rVal;
+	},
+	clone: function() {
+		return new PropertyBoxShadow( this._r, 
+									  this._g, 
+									  this._b, 
+									  this._a, 
+									  this._offY, 
+									  this._offY, 
+									  this._blur, 
+									  this._spread, 
+									  this._inset );
 	}
 });

@@ -316,6 +316,20 @@ var EffectFilter = new Class({
 	}
 });
 
+var EffectBoxShadow = new Class({
+	Extends: EffectChangePropAdvanced,
+
+	_temp: null,
+
+	initialize: function() {
+		this._id = 'EffectBoxShadow';
+		this._propertyToEffect = 'box-shadow';
+		this._temp = new PropertyBoxShadow();
+
+		this.parent.apply(this, arguments);
+	}
+});
+
 
 /* COMPOSITE EFFECTS */
 var EffectMoveUpAndFade = new Class({
@@ -450,10 +464,10 @@ var PropertyColour = new Class({
 		this.__defineSetter__('b', this.setB);
 		this.__defineSetter__('a', this.setA);
 
-		this._r = r == undefined ? 0 : r;
-		this._g = g == undefined ? 0 : g;
-		this._b = b == undefined ? 0 : b;
-		this._a = a == undefined || isNaN(a) ? 1 : a;
+		this._r = r == undefined ? 0 : parseFloat(r);
+		this._g = g == undefined ? 0 : parseFloat(g);
+		this._b = b == undefined ? 0 : parseFloat(b);
+		this._a = a == undefined || isNaN(a) ? 1 : parseFloat(a);
 	},
 
 	_r: 0,
@@ -530,17 +544,6 @@ var PropertyFilter = new Class({
 	Extends: PropertyAdvanced,
 
 	initialize: function(blur, brightness, contrast, dropShadow, grayScale, hueRotation, invert, opacity, saturate, sepia) {
-		this._blur=blur;
-		this._brightness=brightness;
-		this._contrast=contrast;
-		this._dropShadow=dropShadow;
-		this._grayScale=grayScale;
-		this._hueRotation=hueRotation;
-		this._invert=invert;
-		this._opacity=opacity;
-		this._saturate=saturate;
-		this._sepia=sepia;
-
 		this.__defineGetter__('blur', this.getBlur);
 		this.__defineGetter__('brightness', this.getBrightness);
 		this.__defineGetter__('contrast', this.getContrast);
@@ -562,6 +565,17 @@ var PropertyFilter = new Class({
 		this.__defineSetter__('opacity', this.setOpacity);
 		this.__defineSetter__('saturate', this.setSaturate);
 		this.__defineSetter__('sepia', this.setSepia);
+
+		this._blur=blur;
+		this._brightness=brightness;
+		this._contrast=contrast;
+		this._dropShadow=dropShadow;
+		this._grayScale=grayScale;
+		this._hueRotation=hueRotation;
+		this._invert=invert;
+		this._opacity=opacity;
+		this._saturate=saturate;
+		this._sepia=sepia;
 	},
 
 	_blur: 0,
@@ -686,18 +700,134 @@ var PropertyFilter = new Class({
 								   this._sepia );
 	}
 });
+
+var PropertyBoxShadow=new Class({
+	Extends: PropertyColour,
+
+	initialize: function(r, g, b, a, offX, offY, blur, spread, inset) {
+		this.__defineGetter__( 'offX', this.getOffX );
+		this.__defineGetter__( 'offY', this.getOffY );
+		this.__defineGetter__( 'blur', this.getBlur );
+		this.__defineGetter__( 'spread', this.getSpread );
+		this.__defineGetter__( 'inset', this.getInset );
+		this.__defineSetter__( 'offX', this.setOffX );
+		this.__defineSetter__( 'offY', this.setOffY );
+		this.__defineSetter__( 'blur', this.setBlur );
+		this.__defineSetter__( 'spread', this.setSpread );
+		this.__defineSetter__( 'inset', this.setInset );
+
+		this._offX = offX == undefined ? 0 : parseFloat(offX);
+		this._offY = offY == undefined ? 0 : parseFloat(offY);
+		this._blur = blur == undefined ? 0 : parseFloat(blur);
+		this._spread = spread == undefined ? 0 : parseFloat(spread);
+		this._inset = inset == 'inset';
+
+		this.parent(r, g, b, a);
+
+		console.log(this.getCSS());
+	},
+
+	_offX: 0,
+	_offY: 0,
+	_blur: 0,
+	_spread: 0,
+	_inset: false,
+
+	getOffX: function() { return this._offX },
+	getOffY: function() { return this._offY },
+	getBlur: function() { return this._blur },
+	getSpread: function() { return this._spread },
+	getInset: function() { return this._inset },
+	setOffX: function(value) { 
+		this._offX = value;
+		this.onPropertyChange();
+	},
+	setOffY: function(value) {
+		this._offY = value;
+		this.onPropertyChange();
+	},
+	setBlur: function(value) {
+		this._blur = value;
+		this.onPropertyChange();
+	},
+	setSpread: function(value) {
+		this._spread = value;
+		this.onPropertyChange();
+	},
+	setInset: function(value) {
+		this._inset = value;
+		this.onPropertyChange();
+	},
+	add: function(otherItem) {
+		this.parent(otherItem);
+		
+		this._offX += otherItem.offX;
+		this._offY += otherItem.offY;
+		this._blur += otherItem.blur;
+		this._spread += otherItem.spread;
+	},
+	getChange: function(percentage, curValue, startValue, endValue) {
+		this.parent(percentage, curValue, startValue, endValue);
+
+		this._offX = ( endValue.offX - startValue.offX ) * percentage + startValue.offX;
+		this._offY = ( endValue.offY - startValue.offY ) * percentage + startValue.offY;
+		this._blur = ( endValue.blur - startValue.blur ) * percentage + startValue.blur;
+		this._spread = ( endValue.spread - startValue.spread ) * percentage + startValue.spread;
+
+		this._offX -= curValue.offX;
+		this._offY -= curValue.offY;
+		this._blur -= curValue.blur;
+		this._spread -= curValue.spread;
+	
+		return this;
+	},
+	getCSS: function() { 
+		var rVal = this.parent() + ' ';
+
+		rVal += Math.round(this.offX) + 'px ' + Math.round(this.offY) + 'px ';
+
+		if( this.blur > 0 )
+			rVal += Math.round(this.blur) + 'px ';
+
+		if( this.spread > 0 )
+			rVal += Math.round(this.spread) + 'px ';
+
+		if( this.inset )
+			rVal += 'inset';
+
+		return rVal;
+	},
+	clone: function() {
+		return new PropertyBoxShadow( this._r, 
+									  this._g, 
+									  this._b, 
+									  this._a, 
+									  this._offY, 
+									  this._offY, 
+									  this._blur, 
+									  this._spread, 
+									  this._inset );
+	}
+});
 var REGEX_VALUE_EXTENSION = /^(\d+\.?\d*)((px)?(%)?)$/;
 var REGEX_VALUE_COLOUR_RGB = /^rgba?\((\d+), *(\d+), *(\d+)(, *(\d+\.?\d*))?\)$/;
+var REGEX_VALUE_BOX_SHADOW = /^rgba?\((\d+), *(\d+), *(\d+)(, *(\d+\.?\d*))?\) (\d+)px (\d+)px (\d+)px( (\d+)px( inset)?)?$/;
+
 var REGEX_VALUE_FILTER_BLUR = /blur\((\d+)px\)/;
 var REGEX_VALUE_FILTER_BRIGHTNESS = /brightness\((\d+\.?\d*)\)/;
 var REGEX_VALUE_FILTER_CONTRAST = /contrast\((\d+\.?\d*)\)/;
-var REGEX_VALUE_FILTER_DROP_SHADOW = /$$$/; //TODO
+var REGEX_VALUE_FILTER_DROP_SHADOW = /drop-shadow\((.+)\)/;
 var REGEX_VALUE_FILTER_GRAY_SCALE = /grayscale\((\d+\.?\d*)\)/;
 var REGEX_VALUE_FILTER_HUE_ROTATION = /hue-rotate\((\d)+deg\)/;
 var REGEX_VALUE_FILTER_INVERT = /invert\((\d+\.?\d*)\)/;
 var REGEX_VALUE_FILTER_OPACITY = /opacity\((\d+\.?\d*)\)/;
 var REGEX_VALUE_FILTER_SATURATE = /saturate\((\d+\.?\d*)\)/;
 var REGEX_VALUE_FILTER_SEPIA = /sepia\((\d+\.?\d*)\)/;
+
+//drop-shadow(rgb(255, 0, 0) 35px 35px 20px) 
+//box-shadow: rgb(255, 0, 0) 35px 35px 20px 0px [inset]
+//box-shadow: rgba(255, 0, 0, 0.5) 35px 35px 20px 0px [inset]
+
 
 
 var Parser = new Class({
@@ -742,9 +872,9 @@ var ParserColour = new Class({
 		return this._value.clone();
 	},
 	_parseCSSValue: function() {
-		if (REGEX_VALUE_COLOUR_RGB.test(this._cssValue)) {
-			var valArr = REGEX_VALUE_COLOUR_RGB.exec(this._cssValue);
+		var valArr = REGEX_VALUE_COLOUR_RGB.exec(this._cssValue);
 
+		if (valArr != undefined) {
 			//we're doing something funky here with ALPHA because jquery may have a bug
 			//when css is set to 0.5 jQuery returns 0.498046875 which is 127.5/255
 			//we just drop the precision slightly in hopes that it will be more acurate
@@ -792,6 +922,33 @@ var ParserFilter = new Class({
 	}
 });
 
+var ParseDropShadow = new Class({
+	Extends: Parser,
+
+	_value: null,
+
+	getValue: function() {
+		return this._value.clone();
+	},
+	_parseCSSValue: function() {
+		var valArr = REGEX_VALUE_BOX_SHADOW.exec(this._cssValue);
+
+		if (valArr != undefined) {
+			this._value = new PropertyBoxShadow( valArr[1], //r
+												 valArr[2], //g
+												 valArr[3], //b
+												 valArr[5], //a
+												 valArr[6], //offX
+												 valArr[7], //offY
+												 valArr[8], //blur
+												 valArr[10], //spread
+												 valArr[11] ); //inset
+		} else {
+			throw new Error('Could not parse drop shadow:', this._cssValue);
+		}
+	}
+});
+
 var ParserLookUp = {};
 ParserLookUp['width'] = ParseNumberValue;
 ParserLookUp['height'] = ParseNumberValue;
@@ -802,3 +959,4 @@ ParserLookUp['border-width'] = ParseNumberValue;
 ParserLookUp['color'] = ParserColour;
 ParserLookUp['background-color'] = ParserColour;
 ParserLookUp['-webkit-filter'] = ParserFilter;
+ParserLookUp['box-shadow'] = ParseDropShadow;

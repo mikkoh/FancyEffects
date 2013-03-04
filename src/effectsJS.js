@@ -84,6 +84,20 @@ var EffectFilter = new Class({
 	}
 });
 
+var EffectBoxShadow = new Class({
+	Extends: EffectChangePropAdvanced,
+
+	_temp: null,
+
+	initialize: function() {
+		this._id = 'EffectBoxShadow';
+		this._propertyToEffect = 'box-shadow';
+		this._temp = new PropertyBoxShadow();
+
+		this.parent.apply(this, arguments);
+	}
+});
+
 
 /* COMPOSITE EFFECTS */
 var EffectMoveUpAndFade = new Class({
