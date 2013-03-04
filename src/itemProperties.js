@@ -238,13 +238,13 @@ var PropertyFilter = new Class({
 
 	_blur: 0,
 	_brightness: 0,
-	_contrast: 0,
+	_contrast: 1,
 	_dropShadow: null,
 	_grayScale: 0,
 	_hueRotation: 0,
 	_invert: 0,
 	_opacity: 1,
-	_saturate: 0,
+	_saturate: 1,
 	_sepia: 0,
 
 	getBlur: function() { return this._blur; },
@@ -343,18 +343,49 @@ var PropertyFilter = new Class({
 		return this;
 	},
 	getCSS: function() {
-		var rVal = 'blur(' + Math.round(this._blur) + 'px) '+ 
-			   	   'brightness(' + this._brightness + ') ' +
-			   	   'contrast(' + this._contrast + ') ' +
-			   	   'drop-shadow(' + this._dropShadow.getCSS() + ') ' +
-			   	   'grayscale(' + this._grayScale + ') ' +
-			   	   'hue-rotate(' + this._hueRotation + 'deg) ' +
-			   	   'invert(' + this._invert + ') ' +
-			   	   'opacity(' + this._opacity + ') ' +
-			   	   'saturate(' + this._saturate + ') ' +
-			   	   'sepia(' + this._sepia + ')';
+		var rVal = '';
 
-		console.log(rVal);
+		if(this._blur>0) {
+			rVal += 'blur(' + Math.round(this._blur) + 'px) ';
+		}
+
+		if(this._brightness>0) {
+			rVal += 'brightness(' + this._brightness + ') ';
+		}
+
+		if(this._contrast!=1) {
+			rVal += 'contrast(' + this._contrast + ') ';
+		}
+
+		if(this._grayScale>0) {
+			rVal += 'grayscale(' + this._grayScale + ') ';
+		}
+
+		if(this._hueRotation>0 && this._hueRotation<360) {
+			rVal += 'hue-rotate(' + this._hueRotation + 'deg) ';
+		}
+
+		if(this._invert>0) {
+			rVal += 'invert(' + this._invert + ') ';
+		}
+
+		if(this._opacity<1) {
+			rVal += 'opacity(' + this._opacity + ') ';
+		}
+
+		if(this._saturate!=1) {
+			rVal += 'saturate(' + this._saturate + ') ';
+		}
+
+		if(this._sepia>0) {
+			rVal += 'sepia(' + this._sepia + ')';
+		}
+
+		if(this._dropShadow.isNotDefault())
+			rVal += 'drop-shadow(' + this._dropShadow.getCSS() + ') ';
+
+		if(rVal=='')
+			rVal='none';
 
 		return rVal;
 	},
@@ -428,6 +459,9 @@ var PropertyBoxShadow=new Class({
 	setInset: function(value) {
 		this._inset = value;
 		this.onPropertyChange();
+	},
+	isNotDefault: function() {
+		return this._offX!=0 || this._offY!=0 || this._blur!=0 || this._spread!=0;
 	},
 	add: function(otherItem) {
 		this.parent(otherItem);
