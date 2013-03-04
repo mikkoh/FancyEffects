@@ -1,3 +1,22 @@
+var EffectIds = {};
+
+EffectIds.keys = {};
+
+EffectIds.getId = function( effectType ) {
+	if(EffectIds.keys[effectType] === undefined)
+		EffectIds.keys[effectType] = 0;
+
+	var rVal = effectType + EffectIds.keys[effectType];
+
+	EffectIds.keys[effectType]++;
+
+	return rVal;
+};
+
+
+
+
+
 var Effect = new Class({
 	initialize: function(itemToEffect) {
 		this._effectIdx = {};
@@ -248,7 +267,7 @@ var EffectWidth = new Class({
 	Extends: EffectChangePropNumber,
 
 	initialize: function() {
-		this._id = 'EffectWidth';
+		this._id = EffectIds.getId( 'EffectWidth' );
 		this._propertyToEffect = 'width';
 		this.parent.apply(this, arguments);
 	}
@@ -259,7 +278,7 @@ var EffectHeight = new Class({
 	Extends: EffectChangePropNumber,
 
 	initialize: function() {
-		this._id = 'EffectHeight';
+		this._id = EffectIds.getId( 'EffectHeight' );
 		this._propertyToEffect = 'height';
 		this._temp = new PropertyNumber();
 		this.parent.apply(this, arguments);
@@ -270,7 +289,7 @@ var EffectHeight = new Class({
 var EffectLeft = new Class({
 	Extends: EffectChangePropNumber,
 	initialize: function() {
-		this._id = 'EffectLeft';
+		this._id = EffectIds.getId( 'EffectLeft' );
 		this._propertyToEffect = 'left';
 		this.parent.apply(this, arguments);
 	}
@@ -279,7 +298,7 @@ var EffectLeft = new Class({
 var EffectTop = new Class({
 	Extends: EffectChangePropNumber,
 	initialize: function() {
-		this._id = 'EffectTop';
+		this._id = EffectIds.getId( 'EffectTop' );
 		this._propertyToEffect = 'top';
 		this.parent.apply(this, arguments);
 	}
@@ -288,7 +307,7 @@ var EffectTop = new Class({
 var EffectOpacity = new Class({
 	Extends: EffectChangePropNumber,
 	initialize: function() {
-		this._id = 'EffectOpacity';
+		this._id = EffectIds.getId( 'EffectOpacity' );
 		this._propertyToEffect = 'opacity';
 		this.parent.apply(this, arguments);
 	}
@@ -297,7 +316,7 @@ var EffectOpacity = new Class({
 var EffectBorderWidth = new Class({
 	Extends: EffectChangePropNumber,
 	initialize: function() {
-		this._id = 'EffectBorderWidth';
+		this._id = EffectIds.getId( 'EffectBorderWidth' );
 		this._propertyToEffect = 'border-width';
 		this.parent.apply(this, arguments);
 	}
@@ -306,7 +325,7 @@ var EffectBorderWidth = new Class({
 var EffectBackgroundColor = new Class({
 	Extends: EffectChangePropColour,
 	initialize: function() {
-		this._id = 'EffectBackgroundColor';
+		this._id = EffectIds.getId( 'EffectBackgroundColor' );
 		this._propertyToEffect = 'background-color';
 		this.parent.apply(this, arguments);
 	}
@@ -315,7 +334,7 @@ var EffectBackgroundColor = new Class({
 var EffectColor = new Class({
 	Extends: EffectChangePropColour,
 	initialize: function() {
-		this._id = 'EffectColor';
+		this._id = EffectIds.getId( 'EffectColor' );
 		this._propertyToEffect = 'color';
 		this.parent.apply(this, arguments);
 	}
@@ -327,7 +346,7 @@ var EffectFilter = new Class({
 	_temp: null,
 
 	initialize: function() {
-		this._id = 'EffectFilter';
+		this._id = EffectIds.getId( 'EffectFilter' );
 		this._propertyToEffect = '-webkit-filter';
 		this._temp = new PropertyFilter();
 
@@ -341,7 +360,7 @@ var EffectBoxShadow = new Class({
 	_temp: null,
 
 	initialize: function() {
-		this._id = 'EffectBoxShadow';
+		this._id = EffectIds.getId( 'EffectBoxShadow' );
 		this._propertyToEffect = 'box-shadow';
 		this._temp = new PropertyBoxShadow();
 
