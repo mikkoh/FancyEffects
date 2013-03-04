@@ -1,5 +1,6 @@
 var EffectWidth = new Class({
 	Extends: EffectChangePropNumber,
+
 	initialize: function() {
 		this._id = 'EffectWidth';
 		this._propertyToEffect = 'width';
@@ -7,14 +8,18 @@ var EffectWidth = new Class({
 	}
 });
 
+
 var EffectHeight = new Class({
 	Extends: EffectChangePropNumber,
+
 	initialize: function() {
 		this._id = 'EffectHeight';
-		this._propertyToEffect = 'height'
+		this._propertyToEffect = 'height';
+		this._temp = new PropertyNumber();
 		this.parent.apply(this, arguments);
 	}
 });
+
 
 var EffectLeft = new Class({
 	Extends: EffectChangePropNumber,
@@ -71,7 +76,7 @@ var EffectColor = new Class({
 });
 
 var EffectFilter = new Class({
-	Extends: EffectChangePropAdvanced,
+	Extends: EffectChangeProp,
 
 	_temp: null,
 
@@ -85,7 +90,7 @@ var EffectFilter = new Class({
 });
 
 var EffectBoxShadow = new Class({
-	Extends: EffectChangePropAdvanced,
+	Extends: EffectChangeProp,
 
 	_temp: null,
 

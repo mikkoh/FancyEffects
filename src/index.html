@@ -11,100 +11,100 @@
 
 	<script type="text/javascript">
 	$(function() {
-		// var effWidth = new EffectWidth();
-		// var effHeight = new EffectHeight();
-		// var effLeft = new EffectLeft();
-		// var effTop = new EffectTop();
-		// var effOpacity = new EffectOpacity();
-		// var effBorderWidth = new EffectBorderWidth();
-		// var effColor = new EffectColor();
-		// var effBGColor = new EffectBackgroundColor();
-		// var effBoxShadow = new EffectBoxShadow();
+		var effWidth = new EffectWidth();
+		var effHeight = new EffectHeight();
+		var effLeft = new EffectLeft();
+		var effTop = new EffectTop();
+		var effOpacity = new EffectOpacity();
+		var effBorderWidth = new EffectBorderWidth();
+		var effColor = new EffectColor();
+		var effBGColor = new EffectBackgroundColor();
+		//var effBoxShadow = new EffectBoxShadow();
 		var effFilter = new EffectFilter();
 
 		var eff = new Effect($('#itemToEffect'));
-		// eff.add(effWidth);
-		// eff.add(effHeight);
-		// eff.add(effTop);
-		// eff.add(effLeft);
-		// eff.add(effOpacity);
-		// eff.add(effBorderWidth);
-		// eff.add(effColor);
-		// eff.add(effBGColor);
-		// eff.add(effBoxShadow);
+		eff.add(effWidth);
+		eff.add(effHeight);
+		eff.add(effTop);
+		eff.add(effLeft);
+		eff.add(effOpacity);
+		eff.add(effBorderWidth);
+		eff.add(effColor);
+		eff.add(effBGColor);
+		//eff.add(effBoxShadow);
 		eff.add(effFilter);
+
 
 		var gui = new dat.GUI();
 		var folderMain = gui.addFolder('Main Controller');
 		folderMain.add(eff, 'percentage', 0, 1);
 		folderMain.open();
 
-		/*
-		var folderWidth = gui.addFolder('width effect');
-		folderWidth.add(effWidth, 'start').min(0).max(200);
-		folderWidth.add(effWidth, 'end').min(0).max(200);
+		var folderBasicProps = gui.addFolder('Basic');
+		
+		var folderWidth = folderBasicProps.addFolder('width effect');
+		folderWidth.add(effWidth.start, 'value').min(0).max(200);
+		folderWidth.add(effWidth.end, 'value').min(0).max(200);
 
-		var folderHeight = gui.addFolder('height effect');
-		folderHeight.add(effHeight, 'start').min(0).max(200);
-		folderHeight.add(effHeight, 'end').min(0).max(200);
+		var folderHeight = folderBasicProps.addFolder('height effect');
+		folderHeight.add(effHeight.start, 'value').min(0).max(200);
+		folderHeight.add(effHeight.end, 'value').min(0).max(200);
 
-		var folderLeft = gui.addFolder('top effect');
-		folderLeft.add(effTop, 'start').min(0).max(980);
-		folderLeft.add(effTop, 'end').min(0).max(980);
+		var folderTop = folderBasicProps.addFolder('top effect');
+		folderTop.add(effTop.start, 'value').min(0).max(980);
+		folderTop.add(effTop.end, 'value').min(0).max(980);
 
-		var folderLeft = gui.addFolder('left effect');
-		folderLeft.add(effLeft, 'start').min(0).max(980);
-		folderLeft.add(effLeft, 'end').min(0).max(980);
+		var folderLeft = folderBasicProps.addFolder('left effect');
+		folderLeft.add(effLeft.start, 'value').min(0).max(980);
+		folderLeft.add(effLeft.end, 'value').min(0).max(980);
 
-		var folderOpacity = gui.addFolder('opacity effect');
-		folderOpacity.add(effOpacity, 'start').min(0).max(1);
-		folderOpacity.add(effOpacity, 'end').min(0).max(1);
+		var folderOpacity = folderBasicProps.addFolder('opacity effect');
+		folderOpacity.add(effOpacity.start, 'value').min(0).max(1);
+		folderOpacity.add(effOpacity.end, 'value').min(0).max(1);
 
-		var folderBorderWidth = gui.addFolder('border width');
-		folderBorderWidth.add(effBorderWidth, 'start').min(0).max(100);
-		folderBorderWidth.add(effBorderWidth, 'end').min(0).max(100);
+		var folderBorderWidth = folderBasicProps.addFolder('border width');
+		folderBorderWidth.add(effBorderWidth.start, 'value').min(0).max(100);
+		folderBorderWidth.add(effBorderWidth.end, 'value').min(0).max(100);
 
-		var folderColor = gui.addFolder('color');
+		
+		var folderColor = folderBasicProps.addFolder('color');
 		folderColor.add(effColor.start, 'r').min(0).max(255);
-		folderColor.add(effColor.start, 'g').min(0).max(255);
-		folderColor.add(effColor.start, 'b').min(0).max(255);
-		folderColor.add(effColor.start, 'a').min(0).max(1);
 		folderColor.add(effColor.end, 'r').min(0).max(255);
+		folderColor.add(effColor.start, 'g').min(0).max(255);
 		folderColor.add(effColor.end, 'g').min(0).max(255);
+		folderColor.add(effColor.start, 'b').min(0).max(255);
 		folderColor.add(effColor.end, 'b').min(0).max(255);
+		folderColor.add(effColor.start, 'a').min(0).max(1);
 		folderColor.add(effColor.end, 'a').min(0).max(1);
 
-		var folderBackgroundColor = gui.addFolder('background color');
+		var folderBackgroundColor = folderBasicProps.addFolder('background color');
 		folderBackgroundColor.add(effBGColor.start, 'r').min(0).max(255);
-		folderBackgroundColor.add(effBGColor.start, 'g').min(0).max(255);
-		folderBackgroundColor.add(effBGColor.start, 'b').min(0).max(255);
-		folderBackgroundColor.add(effBGColor.start, 'a').min(0).max(1);
 		folderBackgroundColor.add(effBGColor.end, 'r').min(0).max(255);
+		folderBackgroundColor.add(effBGColor.start, 'g').min(0).max(255);
 		folderBackgroundColor.add(effBGColor.end, 'g').min(0).max(255);
+		folderBackgroundColor.add(effBGColor.start, 'b').min(0).max(255);
 		folderBackgroundColor.add(effBGColor.end, 'b').min(0).max(255);
+		folderBackgroundColor.add(effBGColor.start, 'a').min(0).max(1);
 		folderBackgroundColor.add(effBGColor.end, 'a').min(0).max(1);
-		//*/
+		
+		
+		// var folderBoxShadow = gui.addFolder('box-shadow');
+		// folderBoxShadow.add(effBoxShadow.start, 'offX').min(0).max(255);
+		// folderBoxShadow.add(effBoxShadow.start, 'offY').min(0).max(255);
+		// folderBoxShadow.add(effBoxShadow.start, 'blur').min(0).max(255);
+		// folderBoxShadow.add(effBoxShadow.end, 'offX').min(0).max(255);
+		// folderBoxShadow.add(effBoxShadow.end, 'offY').min(0).max(255);
+		// folderBoxShadow.add(effBoxShadow.end, 'blur').min(0).max(255);
 
-		/*
-		var folderBoxShadow = gui.addFolder('box-shadow');
-		folderBoxShadow.add(effBoxShadow.start, 'offX').min(0).max(255);
-		folderBoxShadow.add(effBoxShadow.start, 'offY').min(0).max(255);
-		folderBoxShadow.add(effBoxShadow.start, 'blur').min(0).max(255);
-		folderBoxShadow.add(effBoxShadow.end, 'offX').min(0).max(255);
-		folderBoxShadow.add(effBoxShadow.end, 'offY').min(0).max(255);
-		folderBoxShadow.add(effBoxShadow.end, 'blur').min(0).max(255);
-
-		folderBoxShadow.add(effBoxShadow.start, 'r').min(0).max(255);
-		folderBoxShadow.add(effBoxShadow.start, 'g').min(0).max(255);
-		folderBoxShadow.add(effBoxShadow.start, 'b').min(0).max(255);
-		folderBoxShadow.add(effBoxShadow.start, 'a').min(0).max(1);
-		folderBoxShadow.add(effBoxShadow.end, 'r').min(0).max(255);
-		folderBoxShadow.add(effBoxShadow.end, 'g').min(0).max(255);
-		folderBoxShadow.add(effBoxShadow.end, 'b').min(0).max(255);
-		folderBoxShadow.add(effBoxShadow.end, 'a').min(0).max(1);
-		//*/
-
-		//*
+		// folderBoxShadow.add(effBoxShadow.start, 'r').min(0).max(255);
+		// folderBoxShadow.add(effBoxShadow.start, 'g').min(0).max(255);
+		// folderBoxShadow.add(effBoxShadow.start, 'b').min(0).max(255);
+		// folderBoxShadow.add(effBoxShadow.start, 'a').min(0).max(1);
+		// folderBoxShadow.add(effBoxShadow.end, 'r').min(0).max(255);
+		// folderBoxShadow.add(effBoxShadow.end, 'g').min(0).max(255);
+		// folderBoxShadow.add(effBoxShadow.end, 'b').min(0).max(255);
+		// folderBoxShadow.add(effBoxShadow.end, 'a').min(0).max(1);
+		
 		var folderFilter = gui.addFolder('filter');
 		folderFilter.add(effFilter.start, 'blur').min(0).max(20);
 		folderFilter.add(effFilter.end, 'blur').min(0).max(20);
@@ -140,7 +140,10 @@
 		folderFilterDropShadow.add(effFilter.end.dropShadow, 'offX').min(-255).max(255);
 		folderFilterDropShadow.add(effFilter.start.dropShadow, 'offY').min(-255).max(255);
 		folderFilterDropShadow.add(effFilter.end.dropShadow, 'offY').min(-255).max(255);
-		//*/
+
+		$('#btnDestroy').click(function() {
+			eff.destroy();
+		});
 	});	
 	</script>
 
@@ -154,22 +157,25 @@
 
 		#itemToEffect
 		{
-			background-color: rgba(10, 255, 255, 0.5);
-			width: 100px;
-			height: 100px;
-			
 			position: relative;
 			left: 100px;
 			top: 100px;
 
 			border: 5px solid #FFFFFF;
 
-			-webkit-filter: drop-shadow(35px 35px 20px red);
+			width: 100px;
+			height: 100px;
+
+			background-color: #333;
+
+			-webkit-filter: drop-shadow(35px 35px 20px #333);
 			/* box-shadow: rgba(255, 255, 255, 0.5) 35px 35px 20px; */
 		}
 	</style>
 </head>
 <body>
+	<button id="btnDestroy">Destroy Effects</button>
 	<div id="itemToEffect">TEST</div>
+	<!--  <img id="itemToEffect" src="http://www.animatch.ca/images/sized/images/adoptees/Rocco3-600x500.jpg" /> -->
 </body>
 </html>

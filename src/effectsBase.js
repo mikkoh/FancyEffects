@@ -1,5 +1,6 @@
 var Effect = new Class({
 	initialize: function(itemToEffect) {
+		this._effectIdx = {};
 		this._effects = [];
 
 		if (itemToEffect) this.setItemToEffect(itemToEffect);
@@ -13,6 +14,7 @@ var Effect = new Class({
 	_itemToEffect: null,
 	_itemProperties: null,
 	_percentage: 0,
+	_effectIdx: null,
 	_effects: null,
 
 	getId: function() {
@@ -34,13 +36,40 @@ var Effect = new Class({
 			this._effects[i].setPercentage(value);
 		}
 	},
+	reset: function() {
+		this._itemProperties.resetAll(this.id);
+	},
+	destroy: function() {
+		this.reset();
+
+		for (var i = 0; i < this._effects.length; i++) {
+			this._effects[i].destroy();
+		}
+
+		this._effects.length = 0;
+	},
 	add: function(effect) {
-		this._effects.push(effect);
-		effect.setItemToEffect(this._itemToEffect, this._itemProperties);
-		effect.percentage = this.percentage;
+		if (this._effectIdx[effect.id] === undefined) {
+			this._effectIdx[effect.id] = this._effects.length;
+			this._effects.push(effect);
+
+			effect.setItemToEffect(this._itemToEffect, this._itemProperties);
+			effect.percentage = this.percentage;
+		}
 	},
 	remove: function(effect) {
+		if (this._effectIdx[effect.id] !== undefined) {
+			var idx = this._effectIdx[effect.id];
+			var effect = this._effects[idx];
 
+			effect.destroy();
+
+			this._effects.splice(idx, 1);
+
+			for (var i = 0; i < this._effects.length; i++) {
+				this._effectIdx[this._effects[i].id] = i;
+			}
+		}
 	}
 });
 
@@ -91,6 +120,7 @@ var EffectChangeProp = new Class({
 		this.__defineSetter__('end', this.setEndValue);
 	},
 
+	_temp: null,
 	_startValue: null,
 	_endValue: null,
 	_propertyToEffect: null,
@@ -99,6 +129,17 @@ var EffectChangeProp = new Class({
 		this.parent(itemToEffect, itemProperties);
 
 		this._itemProperties.setupEffect(this, this._propertyToEffect);
+
+		if (this._startValue == null) {
+			this._startValue = this._itemProperties.getStart(this._propertyToEffect).clone();
+		}
+
+		if (this._endValue == null) {
+			this._endValue = this._itemProperties.getStart(this._propertyToEffect).clone();
+		}
+
+		this._startValue.onPropertyChange = this.applyPercentage.bind(this);
+		this._endValue.onPropertyChange = this.applyPercentage.bind(this);
 	},
 	getStartValue: function() {
 		return this._startValue;
@@ -115,82 +156,55 @@ var EffectChangeProp = new Class({
 		this._endValue = value;
 
 		this.setPercentage(this._percentage);
-	}
-});
-
-
-var EffectChangePropNumber = new Class({
-	Extends: EffectChangeProp,
-
-	setPercentage: function(value) {
-		this.parent(value);
-
-		var cValue = this._itemProperties.get(this._propertyToEffect);
-		var nValue = (this._endValue - this._startValue) * value + this._startValue;
-
-		this._itemProperties.change(this.id, this._propertyToEffect, nValue - cValue);
 	},
-	setItemToEffect: function(itemToEffect, itemProperties) {
-		this.parent(itemToEffect, itemProperties);
-
-		if (this._startValue == null) this._startValue = this._itemProperties.getStart(this._propertyToEffect);
-
-		if (this._endValue == null) this._endValue = this._itemProperties.getStart(this._propertyToEffect);
-	}
-});
-
-
-var EffectChangePropAdvanced = new Class({
-	Extends: EffectChangeProp,
-
-	_temp: null,
-
 	setPercentage: function(value) {
 		this.parent(value);
 
 		var cValue = this._itemProperties.get(this._propertyToEffect);
 
-		this._itemProperties.changeAdvanced(this.id, 
-											this._propertyToEffect, 
-											this._temp.getChange(value, cValue, this._startValue, this._endValue));
-
-		//(end-start)*value+start
-		/*
-		_temp.equals(this._endValue);
-		_temp.sub(this._startValue);
-		_temp.mulScalar(value);
-		_temp.add(this._startValue);
-
-		//now subtract the new value from the cValue
-		_temp.sub(cValue);
-		
-		this._itemProperties.changeAdvanced(this.id, this._propertyToEffect, _temp);
-		*/
-	},
-	setItemToEffect: function(itemToEffect, itemProperties) {
-		this.parent(itemToEffect, itemProperties);
-
-		if (this._startValue == null) {
-			this._startValue = this._itemProperties.getStart(this._propertyToEffect).clone();
-		}
-
-		if (this._endValue == null) {
-			this._endValue = this._itemProperties.getStart(this._propertyToEffect).clone();
-		}
-
-		this._startValue.onPropertyChange = this.applyPercentage.bind(this);
-		this._endValue.onPropertyChange = this.applyPercentage.bind(this);
+		this._itemProperties.change(this.id,
+		this._propertyToEffect,
+		this._temp.getChange(value, cValue, this._startValue, this._endValue));
 	},
 	applyPercentage: function() {
 		this.setPercentage(this.percentage);
 	}
 });
 
+var EffectChangePropNumber = new Class({
+	Extends: EffectChangeProp,
+
+	initialize: function() {
+		var startVal = undefined;
+		var endVal = undefined;
+
+		if (typeof arguments[0] == 'object') {
+			if (arguments.length == 2) {
+				endVal = new PropertyNumber(arguments[1]);
+			} else if (arguments.length == 3) {
+				startVal = new PropertyNumber(arguments[1]);
+				endVal = new PropertyNumber(arguments[2]);
+			}
+
+			this.parent.apply(this, [arguments[0], startVal, endVal]);
+		} else {
+			if (arguments.length == 1) {
+				endVal = new PropertyNumber(arguments[0]);
+			} else if (arguments.length == 2) {
+				startVal = new PropertyNumber(arguments[0]);
+				endVal = new PropertyNumber(arguments[1]);
+			}
+
+			this.parent.apply(this, [startVal, endVal]);
+		}
+
+		this._temp = new PropertyNumber();
+	}
+});
+
 
 var EffectChangePropColour = new Class({
-	Extends: EffectChangePropAdvanced,
-
-	_temp: null,
+	Extends: EffectChangeProp,
 
 	initialize: function() {
 		var startVal = undefined;
@@ -226,7 +240,7 @@ var EffectChangePropColour = new Class({
 
 			this.parent.apply(this, [startVal, endVal]);
 		}
-
+	
 		this._temp = new PropertyColour();
 	}
 });

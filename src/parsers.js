@@ -13,12 +13,6 @@ var REGEX_VALUE_FILTER_OPACITY = /opacity\((\d+\.?\d*)\)/;
 var REGEX_VALUE_FILTER_SATURATE = /saturate\((\d+\.?\d*)\)/;
 var REGEX_VALUE_FILTER_SEPIA = /sepia\((\d+\.?\d*)\)/;
 
-//drop-shadow(rgb(255, 0, 0) 35px 35px 20px) 
-//box-shadow: rgb(255, 0, 0) 35px 35px 20px 0px [inset]
-//box-shadow: rgba(255, 0, 0, 0.5) 35px 35px 20px 0px [inset]
-
-
-
 var Parser = new Class({
 	initialize: function(cssValue) {
 		this._cssValue = cssValue;
@@ -27,8 +21,12 @@ var Parser = new Class({
 	},
 
 	_cssValue: null,
+	_value: null,
 
 	getValue: function() {
+		return this._value.clone();
+	},
+	getZeroProperty: function() {
 		throw new Error('You need to override this function');
 	},
 	_parseCSSValue: function() {
@@ -39,27 +37,21 @@ var Parser = new Class({
 var ParseNumberValue = new Class({
 	Extends: Parser,
 
-	_value: 0,
-
-	getValue: function() {
-		return this._value;
-	},
 	_parseCSSValue: function() {
 		var valueResult = REGEX_VALUE_EXTENSION.exec(this._cssValue);
 
-		if (valueResult) this._value = parseFloat(valueResult[1]);
-		else this._value = 0;
+		this._value = new PropertyNumber( parseFloat(valueResult[1]) );
 	}
 });
+
+ParseNumberValue.getZeroProperty = function() {
+	return new PropertyNumber(0);
+};
+
 
 var ParserColour = new Class({
 	Extends: Parser,
 
-	_value: null,
-
-	getValue: function() {
-		return this._value.clone();
-	},
 	_parseCSSValue: function() {
 		var valArr = REGEX_VALUE_COLOUR_RGB.exec(this._cssValue);
 
@@ -78,14 +70,15 @@ var ParserColour = new Class({
 	}
 });
 
+ParserColour.getZeroProperty = function() {
+	return new PropertyColour(0, 0, 0, 0);
+};
+
+
+
 var ParserFilter = new Class({
 	Extends: Parser,
 
-	_value: null,
-
-	getValue: function() {
-		return this._value.clone();
-	},
 	_parseCSSValue: function() {
 		var blur = REGEX_VALUE_FILTER_BLUR.exec(this._cssValue);
 		var brightness = REGEX_VALUE_FILTER_BRIGHTNESS.exec(this._cssValue);
@@ -119,14 +112,14 @@ var ParserFilter = new Class({
 	}
 });
 
+ParserFilter.getZeroProperty = function() {
+	return new PropertyFilter(0, 0, 0, ParseDropShadow.getZeroProperty(), 0, 0, 0, 0, 0, 0);
+};
+
+
 var ParseDropShadow = new Class({
 	Extends: Parser,
 
-	_value: null,
-
-	getValue: function() {
-		return this._value.clone();
-	},
 	_parseCSSValue: function() {
 		var valArr = REGEX_VALUE_BOX_SHADOW.exec(this._cssValue);
 
@@ -145,6 +138,10 @@ var ParseDropShadow = new Class({
 		}
 	}
 });
+
+ParseDropShadow.getZeroProperty=function() {
+		return new PropertyBoxShadow( 0, 0, 0, 0, 0, 0, 0, 0 );
+};
 
 var ParserLookUp = {};
 ParserLookUp['width'] = ParseNumberValue;
