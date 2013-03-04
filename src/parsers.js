@@ -1,9 +1,9 @@
-var REGEX_VALUE_EXTENSION = /^(\d+\.?\d*)((px)?(%)?)$/;
+var REGEX_VALUE_EXTENSION = /^(-?\d+\.?\d*)((px)?(%)?)$/;
 var REGEX_VALUE_COLOUR_RGB = /^rgba?\((\d+), *(\d+), *(\d+)(, *(\d+\.?\d*))?\)$/;
-var REGEX_VALUE_BOX_SHADOW = /^rgba?\((\d+), *(\d+), *(\d+)(, *(\d+\.?\d*))?\) (\d+)px (\d+)px (\d+)px( (\d+)px( inset)?)?$/;
+var REGEX_VALUE_BOX_SHADOW = /^rgba?\((\d+), *(\d+), *(\d+)(, *(\d+\.?\d*))?\) (-?\d+)px (-?\d+)px (-?\d+)px( (-?\d+)px( inset)?)?$/;
 
 var REGEX_VALUE_FILTER_BLUR = /blur\((\d+)px\)/;
-var REGEX_VALUE_FILTER_BRIGHTNESS = /brightness\((\d+\.?\d*)\)/;
+var REGEX_VALUE_FILTER_BRIGHTNESS = /brightness\((-?\d+\.?\d*)\)/;
 var REGEX_VALUE_FILTER_CONTRAST = /contrast\((\d+\.?\d*)\)/;
 var REGEX_VALUE_FILTER_DROP_SHADOW = /drop-shadow\((.+)\)/;
 var REGEX_VALUE_FILTER_GRAY_SCALE = /grayscale\((\d+\.?\d*)\)/;
@@ -122,8 +122,8 @@ var ParseDropShadow = new Class({
 
 	_parseCSSValue: function() {
 		var valArr = REGEX_VALUE_BOX_SHADOW.exec(this._cssValue);
-
-		if (valArr != undefined) {
+		
+		if ( valArr ) {
 			this._value = new PropertyBoxShadow( valArr[1], //r
 												 valArr[2], //g
 												 valArr[3], //b
