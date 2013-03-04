@@ -90,7 +90,6 @@ var ParserFilter = new Class({
 		var blur = REGEX_VALUE_FILTER_BLUR.exec(this._cssValue);
 		var brightness = REGEX_VALUE_FILTER_BRIGHTNESS.exec(this._cssValue);
 		var contrast = REGEX_VALUE_FILTER_CONTRAST.exec(this._cssValue);
-		var dropShadow = REGEX_VALUE_FILTER_DROP_SHADOW.exec(this._cssValue);
 		var grayScale = REGEX_VALUE_FILTER_GRAY_SCALE.exec(this._cssValue);
 		var hueRotation = REGEX_VALUE_FILTER_HUE_ROTATION.exec(this._cssValue);
 		var invert = REGEX_VALUE_FILTER_INVERT.exec(this._cssValue);
@@ -98,10 +97,19 @@ var ParserFilter = new Class({
 		var saturate = REGEX_VALUE_FILTER_SATURATE.exec(this._cssValue);
 		var sepia = REGEX_VALUE_FILTER_SEPIA.exec(this._cssValue);
 
+		var dropShadow = REGEX_VALUE_FILTER_DROP_SHADOW.exec(this._cssValue);
+		var dropShadowVal = undefined;
+
+		if(dropShadow) {
+			dropShadowVal = (new ParseDropShadow(dropShadow[1])).getValue();
+		} else {
+			dropShadowVal = new PropertyBoxShadow();
+		}
+
 		this._value = new PropertyFilter(blur==undefined ? 0 : parseFloat(blur[1]),
 										 brightness == undefined ? 0 : parseFloat(brightness[1]),
 										 contrast == undefined ? 1 : parseFloat(contrast[1]),
-										 dropShadow == undefined ? undefined : parseFloat(dropShadow[1]),
+										 dropShadowVal,
 										 grayScale == undefined ? 0 : parseFloat(grayScale[1]),
 										 hueRotation == undefined ? 0 : parseFloat(hueRotation[1]),
 										 invert == undefined ? 0 : parseFloat(invert[1]),

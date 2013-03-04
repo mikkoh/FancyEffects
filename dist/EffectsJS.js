@@ -423,8 +423,16 @@ var ItemProperties = new Class({
 
 
 var PropertyAdvanced = new Class({
-	onPropertyChange: null,
+	_onPropertyChange: null,
 
+	initialize: function()
+	{
+		this.__defineGetter__('onPropertyChange', this.getPropertyChange);
+		this.__defineSetter__('onPropertyChange', this.setPropertyChange);
+	},
+
+	getPropertyChange: function() { return this._onPropertyChange; },
+	setPropertyChange: function(value) { this._onPropertyChange=value; },
 	add: function(otherItem) {
 		for (var i in this) {
 			if (typeof this[i] == 'number') {
@@ -454,6 +462,8 @@ var PropertyColour = new Class({
 	Extends: PropertyAdvanced,
 
 	initialize: function(r, g, b, a) {
+		this.parent();
+
 		this.__defineGetter__('r', this.getR);
 		this.__defineGetter__('g', this.getG);
 		this.__defineGetter__('b', this.getB);
@@ -544,6 +554,8 @@ var PropertyFilter = new Class({
 	Extends: PropertyAdvanced,
 
 	initialize: function(blur, brightness, contrast, dropShadow, grayScale, hueRotation, invert, opacity, saturate, sepia) {
+		this.parent();
+
 		this.__defineGetter__('blur', this.getBlur);
 		this.__defineGetter__('brightness', this.getBrightness);
 		this.__defineGetter__('contrast', this.getContrast);
@@ -569,7 +581,7 @@ var PropertyFilter = new Class({
 		this._blur=blur;
 		this._brightness=brightness;
 		this._contrast=contrast;
-		this._dropShadow=dropShadow;
+		this._dropShadow=dropShadow==undefined ? new PropertyBoxShadow() : dropShadow;
 		this._grayScale=grayScale;
 		this._hueRotation=hueRotation;
 		this._invert=invert;
@@ -599,6 +611,11 @@ var PropertyFilter = new Class({
 	getOpacity: function() { return this._opacity; },
 	getSaturate: function() { return this._saturate; },
 	getSepia: function() { return this._sepia; },
+	setPropertyChange: function(value) {
+		this.parent(value);
+
+		this.dropShadow.onPropertyChange=value;
+	},
 	setBlur: function(value) {
 		this._blur = value;
 
@@ -651,6 +668,8 @@ var PropertyFilter = new Class({
 		this._opacity += otherItem.opacity;
 		this._saturate+= otherItem.saturate;
 		this._sepia += otherItem.sepia;
+
+		this.dropShadow.add(otherItem.dropShadow);
 	},
 	getChange: function(percentage, curValue, startValue, endValue) {
 		this._blur = (endValue.blur - startValue.blur) * percentage + startValue.blur;
@@ -673,25 +692,31 @@ var PropertyFilter = new Class({
 		this._saturate-= curValue.saturate;
 		this._sepia -= curValue.sepia;
 
+		this.dropShadow.getChange(percentage, curValue.dropShadow, startValue.dropShadow, endValue.dropShadow);
+
 		return this;
 	},
 	getCSS: function() {
-		return 'blur(' + this._blur + 'px) '+ 
-			   'brightness(' + this._brightness + ') ' +
-			   'contrast(' + this._contrast + ') ' +
-			   //'dropShadow'
-			   'grayscale(' + this._grayScale + ') ' +
-			   'hue-rotate(' + this._hueRotation + 'deg) ' +
-			   'invert(' + this._invert + ') ' +
-			   'opacity(' + this._opacity + ') ' +
-			   'saturate(' + this._saturate + ') ' +
-			   'sepia(' + this._sepia + ')'
+		var rVal = 'blur(' + Math.round(this._blur) + 'px) '+ 
+			   	   'brightness(' + this._brightness + ') ' +
+			   	   'contrast(' + this._contrast + ') ' +
+			   	   'drop-shadow(' + this._dropShadow.getCSS() + ') ' +
+			   	   'grayscale(' + this._grayScale + ') ' +
+			   	   'hue-rotate(' + this._hueRotation + 'deg) ' +
+			   	   'invert(' + this._invert + ') ' +
+			   	   'opacity(' + this._opacity + ') ' +
+			   	   'saturate(' + this._saturate + ') ' +
+			   	   'sepia(' + this._sepia + ')';
+
+		console.log(rVal);
+
+		return rVal;
 	},
 	clone: function() {
 		return new PropertyFilter( this._blur,
 								   this._brightness,
 								   this._contrast,
-								   this._dropShadow,
+								   this._dropShadow.clone(),
 								   this._grayScale,
 								   this._hueRotation,
 								   this._invert,
@@ -901,7 +926,6 @@ var ParserFilter = new Class({
 		var blur = REGEX_VALUE_FILTER_BLUR.exec(this._cssValue);
 		var brightness = REGEX_VALUE_FILTER_BRIGHTNESS.exec(this._cssValue);
 		var contrast = REGEX_VALUE_FILTER_CONTRAST.exec(this._cssValue);
-		var dropShadow = REGEX_VALUE_FILTER_DROP_SHADOW.exec(this._cssValue);
 		var grayScale = REGEX_VALUE_FILTER_GRAY_SCALE.exec(this._cssValue);
 		var hueRotation = REGEX_VALUE_FILTER_HUE_ROTATION.exec(this._cssValue);
 		var invert = REGEX_VALUE_FILTER_INVERT.exec(this._cssValue);
@@ -909,10 +933,19 @@ var ParserFilter = new Class({
 		var saturate = REGEX_VALUE_FILTER_SATURATE.exec(this._cssValue);
 		var sepia = REGEX_VALUE_FILTER_SEPIA.exec(this._cssValue);
 
+		var dropShadow = REGEX_VALUE_FILTER_DROP_SHADOW.exec(this._cssValue);
+		var dropShadowVal = undefined;
+
+		if(dropShadow) {
+			dropShadowVal = (new ParseDropShadow(dropShadow[1])).getValue();
+		} else {
+			dropShadowVal = new PropertyBoxShadow();
+		}
+
 		this._value = new PropertyFilter(blur==undefined ? 0 : parseFloat(blur[1]),
 										 brightness == undefined ? 0 : parseFloat(brightness[1]),
 										 contrast == undefined ? 1 : parseFloat(contrast[1]),
-										 dropShadow == undefined ? undefined : parseFloat(dropShadow[1]),
+										 dropShadowVal,
 										 grayScale == undefined ? 0 : parseFloat(grayScale[1]),
 										 hueRotation == undefined ? 0 : parseFloat(hueRotation[1]),
 										 invert == undefined ? 0 : parseFloat(invert[1]),

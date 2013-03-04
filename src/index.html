@@ -11,28 +11,28 @@
 
 	<script type="text/javascript">
 	$(function() {
-		var effWidth = new EffectWidth();
-		var effHeight = new EffectHeight();
-		var effLeft = new EffectLeft();
-		var effTop = new EffectTop();
-		var effOpacity = new EffectOpacity();
-		var effBorderWidth = new EffectBorderWidth();
-		var effColor = new EffectColor();
-		var effBGColor = new EffectBackgroundColor();
-		var effBoxShadow = new EffectBoxShadow();
-		//var effFilter = new EffectFilter();
+		// var effWidth = new EffectWidth();
+		// var effHeight = new EffectHeight();
+		// var effLeft = new EffectLeft();
+		// var effTop = new EffectTop();
+		// var effOpacity = new EffectOpacity();
+		// var effBorderWidth = new EffectBorderWidth();
+		// var effColor = new EffectColor();
+		// var effBGColor = new EffectBackgroundColor();
+		// var effBoxShadow = new EffectBoxShadow();
+		var effFilter = new EffectFilter();
 
 		var eff = new Effect($('#itemToEffect'));
-		eff.add(effWidth);
-		eff.add(effHeight);
-		eff.add(effTop);
-		eff.add(effLeft);
-		eff.add(effOpacity);
-		eff.add(effBorderWidth);
-		eff.add(effColor);
-		eff.add(effBGColor);
-		eff.add(effBoxShadow);
-		//eff.add(effFilter);
+		// eff.add(effWidth);
+		// eff.add(effHeight);
+		// eff.add(effTop);
+		// eff.add(effLeft);
+		// eff.add(effOpacity);
+		// eff.add(effBorderWidth);
+		// eff.add(effColor);
+		// eff.add(effBGColor);
+		// eff.add(effBoxShadow);
+		eff.add(effFilter);
 
 		var gui = new dat.GUI();
 		var folderMain = gui.addFolder('Main Controller');
@@ -83,7 +83,9 @@
 		folderBackgroundColor.add(effBGColor.end, 'g').min(0).max(255);
 		folderBackgroundColor.add(effBGColor.end, 'b').min(0).max(255);
 		folderBackgroundColor.add(effBGColor.end, 'a').min(0).max(1);
-		*/
+		//*/
+
+		/*
 		var folderBoxShadow = gui.addFolder('box-shadow');
 		folderBoxShadow.add(effBoxShadow.start, 'offX').min(0).max(255);
 		folderBoxShadow.add(effBoxShadow.start, 'offY').min(0).max(255);
@@ -100,28 +102,45 @@
 		folderBoxShadow.add(effBoxShadow.end, 'g').min(0).max(255);
 		folderBoxShadow.add(effBoxShadow.end, 'b').min(0).max(255);
 		folderBoxShadow.add(effBoxShadow.end, 'a').min(0).max(1);
+		//*/
 
-		/*
-		var filter = gui.addFolder('filter');
-		filter.add(effFilter.start, 'blur').min(0).max(20);
-		filter.add(effFilter.end, 'blur').min(0).max(20);
-		filter.add(effFilter.start, 'brightness').min(0).max(1);
-		filter.add(effFilter.end, 'brightness').min(0).max(1);
-		filter.add(effFilter.start, 'contrast').min(0).max(1);
-		filter.add(effFilter.end, 'contrast').min(0).max(1);
-		filter.add(effFilter.start, 'grayScale').min(0).max(1);
-		filter.add(effFilter.end, 'grayScale').min(0).max(1);
-		filter.add(effFilter.start, 'hueRotation').min(0).max(360);
-		filter.add(effFilter.end, 'hueRotation').min(0).max(360);
-		filter.add(effFilter.start, 'opacity').min(0).max(1);
-		filter.add(effFilter.end, 'opacity').min(0).max(1);
-		filter.add(effFilter.start, 'saturate').min(0).max(1);
-		filter.add(effFilter.end, 'saturate').min(0).max(1);
-		filter.add(effFilter.start, 'invert').min(0).max(1);
-		filter.add(effFilter.end, 'invert').min(0).max(1);
-		filter.add(effFilter.start, 'sepia').min(0).max(1);
-		filter.add(effFilter.end, 'sepia').min(0).max(1);
-		*/
+		//*
+		var folderFilter = gui.addFolder('filter');
+		folderFilter.add(effFilter.start, 'blur').min(0).max(20);
+		folderFilter.add(effFilter.end, 'blur').min(0).max(20);
+		folderFilter.add(effFilter.start, 'brightness').min(0).max(1);
+		folderFilter.add(effFilter.end, 'brightness').min(0).max(1);
+		folderFilter.add(effFilter.start, 'contrast').min(0).max(1);
+		folderFilter.add(effFilter.end, 'contrast').min(0).max(1);
+		folderFilter.add(effFilter.start, 'grayScale').min(0).max(1);
+		folderFilter.add(effFilter.end, 'grayScale').min(0).max(1);
+		folderFilter.add(effFilter.start, 'hueRotation').min(0).max(360);
+		folderFilter.add(effFilter.end, 'hueRotation').min(0).max(360);
+		folderFilter.add(effFilter.start, 'opacity').min(0).max(1);
+		folderFilter.add(effFilter.end, 'opacity').min(0).max(1);
+		folderFilter.add(effFilter.start, 'saturate').min(0).max(1);
+		folderFilter.add(effFilter.end, 'saturate').min(0).max(1);
+		folderFilter.add(effFilter.start, 'invert').min(0).max(1);
+		folderFilter.add(effFilter.end, 'invert').min(0).max(1);
+		folderFilter.add(effFilter.start, 'sepia').min(0).max(1);
+		folderFilter.add(effFilter.end, 'sepia').min(0).max(1);
+
+		var folderFilterDropShadow=folderFilter.addFolder('drop-shadow');
+		folderFilterDropShadow.add(effFilter.start.dropShadow, 'r').min(0).max(255);
+		folderFilterDropShadow.add(effFilter.end.dropShadow, 'r').min(0).max(255);
+		folderFilterDropShadow.add(effFilter.start.dropShadow, 'g').min(0).max(255);
+		folderFilterDropShadow.add(effFilter.end.dropShadow, 'g').min(0).max(255);
+		folderFilterDropShadow.add(effFilter.start.dropShadow, 'b').min(0).max(255);
+		folderFilterDropShadow.add(effFilter.end.dropShadow, 'b').min(0).max(255);
+		folderFilterDropShadow.add(effFilter.start.dropShadow, 'a').min(0).max(1);
+		folderFilterDropShadow.add(effFilter.end.dropShadow, 'a').min(0).max(1);
+		folderFilterDropShadow.add(effFilter.start.dropShadow, 'blur').min(0).max(255);
+		folderFilterDropShadow.add(effFilter.end.dropShadow, 'blur').min(0).max(255);
+		folderFilterDropShadow.add(effFilter.start.dropShadow, 'offX').min(-255).max(255);
+		folderFilterDropShadow.add(effFilter.end.dropShadow, 'offX').min(-255).max(255);
+		folderFilterDropShadow.add(effFilter.start.dropShadow, 'offY').min(-255).max(255);
+		folderFilterDropShadow.add(effFilter.end.dropShadow, 'offY').min(-255).max(255);
+		//*/
 	});	
 	</script>
 
@@ -145,8 +164,8 @@
 
 			border: 5px solid #FFFFFF;
 
-			/* -webkit-filter: drop-shadow(35px 35px 20px red); */
-			box-shadow: rgba(255, 255, 255, 0.5) 35px 35px 20px;
+			-webkit-filter: drop-shadow(35px 35px 20px red);
+			/* box-shadow: rgba(255, 255, 255, 0.5) 35px 35px 20px; */
 		}
 	</style>
 </head>
