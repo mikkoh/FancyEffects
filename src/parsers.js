@@ -40,7 +40,10 @@ var ParseNumberValue = new Class({
 	_parseCSSValue: function() {
 		var valueResult = REGEX_VALUE_EXTENSION.exec(this._cssValue);
 
-		this._value = new PropertyNumber( parseFloat(valueResult[1]) );
+		if( valueResult != null )
+			this._value = new PropertyNumber( parseFloat(valueResult[1]) );
+		else
+			this._value = new PropertyNumber();
 	}
 });
 
@@ -65,7 +68,7 @@ var ParserColour = new Class({
 											 parseFloat(valArr[3]), 
 											 parseFloat(parseFloat(valArr[5]).toPrecision(2)));
 		} else {
-			throw new Error('Could not parse colour:', this._cssValue);
+			this._value = new PropertyColour();
 		}
 	}
 });
@@ -134,7 +137,7 @@ var ParseDropShadow = new Class({
 												 valArr[10], //spread
 												 valArr[11] ); //inset
 		} else {
-			throw new Error('Could not parse drop shadow:', this._cssValue);
+			this._value = new PropertyBoxShadow();
 		}
 	}
 });

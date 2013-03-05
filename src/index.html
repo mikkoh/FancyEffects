@@ -4,6 +4,7 @@
 	<script type="text/javascript" src="../lib/dat.gui.min.js"></script>
 	<script type="text/javascript" src="../lib/jquery-1.8.2.min.js"></script>
 	<script type="text/javascript" src="../lib/mootools-core-1.4.5.js"></script>
+	<script type="text/javascript" src="signals.js"></script>
 	<script type="text/javascript" src="itemProperties.js"></script>
 	<script type="text/javascript" src="parsers.js"></script>
 	<script type="text/javascript" src="effectsBase.js"></script>
@@ -88,8 +89,8 @@
 		folderBackgroundColor.add(effBGColor.end, 'a').min(0).max(1);
 		
 		var folderBoxShadow = gui.addFolder('box-shadow');
-		folderBoxShadow.add(effBoxShadow.start, 'offX').min(0).max(255);
-		folderBoxShadow.add(effBoxShadow.start, 'offY').min(0).max(255);
+		folderBoxShadow.add(effBoxShadow.start, 'offX').min(-255).max(255);
+		folderBoxShadow.add(effBoxShadow.start, 'offY').min(-255).max(255);
 		folderBoxShadow.add(effBoxShadow.start, 'blur').min(0).max(255);
 		folderBoxShadow.add(effBoxShadow.end, 'offX').min(0).max(255);
 		folderBoxShadow.add(effBoxShadow.end, 'offY').min(0).max(255);
@@ -144,6 +145,14 @@
 		$('#btnDestroy').click(function() {
 			eff.destroy();
 		});
+
+		var leftStart = eff.getStart('left');
+		var topStart = eff.getStart('top');
+
+		$(window).resize(function() {
+			leftStart.value = $(window).width() * 0.5;
+			topStart.value = $(window).height() * 0.5;
+		});
 	});	
 	</script>
 
@@ -158,6 +167,11 @@
 		#itemToEffect
 		{
 			position: relative;
+
+			width: 100px;
+			height: 100px;
+			background-color: #CC0000;
+			/*
 			left: 100px;
 			top: 100px;
 
@@ -168,8 +182,10 @@
 
 			background-color: #333;
 
-			-webkit-filter: drop-shadow(35px 35px 20px #333);
 			box-shadow: rgba(255, 255, 255, 0.5) -10px -10px 20px;
+			-webkit-filter: drop-shadow(35px 35px 20px #333);
+			*/
+			
 		}
 	</style>
 </head>

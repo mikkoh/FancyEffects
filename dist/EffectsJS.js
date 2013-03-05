@@ -39,6 +39,9 @@ var Effect = new Class({
 	getId: function() {
 		return this._id;
 	},
+	getStart: function(property) {
+		return this._itemProperties.getStart(property);
+	},
 	setItemToEffect: function(itemToEffect, itemProperties) {
 		this._itemToEffect = itemToEffect;
 
@@ -150,15 +153,17 @@ var EffectChangeProp = new Class({
 		this._itemProperties.setupEffect(this, this._propertyToEffect);
 
 		if (this._startValue == null) {
+			this._startValueNotDefined = true;
 			this._startValue = this._itemProperties.getStart(this._propertyToEffect).clone();
+			this._itemProperties.getStart(this._propertyToEffect).onPropertyChange.add(this._onStartValueChange.bind(this));
 		}
 
 		if (this._endValue == null) {
 			this._endValue = this._itemProperties.getStart(this._propertyToEffect).clone();
 		}
 
-		this._startValue.onPropertyChange = this.applyPercentage.bind(this);
-		this._endValue.onPropertyChange = this.applyPercentage.bind(this);
+		this._startValue.onPropertyChange.add(this.applyPercentage.bind(this));
+		this._endValue.onPropertyChange.add(this.applyPercentage.bind(this));
 	},
 	getStartValue: function() {
 		return this._startValue;
@@ -187,7 +192,11 @@ var EffectChangeProp = new Class({
 	},
 	applyPercentage: function() {
 		this.setPercentage(this.percentage);
-	}
+	},
+	_onStartValueChange: function() {
+		this._startValue.equals(this._itemProperties.getStart(this._propertyToEffect));
+		this.applyPercentage();
+	},
 });
 
 var EffectChangePropNumber = new Class({
@@ -423,6 +432,9 @@ var ItemProperties = new Class({
 	getStart: function(property) {
 		return this._propertyStartValue[property];
 	},
+	setStart: function(property, value) {
+
+	},
 	change: function(effectID, property, amount) {
 		this._propertyValue[property].add(amount);
 
@@ -464,19 +476,12 @@ var ItemProperties = new Class({
 
 
 var Property = new Class({
-	_onPropertyChange: null,
+	onPropertyChange: null,
 
 	initialize: function() {
-		this.__defineGetter__('onPropertyChange', this.getPropertyChange);
-		this.__defineSetter__('onPropertyChange', this.setPropertyChange);
+		this.onPropertyChange = new Signal();
 	},
 
-	getPropertyChange: function() {
-		return this._onPropertyChange;
-	},
-	setPropertyChange: function(value) {
-		this._onPropertyChange = value;
-	},
 	add: function(otherItem) {
 		throw new Error('You must override this function');
 	},
@@ -517,7 +522,7 @@ var PropertyNumber = new Class({
 	},
 	setValue: function(value) {
 		this._value = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	add: function(otherItem) {
 		this._value += otherItem.value;
@@ -588,22 +593,22 @@ var PropertyColour = new Class({
 	setR: function(value) {
 		this._r = value;
 
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setG: function(value) {
 		this._g = value;
 
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setB: function(value) {
 		this._b = value;
 
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setA: function(value) {
 		this._a = value;
 
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	add: function(otherItem) {
 		this._r += otherItem.r;
@@ -745,44 +750,44 @@ var PropertyFilter = new Class({
 	setBlur: function(value) {
 		this._blur = value;
 
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setBrightness: function(value) {
 		this._brightness = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setContrast: function(value) {
 		this._contrast = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setDropShadow: function(value) {
 		this._dropShadow = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setGrayScale: function(value) {
 		this._grayScale = value;
 
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setHueRotation: function(value) {
 		this._hueRotation = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setInvert: function(value) {
 		this._invert = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setOpacity: function(value) {
 		this._opacity = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setSaturate: function(value) {
 		this._saturate = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setSepia: function(value) {
 		this._sepia = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	add: function(otherItem) {
 		this._blur += otherItem.blur;
@@ -965,23 +970,23 @@ var PropertyBoxShadow = new Class({
 	},
 	setOffX: function(value) {
 		this._offX = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setOffY: function(value) {
 		this._offY = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setBlur: function(value) {
 		this._blur = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setSpread: function(value) {
 		this._spread = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setInset: function(value) {
 		this._inset = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	isNotDefault: function() {
 		return this._offX != 0 || this._offY != 0 || this._blur != 0 || this._spread != 0;
@@ -1099,7 +1104,10 @@ var ParseNumberValue = new Class({
 	_parseCSSValue: function() {
 		var valueResult = REGEX_VALUE_EXTENSION.exec(this._cssValue);
 
-		this._value = new PropertyNumber( parseFloat(valueResult[1]) );
+		if( valueResult != null )
+			this._value = new PropertyNumber( parseFloat(valueResult[1]) );
+		else
+			this._value = new PropertyNumber();
 	}
 });
 
@@ -1124,7 +1132,7 @@ var ParserColour = new Class({
 											 parseFloat(valArr[3]), 
 											 parseFloat(parseFloat(valArr[5]).toPrecision(2)));
 		} else {
-			throw new Error('Could not parse colour:', this._cssValue);
+			this._value = new PropertyColour();
 		}
 	}
 });
@@ -1193,7 +1201,7 @@ var ParseDropShadow = new Class({
 												 valArr[10], //spread
 												 valArr[11] ); //inset
 		} else {
-			throw new Error('Could not parse drop shadow:', this._cssValue);
+			this._value = new PropertyBoxShadow();
 		}
 	}
 });
@@ -1213,3 +1221,106 @@ ParserLookUp['color'] = ParserColour;
 ParserLookUp['background-color'] = ParserColour;
 ParserLookUp['-webkit-filter'] = ParserFilter;
 ParserLookUp['box-shadow'] = ParseDropShadow;
+var Signal=new Class({
+	initialize: function()
+	{
+		this._signalID="signal"+Signal.nextSignalID;
+		this._addOnceList={};
+		this._listeners=[];
+
+		Signal.nextSignalID++;
+
+		//this ensures that an infinite recursion wont happen
+		if(arguments.length==0)
+		{
+			this.onListenerAdded=new Signal(false);
+			this.onListenerRemoved=new Signal(false);
+		}
+	},
+
+	countListeners: 0,
+	onListenerAdded: null,
+	onListenerRemoved: null,
+	_signalID: 0,
+	_addOnceList: null,
+	_listeners: null,
+	_dispatchStopped: false,
+
+	addOnce: function(listener)
+	{
+		this.add(listener);
+
+		this._addOnceList[listener.listenerIDX[this._signalID]]=true;
+	},
+	add: function(listener)
+	{
+		//if addedID is true here we don't have any ids for this listener
+		if(listener.listenerIDX==undefined)
+		{
+			listener.listenerID=Signal.nextListenerID++;
+			listener.listenerIDX={};
+		}
+
+		//else we'll have to check if this id is in the list
+		if(listener.listenerIDX[this._signalID]==undefined)
+		{
+			listener.listenerIDX[this._signalID]=this._listeners.length;
+			this._listeners[this._listeners.length]=listener;
+
+			this.countListeners++;
+
+			if(this.onListenerAdded!=null)
+				this.onListenerAdded.dispatch();
+		}
+	},
+	remove: function(listener)
+	{
+		if(this._checkHasId(listener))
+		{
+			var delIDX=listener.listenerIDX[this._signalID];
+
+			//delete the listener
+			this._listeners.splice(delIDX, 1);
+
+			//update the index for the listeners
+			for(var i=delIDX;i<this._listeners.length;i++)	
+			{
+				this._listeners[i].listenerIDX[this._signalID]=i;
+			}
+
+			this.countListeners--;
+
+			if(this.onListenerRemoved!=null)
+				this.onListenerRemoved.dispatch();
+		}
+	},
+	dispatch: function()
+	{
+		for(var i=0;!this._dispatchStopped && i<this._listeners.length;i++)
+		{
+			this._listeners[i].apply(null, arguments);
+
+			if(this._addOnceList[i]!=undefined)
+			{
+				this.remove(this._listeners[i]);
+
+				delete this._addOnceList[i];
+
+				i--;
+			}
+		}
+
+		this._dispatchStopped=false;
+	},
+	stopDispatch: function()
+	{
+		this._dispatchStopped=true;	
+	},
+	_checkHasId: function(listener)
+	{
+		return listener.listenerIDX!=undefined && listener.listenerIDX[this._signalID]!=undefined;	
+	}
+});
+
+Signal.nextSignalID=0;
+Signal.nextListenerID=0;

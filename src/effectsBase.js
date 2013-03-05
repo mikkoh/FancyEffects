@@ -39,6 +39,9 @@ var Effect = new Class({
 	getId: function() {
 		return this._id;
 	},
+	getStart: function(property) {
+		return this._itemProperties.getStart(property);
+	},
 	setItemToEffect: function(itemToEffect, itemProperties) {
 		this._itemToEffect = itemToEffect;
 
@@ -150,15 +153,17 @@ var EffectChangeProp = new Class({
 		this._itemProperties.setupEffect(this, this._propertyToEffect);
 
 		if (this._startValue == null) {
+			this._startValueNotDefined = true;
 			this._startValue = this._itemProperties.getStart(this._propertyToEffect).clone();
+			this._itemProperties.getStart(this._propertyToEffect).onPropertyChange.add(this._onStartValueChange.bind(this));
 		}
 
 		if (this._endValue == null) {
 			this._endValue = this._itemProperties.getStart(this._propertyToEffect).clone();
 		}
 
-		this._startValue.onPropertyChange = this.applyPercentage.bind(this);
-		this._endValue.onPropertyChange = this.applyPercentage.bind(this);
+		this._startValue.onPropertyChange.add(this.applyPercentage.bind(this));
+		this._endValue.onPropertyChange.add(this.applyPercentage.bind(this));
 	},
 	getStartValue: function() {
 		return this._startValue;
@@ -187,7 +192,11 @@ var EffectChangeProp = new Class({
 	},
 	applyPercentage: function() {
 		this.setPercentage(this.percentage);
-	}
+	},
+	_onStartValueChange: function() {
+		this._startValue.equals(this._itemProperties.getStart(this._propertyToEffect));
+		this.applyPercentage();
+	},
 });
 
 var EffectChangePropNumber = new Class({

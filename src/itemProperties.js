@@ -31,6 +31,9 @@ var ItemProperties = new Class({
 	getStart: function(property) {
 		return this._propertyStartValue[property];
 	},
+	setStart: function(property, value) {
+
+	},
 	change: function(effectID, property, amount) {
 		this._propertyValue[property].add(amount);
 
@@ -72,19 +75,12 @@ var ItemProperties = new Class({
 
 
 var Property = new Class({
-	_onPropertyChange: null,
+	onPropertyChange: null,
 
 	initialize: function() {
-		this.__defineGetter__('onPropertyChange', this.getPropertyChange);
-		this.__defineSetter__('onPropertyChange', this.setPropertyChange);
+		this.onPropertyChange = new Signal();
 	},
 
-	getPropertyChange: function() {
-		return this._onPropertyChange;
-	},
-	setPropertyChange: function(value) {
-		this._onPropertyChange = value;
-	},
 	add: function(otherItem) {
 		throw new Error('You must override this function');
 	},
@@ -125,7 +121,7 @@ var PropertyNumber = new Class({
 	},
 	setValue: function(value) {
 		this._value = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	add: function(otherItem) {
 		this._value += otherItem.value;
@@ -196,22 +192,22 @@ var PropertyColour = new Class({
 	setR: function(value) {
 		this._r = value;
 
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setG: function(value) {
 		this._g = value;
 
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setB: function(value) {
 		this._b = value;
 
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setA: function(value) {
 		this._a = value;
 
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	add: function(otherItem) {
 		this._r += otherItem.r;
@@ -353,44 +349,44 @@ var PropertyFilter = new Class({
 	setBlur: function(value) {
 		this._blur = value;
 
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setBrightness: function(value) {
 		this._brightness = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setContrast: function(value) {
 		this._contrast = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setDropShadow: function(value) {
 		this._dropShadow = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setGrayScale: function(value) {
 		this._grayScale = value;
 
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setHueRotation: function(value) {
 		this._hueRotation = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setInvert: function(value) {
 		this._invert = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setOpacity: function(value) {
 		this._opacity = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setSaturate: function(value) {
 		this._saturate = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setSepia: function(value) {
 		this._sepia = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	add: function(otherItem) {
 		this._blur += otherItem.blur;
@@ -573,23 +569,23 @@ var PropertyBoxShadow = new Class({
 	},
 	setOffX: function(value) {
 		this._offX = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setOffY: function(value) {
 		this._offY = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setBlur: function(value) {
 		this._blur = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setSpread: function(value) {
 		this._spread = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	setInset: function(value) {
 		this._inset = value;
-		this.onPropertyChange();
+		this.onPropertyChange.dispatch();
 	},
 	isNotDefault: function() {
 		return this._offX != 0 || this._offY != 0 || this._blur != 0 || this._spread != 0;
