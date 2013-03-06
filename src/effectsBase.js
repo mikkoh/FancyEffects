@@ -19,6 +19,10 @@ EffectIds.getId = function( effectType ) {
 
 var Effect = new Class({
 	initialize: function(itemToEffect) {
+		this._id = EffectIds.getId( this._type );
+
+		console.log( this._id );
+
 		this._effectIdx = {};
 		this._effects = [];
 
@@ -32,7 +36,8 @@ var Effect = new Class({
 		this.__proto__.__defineGetter__('id', this.getId);
 	},
 
-	_id: 'Effect',
+	_type: 'Effect',
+	_id: null,
 	_itemToEffect: null,
 	_itemProperties: null,
 	_percentage: 0,
@@ -283,6 +288,8 @@ var EffectChangePropColour = new Class({
 	Extends: EffectChangeProp,
 
 	initialize: function() {
+		this._type = 'EffectChangePropColour';
+
 		var startVal = undefined;
 		var endVal = undefined;
 
