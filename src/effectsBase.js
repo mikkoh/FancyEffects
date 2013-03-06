@@ -22,6 +22,9 @@ var Effect = new Class({
 		this._effectIdx = {};
 		this._effects = [];
 
+		this._effectEffectIdx = {};
+		this._effectEffects = [];
+
 		if (itemToEffect) this.setItemToEffect(itemToEffect);
 
 		this.__proto__.__defineSetter__('percentage', this.setPercentage);
@@ -33,8 +36,11 @@ var Effect = new Class({
 	_itemToEffect: null,
 	_itemProperties: null,
 	_percentage: 0,
+	_percentageToApply: 0,
 	_effectIdx: null,
+	_effectEffectIdx: null,
 	_effects: null,
+	_effectEffects: null,
 
 	getId: function() {
 		return this._id;
@@ -54,9 +60,27 @@ var Effect = new Class({
 	setPercentage: function(value) {
 		this._percentage = value;
 
-		for (var i = 0; i < this._effects.length; i++) {
-			this._effects[i].setPercentage(value);
+		if( this._effectEffects.length>0 ) {
+			this._percentageToApply = 0;
+
+			for(var i = 0; i < this._effectEffects.length; i++ ) {
+				this._effectEffects[i].setPercentage( this._percentage );
+			}
+
+			this._percentageToApply /= this._effectEffects.length;
+		} else {
+			this._percentageToApply = this._percentage;
 		}
+
+		for (var i = 0; i < this._effects.length; i++) {
+
+			if( this._effectEffects.length>0 ) { console.log(this._percentageToApply) }
+
+			this._effects[i].setPercentage( this._percentageToApply );
+		}
+	},
+	effectPercentage: function(percentage) {
+		this._percentageToApply += percentage;
 	},
 	reset: function() {
 		this._itemProperties.resetAll(this.id);
@@ -71,16 +95,28 @@ var Effect = new Class({
 		this._effects.length = 0;
 	},
 	add: function(effect) {
-		if (this._effectIdx[effect.id] === undefined) {
-			this._effectIdx[effect.id] = this._effects.length;
-			this._effects.push(effect);
+		//check if this effect being added will effect this effect
+		//or if it will effect the itemToEffect
+		if ( effect instanceof EffectPercentage ) {
+			if( this._effectEffectIdx[effect.id] === undefined ) {
+				this._effectEffectIdx[effect.id] = this._effectEffects.length;
+				this._effectEffects.push( effect );
 
-			effect.setItemToEffect(this._itemToEffect, this._itemProperties);
-			effect.percentage = this.percentage;
+				effect.setItemToEffect( this );
+				effect.percentage = this.percentage;
+			}
+		} else {
+			if( this._effectIdx[effect.id] === undefined ) {
+				this._effectIdx[effect.id] = this._effects.length;
+				this._effects.push( effect );
+
+				effect.setItemToEffect( this._itemToEffect, this._itemProperties );
+				effect.percentage = this.percentage;
+			}
 		}
 	},
 	remove: function(effect) {
-		if (this._effectIdx[effect.id] !== undefined) {
+		if ( this._effectIdx[effect.id] !== undefined ) {
 			var idx = this._effectIdx[effect.id];
 			var effect = this._effects[idx];
 
@@ -88,13 +124,25 @@ var Effect = new Class({
 
 			this._effects.splice(idx, 1);
 
-			for (var i = 0; i < this._effects.length; i++) {
+			//reset the idx lookup to reflect the removed item
+			for ( var i = idx; i < this._effects.length; i++ ) {
 				this._effectIdx[this._effects[i].id] = i;
+			}
+		} else if( this._effectEffectIdx[effect.id] !== undefined ) {
+			var idx = this._effectIdx[effect.id];
+			var effect = this._effectEffects[idx];
+
+			effect.destroy();
+
+			this._effectEffects.splice(idx, 1);
+
+			//reset the idx lookup to reflect the removed item
+			for ( var i = idx; i < this._effectEffects.length; i++ ) {
+				this._effectEffects[this._effectEffects[i].id] = i;
 			}
 		}
 	}
 });
-
 
 var EffectChangeProp = new Class({
 	Extends: Effect,
@@ -171,7 +219,7 @@ var EffectChangeProp = new Class({
 	setStartValue: function(value) {
 		this._startValue = value;
 
-		this.setPercentage(this._percentage);
+		this.setPercentage(this._percentageToApply);
 	},
 	getEndValue: function() {
 		return this._endValue;
@@ -179,7 +227,7 @@ var EffectChangeProp = new Class({
 	setEndValue: function(value) {
 		this._endValue = value;
 
-		this.setPercentage(this._percentage);
+		this.setPercentage(this._percentageToApply);
 	},
 	setPercentage: function(value) {
 		this.parent(value);
@@ -187,8 +235,8 @@ var EffectChangeProp = new Class({
 		var cValue = this._itemProperties.get(this._propertyToEffect);
 
 		this._itemProperties.change(this.id,
-		this._propertyToEffect,
-		this._temp.getChange(value, cValue, this._startValue, this._endValue));
+									this._propertyToEffect,
+									this._temp.getChange(this._percentageToApply, cValue, this._startValue, this._endValue));
 	},
 	applyPercentage: function() {
 		this.setPercentage(this.percentage);
