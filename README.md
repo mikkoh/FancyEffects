@@ -1,7 +1,8 @@
 EffectsJS
 =========
 
-This is a non-destructive effects and animation library built ontop of jQuery.
+This is a non-destructive effects and animation library built ontop of jQuery. The libraries main goal is to create 
+reusable yet customizable effects and animations.
 
 Let's say we'd like to animate/effect a div with id "itemToEffect" by moving it's top from 0px to 100px.
 
