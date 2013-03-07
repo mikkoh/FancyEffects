@@ -90,13 +90,18 @@ var Effect = new Class({
 		return this._itemProperties.getStart(property);
 	},
 	setItemToEffect: function(itemToEffect, itemProperties) {
-		this._itemToEffect = itemToEffect;
+		if( !this._itemToEffect )
+		{
+			this._itemToEffect = itemToEffect;
 
-		if (itemProperties) {
-			this._itemProperties = itemProperties;
-		}
-		else {
-			this._itemProperties = ItemPropertiesBank.get( this._itemToEffect );
+			if( !(this._itemToEffect instanceof EffectPercentage) ) {
+				if ( itemProperties ) {
+					this._itemProperties = itemProperties;
+				}
+				else {
+					this._itemProperties = ItemPropertiesBank.get( this._itemToEffect );
+				}
+			}
 		}
 
 		//now set item to effect for all child effects

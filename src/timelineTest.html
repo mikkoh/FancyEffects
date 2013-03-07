@@ -37,6 +37,9 @@
 				var effLeft = new EffectLeft( 0, 100 );
 				var effOpacity = new EffectOpacity( 0, 1 );
 				var animateIn = new EffectTimeline();
+
+				effLeft.add( new EffectPercentageElasticEaseOut() );
+
 				animateIn.add( effTop, 0, 1 );
 				animateIn.add( effLeft, 0, 1 );
 				animateIn.add( effOpacity, 0, 0.25 );
