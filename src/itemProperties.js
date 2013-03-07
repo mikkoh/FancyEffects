@@ -49,7 +49,7 @@ var ItemProperties = new Class({
 	_propertyValue: null,
 	_changeAmountForEffect: null,
 
-	setupEffect: function(effect) {
+	setupEffect: function( effect ) {
 		var effectID = effect.id;
 
 		if (!this._changeAmountForEffect[ effectID ]) {
@@ -62,38 +62,35 @@ var ItemProperties = new Class({
 			}
 		}
 	},
-	get: function(property) {
+	get: function( property ) {
 		return this._propertyValue[property];
 	},
-	getStart: function(property) {
+	getStart: function( property ) {
 		return this._propertyStartValue[property];
 	},
-	setStart: function(property, value) {
-
+	getChange: function( effectID, property ) {
+		return this._changeAmountForEffect[ effectID ][ property ];
 	},
-	change: function(effectID, property, amount) {
+	change: function( effectID, property, amount ) {
 		this._propertyValue[property].add(amount);
-
-		if(property == 'left')
-			console.log(property, amount.value, this._propertyValue[property].value);
 
 		this._changeAmountForEffect[effectID][property].add(amount);
 
 		this._itemToEffect.css(property, this._propertyValue[property].getCSS());
 	},
-	reset: function(effectID, property) {
+	reset: function( effectID, property ) {
 		this._propertyValue[property].sub(this._changeAmountForEffect[effectID][property]);
 		
 		this._changeAmountForEffect[effectID][property].reset();
 
 		this._itemToEffect.css(property, this._propertyValue[property].getCSS());
 	},
-	resetAll: function(effectID) {
+	resetAll: function( effectID ) {
 		for (var i in this._changeAmountForEffect[effectID]) {
 			this.reset(effectID, i);
 		}
 	},
-	_setupProperty: function(effectID, property) {
+	_setupProperty: function( effectID, property ) {
 		var ParserClass = ParserLookUp[property];
 
 		if (!this._propertiesWatching[property]) {
@@ -109,7 +106,7 @@ var ItemProperties = new Class({
 			}
 		}
 
-		this._changeAmountForEffect[effectID][property] = ParserClass.getZeroProperty();
+		this._changeAmountForEffect[effectID][property] = this._propertyStartValue[property].clone();
 	}
 });
 

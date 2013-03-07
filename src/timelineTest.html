@@ -15,7 +15,7 @@
 
 		<style type="text/css">
 			body {
-				background-color: #000;
+				background-color: #333;
 				padding: 0;
 				margin: 0;
 				border: 0;
@@ -23,7 +23,7 @@
 
 			#itemToEffect {
 				position: absolute;;
-				background-color: #333333;
+				background-color: #FF0000;
 				width: 100px;
 				height: 100px;
 			}
@@ -32,21 +32,19 @@
 		<script type="text/javascript">
 			$(function() { 
 				var itemToEffect=$('#itemToEffect');
-				console.log(itemToEffect[0].accessKey);
-
-				for(var i in itemToEffect[0]) {
-					console.log(i);
-				}
 
 				var effLeft = new EffectLeft( itemToEffect, 0, 100 );
 				var effLeft2 = new EffectLeft( itemToEffect, 0, 400 );
-				var effTop = new EffectTop( itemToEffect, 0, 100 );
-				var effLeft2 = new EffectLeft( itemToEffect, 0, 300 );
+				var effBlur = new EffectFilter( itemToEffect );
+				var effTop = new EffectTop( itemToEffect, 200 );
+				effBlur.end.blur = 20;
 
 				var timeLine = new EffectTimeline();
 				timeLine.add( effLeft, 0, 0.5 );
-				timeLine.add( effLeft2, 0.5, 1 );
-				timeLine.add( effTop, 0.5, 1 );
+				timeLine.add( effLeft2, 0, 1 );
+				timeLine.add( effTop, 0.25, 0.75 );
+				//timeLine.add( effBlur, 0.25, 0.75 );
+				timeLine.percentage = 0.25;
 
 				var gui = new dat.GUI();
 				var folderMain = gui.addFolder('Main Controller');

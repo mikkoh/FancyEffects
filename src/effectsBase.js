@@ -236,7 +236,8 @@ var EffectChangeProp = new Class({
 	setPercentage: function(value) {
 		this.parent(value);
 
-		var cValue = this._itemProperties._changeAmountForEffect[this.id][this._propertyToEffect]; //this._itemProperties.get(this._propertyToEffect);
+		var cValue = this._itemProperties.getChange( this.id, this._propertyToEffect ); //this._itemProperties.get(this._propertyToEffect);
+		//var cValue = this._itemProperties.get(this._propertyToEffect);
 
 		this._itemProperties.change(this.id,
 									this._propertyToEffect,
