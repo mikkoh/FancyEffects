@@ -1,3 +1,40 @@
+var ItemPropertiesBank = {};
+ItemPropertiesBank.curKey = 0;
+ItemPropertiesBank.items = {};
+ItemPropertiesBank.itemCount = {};
+
+ItemPropertiesBank.get = function( jQueryItem ) {
+	var rVal = null;
+
+	if( jQueryItem[0].$itemPropertiesIndex === undefined ) {
+		jQueryItem[0].$itemPropertiesIndex = ItemPropertiesBank.curKey;
+		ItemPropertiesBank.itemCount[ jQueryItem[0].$itemPropertiesIndex ] = 1;
+
+		rVal = new ItemProperties( jQueryItem );
+		ItemPropertiesBank.items[ ItemPropertiesBank.curKey ] = rVal;
+
+		ItemPropertiesBank.curKey++;
+	} else {
+		rVal = ItemPropertiesBank.items[ jQueryItem[0].$itemPropertiesIndex ];
+		ItemPropertiesBank.itemCount[ jQueryItem[0].$itemPropertiesIndex ]++;
+	}
+
+	return rVal;
+}
+
+ItemPropertiesBank.destroy = function( jQueryItem ) {
+	if( jQueryItem[0].$itemPropertiesIndex !== undefined ) {
+		ItemPropertiesBank.itemCount[ jQueryItem[0].$itemPropertiesIndex ]--;
+
+		if( ItemPropertiesBank.itemCount[ jQueryItem[0].$itemPropertiesIndex ] == 0) {
+			delete ItemPropertiesBank[ jQueryItem[0].$itemPropertiesIndex ];
+			delete ItemPropertiesBank.itemCount[ jQueryItem[0].$itemPropertiesIndex ];
+			delete jQueryItem[0].$itemPropertiesIndex;	
+		}
+	}
+}
+
+
 var ItemProperties = new Class({
 	initialize: function(itemToEffect) {
 		this._itemToEffect = itemToEffect;
@@ -36,6 +73,9 @@ var ItemProperties = new Class({
 	},
 	change: function(effectID, property, amount) {
 		this._propertyValue[property].add(amount);
+
+		if(property == 'left')
+			console.log(property, amount.value, this._propertyValue[property].value);
 
 		this._changeAmountForEffect[effectID][property].add(amount);
 

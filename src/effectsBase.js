@@ -15,8 +15,6 @@ EffectIds.getId = function( effectType ) {
 
 
 
-
-
 var Effect = new Class({
 	initialize: function(itemToEffect) {
 		this.__proto__.__defineSetter__('percentage', this.setPercentage);
@@ -54,8 +52,12 @@ var Effect = new Class({
 	setItemToEffect: function(itemToEffect, itemProperties) {
 		this._itemToEffect = itemToEffect;
 
-		if (itemProperties) this._itemProperties = itemProperties;
-		else this._itemProperties = new ItemProperties(itemToEffect);
+		if (itemProperties) {
+			this._itemProperties = itemProperties;
+		}
+		else {
+			this._itemProperties = ItemPropertiesBank.get( this._itemToEffect );
+		}
 	},
 	getPercentage: function() {
 		return this._percentage;
@@ -92,6 +94,7 @@ var Effect = new Class({
 			this._effects[i].destroy();
 		}
 
+		ItemPropertiesBank.destroy( this._itemToEffect );
 		this._effects.length = 0;
 	},
 	add: function(effect) {
@@ -233,7 +236,7 @@ var EffectChangeProp = new Class({
 	setPercentage: function(value) {
 		this.parent(value);
 
-		var cValue = this._itemProperties.get(this._propertyToEffect);
+		var cValue = this._itemProperties._changeAmountForEffect[this.id][this._propertyToEffect]; //this._itemProperties.get(this._propertyToEffect);
 
 		this._itemProperties.change(this.id,
 									this._propertyToEffect,

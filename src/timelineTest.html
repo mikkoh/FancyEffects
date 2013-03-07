@@ -32,11 +32,20 @@
 		<script type="text/javascript">
 			$(function() { 
 				var itemToEffect=$('#itemToEffect');
+				console.log(itemToEffect[0].accessKey);
+
+				for(var i in itemToEffect[0]) {
+					console.log(i);
+				}
 
 				var effLeft = new EffectLeft( itemToEffect, 0, 100 );
+				var effLeft2 = new EffectLeft( itemToEffect, 0, 400 );
 				var effTop = new EffectTop( itemToEffect, 0, 100 );
+				var effLeft2 = new EffectLeft( itemToEffect, 0, 300 );
+
 				var timeLine = new EffectTimeline();
 				timeLine.add( effLeft, 0, 0.5 );
+				timeLine.add( effLeft2, 0.5, 1 );
 				timeLine.add( effTop, 0.5, 1 );
 
 				var gui = new dat.GUI();
