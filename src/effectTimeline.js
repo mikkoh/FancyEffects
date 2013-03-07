@@ -33,10 +33,13 @@ var EffectTimeline = new Class({
 				if( this._itemToEffect )
 					effect.setItemToEffect( this._itemToEffect, this._itemProperties );
 
+				console.log( 'added to timeline', effect.id, effect.enabled );
+				effect.enabled = this._percentage >= startPerc && this._percentage <= endPerc;
+				
 				//we don't want it to effect this timeline unless
 				//it should effect it otherwise we just add it straight up
-				if( this._isEffectEffecting(effect) ) {
-					effect.percentage = this.percentage;	
+				if( effect.enabled ) {
+					effect.percentage = ( this.percentage - startPerc ) / this._effectDuration[ effect.id ];	
 				}
 			}
 		}
@@ -60,33 +63,38 @@ var EffectTimeline = new Class({
 		}
 	},
 	setPercentage: function( value ) {
-		this._percentage = value;
+		if( this.enabled ) {
+			this._percentage = value;
 
-		if( this._effectEffects.length>0 ) {
-			this._percentageToApply = 0;
+			if( this._effectEffects.length>0 ) {
+				this._percentageToApply = 0;
 
-			for(var i = 0; i < this._effectEffects.length; i++ ) {
-				this._effectEffects[i].setPercentage( this._percentage );
+				for(var i = 0; i < this._effectEffects.length; i++ ) {
+					this._effectEffects[i].setPercentage( this._percentage );
+				}
+
+				this._percentageToApply /= this._effectEffects.length;
+			} else {
+				this._percentageToApply = this._percentage;
 			}
 
-			this._percentageToApply /= this._effectEffects.length;
-		} else {
-			this._percentageToApply = this._percentage;
-		}
+			for (var i = 0; i < this._effects.length; i++) {
+				//check whether this effect should effect
+				//is it in a position in the timeline where it should be doing stuff
+				if(this._percentageToApply < this._effectStart[ this._effects[i].id ]) {
+					this._effects[i].setPercentage( 0 );
+					this._effects[i].enabled = false;
+				} else if( this._percentageToApply > this._effectEnd[ this._effects[i].id ] ) {
+					this._effects[i].setPercentage( 1 );
+					this._effects[i].enabled = false;
+				} else {
+					var startTime = this._effectStart[ this._effects[i].id ];
+					var duration = this._effectDuration[ this._effects[i].id ];
+					var curTime = ( this._percentageToApply - startTime ) / duration;
 
-		for (var i = 0; i < this._effects.length; i++) {
-			//check whether this effect should effect
-			//is it in a position in the timeline where it should be doing stuff
-			if( this._isEffectEffecting(this._effects[i]) ) {
-				var startTime = this._effectStart[ this._effects[i].id ];
-				var duration = this._effectDuration[ this._effects[i].id ];
-				var curTime = ( this._percentageToApply - startTime ) / duration;
-
-				this._effects[i].setPercentage( curTime );
-			} else if(this._percentageToApply < this._effectStart[ this._effects[i].id ]) {
-				this._effects[i].setPercentage( 0 );
-			} else {
-				this._effects[i].setPercentage( 1 );
+					this._effects[i].enabled = true;
+					this._effects[i].setPercentage( curTime );
+				}
 			}
 		}
 	},

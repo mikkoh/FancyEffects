@@ -22,7 +22,7 @@
 			}
 
 			#itemToEffect {
-				position: absolute;;
+				position: absolute;
 				background-color: #FF0000;
 				width: 100px;
 				height: 100px;
@@ -33,22 +33,26 @@
 			$(function() { 
 				var itemToEffect=$('#itemToEffect');
 
-				var effLeft = new EffectLeft( itemToEffect, 0, 100 );
-				var effLeft2 = new EffectLeft( itemToEffect, 0, 400 );
-				var effBlur = new EffectFilter( itemToEffect );
-				var effTop = new EffectTop( itemToEffect, 200 );
-				effBlur.end.blur = 20;
+				var effTop = new EffectTop( itemToEffect, 200, 0 );
+				var effOpacity = new EffectOpacity( itemToEffect, 0, 1 );
+				var animateIn = new EffectTimeline();
+				animateIn.add( effTop, 0, 1 );
+				animateIn.add( effOpacity, 0, 0.25 );
+				
+				var effTop2 = new EffectTop( itemToEffect, 0, 200 );
+				var effOpacity2 = new EffectOpacity( itemToEffect, 1, 0 );
+				var animateOut = new EffectTimeline();
+				animateOut.add( effTop2, 0, 1 );
+				animateOut.add( effOpacity2, 0.75, 1 );
 
-				var timeLine = new EffectTimeline();
-				timeLine.add( effLeft, 0, 0.5 );
-				timeLine.add( effLeft2, 0, 1 );
-				timeLine.add( effTop, 0.25, 0.75 );
-				//timeLine.add( effBlur, 0.25, 0.75 );
-				timeLine.percentage = 0.25;
+				var animation = new EffectTimeline();
+				animation.add( animateIn, 0, 0.5 );
+				animation.add( animateOut, 0.4, 1 );
+
 
 				var gui = new dat.GUI();
-				var folderMain = gui.addFolder('Main Controller');
-				folderMain.add(timeLine, 'percentage', 0, 1);
+				var folderMain = gui.addFolder( 'Main Controller' );
+				folderMain.add( animation, 'percentage', 0, 1 );
 				folderMain.open();
 			});
 		</script>
