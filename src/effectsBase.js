@@ -16,12 +16,12 @@ EffectIds.getId = function( effectType ) {
 
 
 var Effect = new Class({
-	initialize: function(itemToEffect) {
-		this.__defineSetter__('percentage', this.setPercentage);
-		this.__defineGetter__('percentage', this.getPercentage);
-		this.__defineGetter__('enabled', this.getEnabled);
-		this.__defineSetter__('enabled', this.setEnabled);
-		this.__defineGetter__('id', this.getId);
+	initialize: function( itemToEffect ) {
+		this.__defineSetter__( 'percentage', this.setPercentage );
+		this.__defineGetter__( 'percentage', this.getPercentage );
+		this.__defineGetter__( 'enabled', this.getEnabled );
+		this.__defineSetter__( 'enabled', this.setEnabled );
+		this.__defineGetter__( 'id', this.getId );
 
 
 		this._id = EffectIds.getId( this._type );
@@ -32,7 +32,9 @@ var Effect = new Class({
 		this._effectEffectIdx = {};
 		this._effectEffects = [];
 
-		if (itemToEffect) this.setItemToEffect(itemToEffect);
+		if (itemToEffect) {
+			this.setItemToEffect( itemToEffect );
+		}
 	},
 
 	_enabled: true,
@@ -53,7 +55,7 @@ var Effect = new Class({
 	getPercentage: function() {
 		return this._percentage;
 	},
-	setPercentage: function(value) {
+	setPercentage: function( value ) {
 		if( this.enabled ) {
 			this._percentage = value;
 
@@ -80,7 +82,6 @@ var Effect = new Class({
 	setEnabled: function( value ) {
 		this._enabled = value;
 
-		console.log( '\tsetting', this.id, this._enabled );
 		for( var i = 0; i < this._effects.length; i++ ) {
 			this._effects[ i ].enabled = value;
 		}
@@ -97,6 +98,11 @@ var Effect = new Class({
 		else {
 			this._itemProperties = ItemPropertiesBank.get( this._itemToEffect );
 		}
+
+		//now set item to effect for all child effects
+		for (var i = 0; i < this._effects.length; i++) {
+			this._effects[i].setItemToEffect( itemToEffect, itemProperties );
+		};
 	},
 	effectPercentage: function(percentage) {
 		this._percentageToApply += percentage;
@@ -254,12 +260,15 @@ var EffectChangeProp = new Class({
 		if( this.enabled ) {
 			this.parent( value );
 
-			var cValue = this._itemProperties.getChange( this.id, this._propertyToEffect ); //this._itemProperties.get(this._propertyToEffect);
-			//var cValue = this._itemProperties.get(this._propertyToEffect);
+			//if an effect was initialized without a item to effect this can be null
+			if( this._itemProperties != null ) {
+				var cValue = this._itemProperties.getChange( this.id, this._propertyToEffect ); //this._itemProperties.get(this._propertyToEffect);
+				//var cValue = this._itemProperties.get(this._propertyToEffect);
 
-			this._itemProperties.change(this.id,
-										this._propertyToEffect,
-										this._temp.getChange( this._percentageToApply, cValue, this._startValue, this._endValue ));
+				this._itemProperties.change(this.id,
+											this._propertyToEffect,
+											this._temp.getChange( this._percentageToApply, cValue, this._startValue, this._endValue ));
+			}
 		}
 	},
 	applyPercentage: function() {

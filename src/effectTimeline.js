@@ -1,13 +1,13 @@
 var EffectTimeline = new Class({
 	Extends: Effect,
 
-	initialize: function() {
+	initialize: function( itemToEffect ) {
 		this._type = 'EffectTimeline';
 		this._effectStart = {};
 		this._effectEnd = {};
 		this._effectDuration = {};
 
-		this.parent();
+		this.parent( itemToEffect );
 	},
 
 	_effectStart: null,
@@ -33,7 +33,6 @@ var EffectTimeline = new Class({
 				if( this._itemToEffect )
 					effect.setItemToEffect( this._itemToEffect, this._itemProperties );
 
-				console.log( 'added to timeline', effect.id, effect.enabled );
 				effect.enabled = this._percentage >= startPerc && this._percentage <= endPerc;
 				
 				//we don't want it to effect this timeline unless

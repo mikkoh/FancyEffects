@@ -33,21 +33,25 @@
 			$(function() { 
 				var itemToEffect=$('#itemToEffect');
 
-				var effTop = new EffectTop( itemToEffect, 200, 0 );
-				var effOpacity = new EffectOpacity( itemToEffect, 0, 1 );
+				var effTop = new EffectTop( 200, 0 );
+				var effLeft = new EffectLeft( 0, 100 );
+				var effOpacity = new EffectOpacity( 0, 1 );
 				var animateIn = new EffectTimeline();
 				animateIn.add( effTop, 0, 1 );
+				animateIn.add( effLeft, 0, 1 );
 				animateIn.add( effOpacity, 0, 0.25 );
 				
-				var effTop2 = new EffectTop( itemToEffect, 0, 200 );
-				var effOpacity2 = new EffectOpacity( itemToEffect, 1, 0 );
+				var effTop2 = new EffectTop( 0, 200 );
+				var effLeft2 = new EffectLeft( 100, 200 );
+				var effOpacity2 = new EffectOpacity( 1, 0 );
 				var animateOut = new EffectTimeline();
 				animateOut.add( effTop2, 0, 1 );
+				animateOut.add( effLeft2, 0, 1 );
 				animateOut.add( effOpacity2, 0.75, 1 );
 
-				var animation = new EffectTimeline();
+				var animation = new EffectTimeline( itemToEffect );
 				animation.add( animateIn, 0, 0.5 );
-				animation.add( animateOut, 0.4, 1 );
+				animation.add( animateOut, 0.5, 1 );
 
 
 				var gui = new dat.GUI();
