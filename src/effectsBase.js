@@ -19,9 +19,11 @@ EffectIds.getId = function( effectType ) {
 
 var Effect = new Class({
 	initialize: function(itemToEffect) {
-		this._id = EffectIds.getId( this._type );
+		this.__proto__.__defineSetter__('percentage', this.setPercentage);
+		this.__proto__.__defineGetter__('percentage', this.getPercentage);
+		this.__proto__.__defineGetter__('id', this.getId);
 
-		console.log( this._id );
+		this._id = EffectIds.getId( this._type );
 
 		this._effectIdx = {};
 		this._effects = [];
@@ -30,10 +32,6 @@ var Effect = new Class({
 		this._effectEffects = [];
 
 		if (itemToEffect) this.setItemToEffect(itemToEffect);
-
-		this.__proto__.__defineSetter__('percentage', this.setPercentage);
-		this.__proto__.__defineGetter__('percentage', this.getPercentage);
-		this.__proto__.__defineGetter__('id', this.getId);
 	},
 
 	_type: 'Effect',
@@ -78,9 +76,6 @@ var Effect = new Class({
 		}
 
 		for (var i = 0; i < this._effects.length; i++) {
-
-			if( this._effectEffects.length>0 ) { console.log(this._percentageToApply) }
-
 			this._effects[i].setPercentage( this._percentageToApply );
 		}
 	},
@@ -111,6 +106,7 @@ var Effect = new Class({
 				effect.percentage = this.percentage;
 			}
 		} else {
+			//check to see if this effect has already been added
 			if( this._effectIdx[effect.id] === undefined ) {
 				this._effectIdx[effect.id] = this._effects.length;
 				this._effects.push( effect );

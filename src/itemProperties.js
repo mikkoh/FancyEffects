@@ -15,8 +15,8 @@ var ItemProperties = new Class({
 	setupEffect: function(effect) {
 		var effectID = effect.id;
 
-		if (!this._changeAmountForEffect[effectID]) {
-			this._changeAmountForEffect[effectID] = {};
+		if (!this._changeAmountForEffect[ effectID ]) {
+			this._changeAmountForEffect[ effectID ] = {};
 
 			for (var i = 1; i < arguments.length; i++) {
 				var property = arguments[i];

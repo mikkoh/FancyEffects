@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script type="text/javascript" src="../lib/dat.gui.min.js"></script>
+		<script type="text/javascript" src="../lib/jquery-1.8.2.min.js"></script>
+		<script type="text/javascript" src="../lib/mootools-core-1.4.5.js"></script>
+		<script type="text/javascript" src="signals.js"></script>
+		<script type="text/javascript" src="easingEquations.js"></script>
+		<script type="text/javascript" src="itemProperties.js"></script>
+		<script type="text/javascript" src="parsers.js"></script>
+		<script type="text/javascript" src="effectsBase.js"></script>
+		<script type="text/javascript" src="effectTimeline.js"></script>
+		<script type="text/javascript" src="effectEffects.js"></script>
+		<script type="text/javascript" src="effectsJS.js"></script>
+
+		<style type="text/css">
+			body {
+				background-color: #000;
+				padding: 0;
+				margin: 0;
+				border: 0;
+			}
+
+			#itemToEffect {
+				position: absolute;;
+				background-color: #333333;
+				width: 100px;
+				height: 100px;
+			}
+		</style>
+
+		<script type="text/javascript">
+			$(function() { 
+				var itemToEffect=$('#itemToEffect');
+
+				var effLeft = new EffectLeft( itemToEffect, 0, 100 );
+				var effTop = new EffectTop( itemToEffect, 0, 100 );
+				var timeLine = new EffectTimeline();
+				timeLine.add( effLeft, 0, 0.5 );
+				timeLine.add( effTop, 0.5, 1 );
+
+				var gui = new dat.GUI();
+				var folderMain = gui.addFolder('Main Controller');
+				folderMain.add(timeLine, 'percentage', 0, 1);
+				folderMain.open();
+			});
+		</script>
+	</head>
+	<body>
+		<div id="itemToEffect"></div>
+	</body>
+</html>
