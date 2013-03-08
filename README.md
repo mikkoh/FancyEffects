@@ -1,4 +1,4 @@
-EffectsJS
+FancyEffects
 =========
 
 This is a non-destructive effects and animation library built ontop of jQuery. The libraries main goal is to create 
