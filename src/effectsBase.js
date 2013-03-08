@@ -350,6 +350,12 @@ var EffectChangePropColour = new Class({
 			} else if (arguments.length == 9) {
 				startVal = new PropertyColour(arguments[1], arguments[2], arguments[3], arguments[4]);
 				endVal = new PropertyColour(arguments[5], arguments[6], arguments[7], arguments[8]);
+			} else {
+				throw new Error('You should instantiate this colour with either: \n' +
+								'itemToEffect, r, g, b\n' +
+								'itemToEffect, r, g, b, a\n' +
+								'itemToEffect, r, g, b, r, g, b\n' +
+								'itemToEffect, r, g, b, a, r, g, b, a\n');
 			}
 
 			this.parent.apply(this, [arguments[0], startVal, endVal]);
@@ -364,6 +370,12 @@ var EffectChangePropColour = new Class({
 			} else if (arguments.length == 8) {
 				startVal = new PropertyColour(arguments[0], arguments[1], arguments[2], arguments[3]);
 				endVal = new PropertyColour(arguments[4], arguments[5], arguments[6], arguments[7]);
+			} else {
+				throw new Error('You should instantiate this colour with either: \n' +
+								'r, g, b\n' +
+								'r, g, b, a\n' +
+								'r, g, b, r, g, b\n' +
+								'r, g, b, a, r, g, b, a\n');
 			}
 
 			this.parent.apply(this, [startVal, endVal]);
