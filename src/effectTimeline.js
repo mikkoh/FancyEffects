@@ -33,12 +33,23 @@ var EffectTimeline = new Class({
 				if( this._itemToEffect )
 					effect.setItemToEffect( this._itemToEffect, this._itemProperties );
 
-				effect.enabled = this._percentage >= startPerc && this._percentage <= endPerc;
+			
 				
 				//we don't want it to effect this timeline unless
 				//it should effect it otherwise we just add it straight up
-				if( effect.enabled ) {
-					effect.percentage = ( this.percentage - startPerc ) / this._effectDuration[ effect.id ];	
+				if( this._percentageToApply < this._effectStart[ effect.id ] ) {
+					effect.setPercentage( 0 );
+					effect.enabled = false;
+				} else if( this._percentageToApply > this._effectEnd[ effect.id ] ) {
+					effect.setPercentage( 1 );
+					effect.enabled = false;
+				} else {
+					var startTime = this._effectStart[ effect.id ];
+					var duration = this._effectDuration[ effect.id ];
+					var curTime = ( this._percentageToApply - startTime ) / duration;
+
+					effect.enabled = true;
+					effect.setPercentage( curTime );
 				}
 			}
 		}
@@ -80,7 +91,7 @@ var EffectTimeline = new Class({
 			for (var i = 0; i < this._effects.length; i++) {
 				//check whether this effect should effect
 				//is it in a position in the timeline where it should be doing stuff
-				if(this._percentageToApply < this._effectStart[ this._effects[i].id ]) {
+				if( this._percentageToApply < this._effectStart[ this._effects[i].id ] ) {
 					this._effects[i].setPercentage( 0 );
 					this._effects[i].enabled = false;
 				} else if( this._percentageToApply > this._effectEnd[ this._effects[i].id ] ) {

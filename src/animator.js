@@ -54,7 +54,7 @@ Animator.destroyAnimation = function( animation ) {
 
 Animator.tick =function() {
 	var animations = Animator.animations;
-	
+
 	for(var i = animations.length - 1; i >= 0 ; i-- ) {
 		if( !animations[i].shouldBeDeleted ) {
 			animations[i].tick();
