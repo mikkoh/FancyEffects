@@ -13,6 +13,7 @@ ItemPropertiesBank.get = function( jQueryItem ) {
 		rVal = new ItemProperties( jQueryItem );
 		ItemPropertiesBank.items[ ItemPropertiesBank.curKey ] = rVal;
 
+		console.log('got key', ItemPropertiesBank.curKey);
 		ItemPropertiesBank.curKey++;
 	} else {
 		rVal = ItemPropertiesBank.items[ jQueryItem[0].$itemPropertiesIndex ];

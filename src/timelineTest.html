@@ -37,14 +37,14 @@
 				var animateIn = new EffectTimeline();
 				animateIn.add( new EffectTop( 200, 0 ), 0, 1 );
 				animateIn.add( new EffectLeft( 100, 200 ), 0, 1 );
-				animateIn.add( new EffectOpacity( 0, 1 ), 0, 0.25 );
+				//animateIn.add( new EffectOpacity( 0, 1 ), 0, 0.25 );
 				animateIn.add( new EffectBackgroundColor( 255, 0, 255 ), 0, 1 );
 				
 				var animateOut = new EffectTimeline();
 				animateOut.add( new EffectTop( 0, 200 ), 0, 1 );
 				animateOut.add( new EffectLeft( 200, 300 ), 0, 1 );
-				animateOut.add( new EffectOpacity( 1, 0 ), 0.75, 1 );
-				animateOut.add( new EffectBackgroundColor( 0, 0, 0 ), 0, 1 );
+				//animateOut.add( new EffectOpacity( 1, 0 ), 0.75, 1 );
+				animateOut.add( new EffectBackgroundColor( 255, 0, 255, 245, 242, 54 ), 0, 1 );
 
 				var animation = new EffectTimeline( itemToEffect );
 				animation.add( animateIn, 0, 0.5 );
