@@ -1,3 +1,236 @@
+var Time = {};
+
+Time.deltaTime = 0;
+Time.scale = 1;
+Time.onEnterFrame = new Signal();
+
+Time.setTargetFrameRate = function(frameRate) {
+	Time._targetMilli = 1000 / frameRate;
+};
+
+Time._targetMilli = 1000 / 60;
+Time._lastCallTime = 0;
+Time._allowOnEnterFrame = false;
+
+Time._onEnterFrameFunction = function() {
+	var curCallTime = Date.now();
+	
+	Time.deltaTime = curCallTime - Time._lastCallTime;
+
+	Time.scale = Time.deltaTime / Time._targetMilli;
+
+	if (isNaN(Time.scale)) Time.scale = 1;
+
+	Time.onEnterFrame.dispatch();
+
+	if (Time._allowOnEnterFrame) requestAnimationFrame(Time._onEnterFrameFunction);
+	else Time.scale = 1;
+
+	Time._lastCallTime = curCallTime;
+};
+
+Time.onEnterFrame.onListenerAdded.add( function() {
+	Time._allowOnEnterFrame = true;
+	Time._onEnterFrameFunction();
+});
+
+Time.onEnterFrame.onListenerRemoved.add( function() {
+	if (Time.onEnterFrame.countListeners == 0) Time._allowOnEnterFrame = false;
+});
+
+
+var Animator = {};
+Animator.animations = [];
+
+Animator.createAnimation = function( effect, percentage, duration, onComplete ) {
+	Animator.animations.push( new Animation(effect, percentage, duration, onComplete) );
+
+	return Animator.animations[ Animator.animations.length - 1 ];
+};
+
+Animator.destroyAnimation = function( animation ) {
+	animation.shouldBeDeleted = true;
+};
+
+Animator.tick =function() {
+	var animations = Animator.animations;
+	
+	for(var i = animations.length - 1; i >= 0 ; i-- ) {
+		if( !animations[i].shouldBeDeleted ) {
+			animations[i].tick();
+		} else {
+			animations.splice(i, 1);
+		}
+	}
+};
+
+Time.onEnterFrame.add( Animator.tick );
+
+
+var Animation = new Class({
+	initialize: function( effect, percentage, duration, onComplete ) {
+		this._effect = effect;
+		this._startPercentage = effect.percentage;
+		this._percentageChange = percentage - this._startPercentage;
+		this._duration = duration * 1000;
+		this._startTime = this._currentTime = Date.now();
+		this._onComplete = onComplete;
+	},
+
+	shouldBeDeleted: false,
+	_effect: null,
+	_startPercentage: 0,
+	_percentageChange: 0,
+	_startTime: 0,
+	_currentTime: 0,
+	_duration: 0,
+	_onComplete: null,
+
+	tick: function() {
+		this._currentTime += Time.deltaTime;
+
+		var curPerc = ( this._currentTime - this._startTime ) / this._duration;
+
+		if( curPerc >= 1 )
+		{
+			curPerc = 1;
+			this.shouldBeDeleted = true;
+
+			if( this._onComplete )
+				this._onComplete();
+		}
+
+		this._effect.percentage = this._startPercentage + this._percentageChange * curPerc;
+	}
+});
+var easing = {};
+
+easing.ElasticEaseOut = function( t, b, c, d, a, p ) {
+	if (t==0) return b;  if ((t/=d)==1) return b+c;  if (!p) p=d*.3;
+	if (!a || a < Math.abs(c)) { a=c; var s=p/4; }
+	else var s = p/(2*Math.PI) * Math.asin (c/a);
+	return (a*Math.pow(2,-10*t) * Math.sin( (t*d-s)*(2*Math.PI)/p ) + c + b);
+}
+
+var EffectPercentage = new Class({
+	Extends: Effect,
+
+	setItemToEffect: function( effect ) {
+		this._itemToEffect = effect;
+	}
+});
+
+var EffectPercentageElasticEaseOut = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.ElasticEaseOut( value, 0, 1, 1 ) );
+	}
+});
+var EffectTimeline = new Class({
+	Extends: Effect,
+
+	initialize: function( itemToEffect ) {
+		this._type = 'EffectTimeline';
+		this._effectStart = {};
+		this._effectEnd = {};
+		this._effectDuration = {};
+
+		this.parent( itemToEffect );
+	},
+
+	_effectStart: null,
+	_effectEnd: null,
+	_effectDuration: null,
+
+	add: function( effect, startPerc, endPerc ) {
+		//check if this effect being added will effect this effect
+		//or if it will effect the itemToEffect
+		if ( effect instanceof EffectPercentage ) {
+			//we'll just use the parent functionality cause it should be the exact same
+			this.parent( effect );
+		} else {
+			//check to see if this effect has already been added
+			if( this._effectIdx[effect.id] === undefined ) {
+				this._effectStart[ effect.id ] = startPerc == undefined ? 0 : startPerc;
+				this._effectEnd[ effect.id ] = endPerc == undefined ? 1 : endPerc;
+				this._effectDuration[ effect.id ] = endPerc - startPerc;
+
+				this._effectIdx[effect.id] = this._effects.length;
+				this._effects.push( effect );
+
+				if( this._itemToEffect )
+					effect.setItemToEffect( this._itemToEffect, this._itemProperties );
+
+				effect.enabled = this._percentage >= startPerc && this._percentage <= endPerc;
+				
+				//we don't want it to effect this timeline unless
+				//it should effect it otherwise we just add it straight up
+				if( effect.enabled ) {
+					effect.percentage = ( this.percentage - startPerc ) / this._effectDuration[ effect.id ];	
+				}
+			}
+		}
+	},
+	remove: function( effect ) {
+		//check if this is an effect effect or just a regular old effect
+		//if this first if statement has an index then this is a regular effect
+		if ( this._effectIdx[effect.id] !== undefined ) {
+			//we'll just use the parent functionality cause it should be the exact same
+			//for effect effects
+			this.parent( effect );
+
+			//delete it from the start and end time lookups
+			delete this._effectStart[ effect.id ];
+			delete this._effectEnd[ effect.id ];
+
+		} else if( this._effectEffectIdx[effect.id] !== undefined ) {
+			//we'll just use the parent functionality cause it should be the exact same
+			//for effect effects
+			this.parent( effect );
+		}
+	},
+	setPercentage: function( value ) {
+		if( this.enabled ) {
+			this._percentage = value;
+
+			if( this._effectEffects.length>0 ) {
+				this._percentageToApply = 0;
+
+				for(var i = 0; i < this._effectEffects.length; i++ ) {
+					this._effectEffects[i].setPercentage( this._percentage );
+				}
+
+				this._percentageToApply /= this._effectEffects.length;
+			} else {
+				this._percentageToApply = this._percentage;
+			}
+
+			for (var i = 0; i < this._effects.length; i++) {
+				//check whether this effect should effect
+				//is it in a position in the timeline where it should be doing stuff
+				if(this._percentageToApply < this._effectStart[ this._effects[i].id ]) {
+					this._effects[i].setPercentage( 0 );
+					this._effects[i].enabled = false;
+				} else if( this._percentageToApply > this._effectEnd[ this._effects[i].id ] ) {
+					this._effects[i].setPercentage( 1 );
+					this._effects[i].enabled = false;
+				} else {
+					var startTime = this._effectStart[ this._effects[i].id ];
+					var duration = this._effectDuration[ this._effects[i].id ];
+					var curTime = ( this._percentageToApply - startTime ) / duration;
+
+					this._effects[i].enabled = true;
+					this._effects[i].setPercentage( curTime );
+				}
+			}
+		}
+	},
+	_isEffectEffecting: function( effect ) {
+		return this._percentageToApply >= this._effectStart[ effect.id ] && 
+			   this._percentageToApply <= this._effectEnd[ effect.id ];
+	}
+});
 var EffectIds = {};
 
 EffectIds.keys = {};
@@ -15,48 +248,112 @@ EffectIds.getId = function( effectType ) {
 
 
 
-
-
 var Effect = new Class({
-	initialize: function(itemToEffect) {
+	initialize: function( itemToEffect ) {
+		this.__defineSetter__( 'percentage', this.setPercentage );
+		this.__defineGetter__( 'percentage', this.getPercentage );
+		this.__defineGetter__( 'enabled', this.getEnabled );
+		this.__defineSetter__( 'enabled', this.setEnabled );
+		this.__defineGetter__( 'id', this.getId );
+
+
+		this._id = EffectIds.getId( this._type );
+
 		this._effectIdx = {};
 		this._effects = [];
 
-		if (itemToEffect) this.setItemToEffect(itemToEffect);
+		this._effectEffectIdx = {};
+		this._effectEffects = [];
 
-		this.__proto__.__defineSetter__('percentage', this.setPercentage);
-		this.__proto__.__defineGetter__('percentage', this.getPercentage);
-		this.__proto__.__defineGetter__('id', this.getId);
+		if (itemToEffect) {
+			this.setItemToEffect( itemToEffect );
+		}
 	},
 
-	_id: 'Effect',
+	_enabled: true,
+	_type: 'Effect',
+	_id: null,
 	_itemToEffect: null,
 	_itemProperties: null,
 	_percentage: 0,
+	_percentageToApply: 0,
 	_effectIdx: null,
+	_effectEffectIdx: null,
 	_effects: null,
+	_effectEffects: null,
+	_animation: null,
 
 	getId: function() {
 		return this._id;
+	},
+	getPercentage: function() {
+		return this._percentage;
+	},
+	setPercentage: function( value ) {
+		if( this.enabled ) {
+			this._percentage = value;
+
+			if( this._effectEffects.length>0 ) {
+				this._percentageToApply = 0;
+
+				for(var i = 0; i < this._effectEffects.length; i++ ) {
+					this._effectEffects[i].setPercentage( this._percentage );
+				}
+
+				this._percentageToApply /= this._effectEffects.length;
+			} else {
+				this._percentageToApply = this._percentage;
+			}
+
+			for (var i = 0; i < this._effects.length; i++) {
+				this._effects[i].setPercentage( this._percentageToApply );
+			}
+		}
+	},
+	getEnabled: function() { 
+		return this._enabled;
+	},
+	setEnabled: function( value ) {
+		this._enabled = value;
+
+		for( var i = 0; i < this._effects.length; i++ ) {
+			this._effects[ i ].enabled = value;
+		}
 	},
 	getStart: function(property) {
 		return this._itemProperties.getStart(property);
 	},
 	setItemToEffect: function(itemToEffect, itemProperties) {
-		this._itemToEffect = itemToEffect;
+		if( !this._itemToEffect )
+		{
+			this._itemToEffect = itemToEffect;
 
-		if (itemProperties) this._itemProperties = itemProperties;
-		else this._itemProperties = new ItemProperties(itemToEffect);
-	},
-	getPercentage: function() {
-		return this._percentage;
-	},
-	setPercentage: function(value) {
-		this._percentage = value;
-
-		for (var i = 0; i < this._effects.length; i++) {
-			this._effects[i].setPercentage(value);
+			if( !(this._itemToEffect instanceof EffectPercentage) ) {
+				if ( itemProperties ) {
+					this._itemProperties = itemProperties;
+				}
+				else {
+					this._itemProperties = ItemPropertiesBank.get( this._itemToEffect );
+				}
+			}
 		}
+
+		//now set item to effect for all child effects
+		for (var i = 0; i < this._effects.length; i++) {
+			this._effects[i].setItemToEffect( itemToEffect, itemProperties );
+		};
+	},
+	animate: function( targetPercentage, duration, onComplete ) {
+		if( this._animation )
+			Animator.destroyAnimation( this._animation );
+
+		this._animation = Animator.createAnimation( this, targetPercentage, duration, onComplete );
+	},
+	stopAnimate: function() {
+		Animator.destroyAnimation( this._animation );
+	},
+	effectPercentage: function( percentage ) {
+		this._percentageToApply += percentage;
 	},
 	reset: function() {
 		this._itemProperties.resetAll(this.id);
@@ -68,19 +365,33 @@ var Effect = new Class({
 			this._effects[i].destroy();
 		}
 
+		ItemPropertiesBank.destroy( this._itemToEffect );
 		this._effects.length = 0;
 	},
 	add: function(effect) {
-		if (this._effectIdx[effect.id] === undefined) {
-			this._effectIdx[effect.id] = this._effects.length;
-			this._effects.push(effect);
+		//check if this effect being added will effect this effect
+		//or if it will effect the itemToEffect
+		if ( effect instanceof EffectPercentage ) {
+			if( this._effectEffectIdx[effect.id] === undefined ) {
+				this._effectEffectIdx[effect.id] = this._effectEffects.length;
+				this._effectEffects.push( effect );
 
-			effect.setItemToEffect(this._itemToEffect, this._itemProperties);
-			effect.percentage = this.percentage;
+				effect.setItemToEffect( this );
+				effect.percentage = this.percentage;
+			}
+		} else {
+			//check to see if this effect has already been added
+			if( this._effectIdx[effect.id] === undefined ) {
+				this._effectIdx[effect.id] = this._effects.length;
+				this._effects.push( effect );
+
+				effect.setItemToEffect( this._itemToEffect, this._itemProperties );
+				effect.percentage = this.percentage;
+			}
 		}
 	},
 	remove: function(effect) {
-		if (this._effectIdx[effect.id] !== undefined) {
+		if ( this._effectIdx[effect.id] !== undefined ) {
 			var idx = this._effectIdx[effect.id];
 			var effect = this._effects[idx];
 
@@ -88,13 +399,25 @@ var Effect = new Class({
 
 			this._effects.splice(idx, 1);
 
-			for (var i = 0; i < this._effects.length; i++) {
+			//reset the idx lookup to reflect the removed item
+			for ( var i = idx; i < this._effects.length; i++ ) {
 				this._effectIdx[this._effects[i].id] = i;
+			}
+		} else if( this._effectEffectIdx[effect.id] !== undefined ) {
+			var idx = this._effectIdx[effect.id];
+			var effect = this._effectEffects[idx];
+
+			effect.destroy();
+
+			this._effectEffects.splice(idx, 1);
+
+			//reset the idx lookup to reflect the removed item
+			for ( var i = idx; i < this._effectEffects.length; i++ ) {
+				this._effectEffects[this._effectEffects[i].id] = i;
 			}
 		}
 	}
 });
-
 
 var EffectChangeProp = new Class({
 	Extends: Effect,
@@ -171,7 +494,7 @@ var EffectChangeProp = new Class({
 	setStartValue: function(value) {
 		this._startValue = value;
 
-		this.setPercentage(this._percentage);
+		this.setPercentage(this._percentageToApply);
 	},
 	getEndValue: function() {
 		return this._endValue;
@@ -179,19 +502,25 @@ var EffectChangeProp = new Class({
 	setEndValue: function(value) {
 		this._endValue = value;
 
-		this.setPercentage(this._percentage);
+		this.setPercentage(this._percentageToApply);
 	},
 	setPercentage: function(value) {
-		this.parent(value);
+		if( this.enabled ) {
+			this.parent( value );
 
-		var cValue = this._itemProperties.get(this._propertyToEffect);
+			//if an effect was initialized without a item to effect this can be null
+			if( this._itemProperties != null ) {
+				var cValue = this._itemProperties.getChange( this.id, this._propertyToEffect ); //this._itemProperties.get(this._propertyToEffect);
+				//var cValue = this._itemProperties.get(this._propertyToEffect);
 
-		this._itemProperties.change(this.id,
-		this._propertyToEffect,
-		this._temp.getChange(value, cValue, this._startValue, this._endValue));
+				this._itemProperties.change(this.id,
+											this._propertyToEffect,
+											this._temp.getChange( this._percentageToApply, cValue, this._startValue, this._endValue ));
+			}
+		}
 	},
 	applyPercentage: function() {
-		this.setPercentage(this.percentage);
+		this.setPercentage( this.percentage );
 	},
 	_onStartValueChange: function() {
 		this._startValue.equals(this._itemProperties.getStart(this._propertyToEffect));
@@ -235,6 +564,8 @@ var EffectChangePropColour = new Class({
 	Extends: EffectChangeProp,
 
 	initialize: function() {
+		this._type = 'EffectChangePropColour';
+
 		var startVal = undefined;
 		var endVal = undefined;
 
@@ -276,7 +607,7 @@ var EffectWidth = new Class({
 	Extends: EffectChangePropNumber,
 
 	initialize: function() {
-		this._id = EffectIds.getId( 'EffectWidth' );
+		this._type =  'EffectWidth';
 		this._propertyToEffect = 'width';
 		this.parent.apply(this, arguments);
 	}
@@ -287,9 +618,8 @@ var EffectHeight = new Class({
 	Extends: EffectChangePropNumber,
 
 	initialize: function() {
-		this._id = EffectIds.getId( 'EffectHeight' );
+		this._type =  'EffectHeight';
 		this._propertyToEffect = 'height';
-		this._temp = new PropertyNumber();
 		this.parent.apply(this, arguments);
 	}
 });
@@ -298,7 +628,7 @@ var EffectHeight = new Class({
 var EffectLeft = new Class({
 	Extends: EffectChangePropNumber,
 	initialize: function() {
-		this._id = EffectIds.getId( 'EffectLeft' );
+		this._type =  'EffectLeft';
 		this._propertyToEffect = 'left';
 		this.parent.apply(this, arguments);
 	}
@@ -307,7 +637,7 @@ var EffectLeft = new Class({
 var EffectTop = new Class({
 	Extends: EffectChangePropNumber,
 	initialize: function() {
-		this._id = EffectIds.getId( 'EffectTop' );
+		this._type =  'EffectTop';
 		this._propertyToEffect = 'top';
 		this.parent.apply(this, arguments);
 	}
@@ -316,7 +646,7 @@ var EffectTop = new Class({
 var EffectOpacity = new Class({
 	Extends: EffectChangePropNumber,
 	initialize: function() {
-		this._id = EffectIds.getId( 'EffectOpacity' );
+		this._type =  'EffectOpacity';
 		this._propertyToEffect = 'opacity';
 		this.parent.apply(this, arguments);
 	}
@@ -325,7 +655,7 @@ var EffectOpacity = new Class({
 var EffectBorderWidth = new Class({
 	Extends: EffectChangePropNumber,
 	initialize: function() {
-		this._id = EffectIds.getId( 'EffectBorderWidth' );
+		this._type =  'EffectBorderWidth';
 		this._propertyToEffect = 'border-width';
 		this.parent.apply(this, arguments);
 	}
@@ -334,7 +664,7 @@ var EffectBorderWidth = new Class({
 var EffectBackgroundColor = new Class({
 	Extends: EffectChangePropColour,
 	initialize: function() {
-		this._id = EffectIds.getId( 'EffectBackgroundColor' );
+		this._type =  'EffectBackgroundColor';
 		this._propertyToEffect = 'background-color';
 		this.parent.apply(this, arguments);
 	}
@@ -343,7 +673,7 @@ var EffectBackgroundColor = new Class({
 var EffectColor = new Class({
 	Extends: EffectChangePropColour,
 	initialize: function() {
-		this._id = EffectIds.getId( 'EffectColor' );
+		this._type =  'EffectColor';
 		this._propertyToEffect = 'color';
 		this.parent.apply(this, arguments);
 	}
@@ -355,7 +685,7 @@ var EffectFilter = new Class({
 	_temp: null,
 
 	initialize: function() {
-		this._id = EffectIds.getId( 'EffectFilter' );
+		this._type =  'EffectFilter';
 		this._propertyToEffect = '-webkit-filter';
 		this._temp = new PropertyFilter();
 
@@ -369,7 +699,7 @@ var EffectBoxShadow = new Class({
 	_temp: null,
 
 	initialize: function() {
-		this._id = EffectIds.getId( 'EffectBoxShadow' );
+		this._type =  'EffectBoxShadow';
 		this._propertyToEffect = 'box-shadow';
 		this._temp = new PropertyBoxShadow();
 
@@ -382,13 +712,15 @@ var EffectBoxShadow = new Class({
 var EffectMoveUpAndFade = new Class({
 	Extends: Effect,
 	initialize: function(itemToEffect, offY) {
-		this.parent(itemToEffect);
+		this._type = 'EffectMoveUpAndFade';
 
 		this._effFade = new EffectOpacity(0, 1);
 		this._effMove = new EffectTop(offY == undefined ? 200 : offY);
 
 		this.add(this._effFade);
 		this.add(this._effMove);
+
+		this.parent(itemToEffect);
 	},
 
 	_effFade: null,
@@ -399,6 +731,43 @@ var EffectMoveUpAndFade = new Class({
 		this._effMove.percentage = 1 - value;
 	}
 });
+var ItemPropertiesBank = {};
+ItemPropertiesBank.curKey = 0;
+ItemPropertiesBank.items = {};
+ItemPropertiesBank.itemCount = {};
+
+ItemPropertiesBank.get = function( jQueryItem ) {
+	var rVal = null;
+
+	if( jQueryItem[0].$itemPropertiesIndex === undefined ) {
+		jQueryItem[0].$itemPropertiesIndex = ItemPropertiesBank.curKey;
+		ItemPropertiesBank.itemCount[ jQueryItem[0].$itemPropertiesIndex ] = 1;
+
+		rVal = new ItemProperties( jQueryItem );
+		ItemPropertiesBank.items[ ItemPropertiesBank.curKey ] = rVal;
+
+		ItemPropertiesBank.curKey++;
+	} else {
+		rVal = ItemPropertiesBank.items[ jQueryItem[0].$itemPropertiesIndex ];
+		ItemPropertiesBank.itemCount[ jQueryItem[0].$itemPropertiesIndex ]++;
+	}
+
+	return rVal;
+}
+
+ItemPropertiesBank.destroy = function( jQueryItem ) {
+	if( jQueryItem[0].$itemPropertiesIndex !== undefined ) {
+		ItemPropertiesBank.itemCount[ jQueryItem[0].$itemPropertiesIndex ]--;
+
+		if( ItemPropertiesBank.itemCount[ jQueryItem[0].$itemPropertiesIndex ] == 0) {
+			delete ItemPropertiesBank[ jQueryItem[0].$itemPropertiesIndex ];
+			delete ItemPropertiesBank.itemCount[ jQueryItem[0].$itemPropertiesIndex ];
+			delete jQueryItem[0].$itemPropertiesIndex;	
+		}
+	}
+}
+
+
 var ItemProperties = new Class({
 	initialize: function(itemToEffect) {
 		this._itemToEffect = itemToEffect;
@@ -413,11 +782,11 @@ var ItemProperties = new Class({
 	_propertyValue: null,
 	_changeAmountForEffect: null,
 
-	setupEffect: function(effect) {
+	setupEffect: function( effect ) {
 		var effectID = effect.id;
 
-		if (!this._changeAmountForEffect[effectID]) {
-			this._changeAmountForEffect[effectID] = {};
+		if (!this._changeAmountForEffect[ effectID ]) {
+			this._changeAmountForEffect[ effectID ] = {};
 
 			for (var i = 1; i < arguments.length; i++) {
 				var property = arguments[i];
@@ -426,35 +795,35 @@ var ItemProperties = new Class({
 			}
 		}
 	},
-	get: function(property) {
+	get: function( property ) {
 		return this._propertyValue[property];
 	},
-	getStart: function(property) {
+	getStart: function( property ) {
 		return this._propertyStartValue[property];
 	},
-	setStart: function(property, value) {
-
+	getChange: function( effectID, property ) {
+		return this._changeAmountForEffect[ effectID ][ property ];
 	},
-	change: function(effectID, property, amount) {
+	change: function( effectID, property, amount ) {
 		this._propertyValue[property].add(amount);
 
 		this._changeAmountForEffect[effectID][property].add(amount);
 
 		this._itemToEffect.css(property, this._propertyValue[property].getCSS());
 	},
-	reset: function(effectID, property) {
+	reset: function( effectID, property ) {
 		this._propertyValue[property].sub(this._changeAmountForEffect[effectID][property]);
 		
 		this._changeAmountForEffect[effectID][property].reset();
 
 		this._itemToEffect.css(property, this._propertyValue[property].getCSS());
 	},
-	resetAll: function(effectID) {
+	resetAll: function( effectID ) {
 		for (var i in this._changeAmountForEffect[effectID]) {
 			this.reset(effectID, i);
 		}
 	},
-	_setupProperty: function(effectID, property) {
+	_setupProperty: function( effectID, property ) {
 		var ParserClass = ParserLookUp[property];
 
 		if (!this._propertiesWatching[property]) {
@@ -470,7 +839,7 @@ var ItemProperties = new Class({
 			}
 		}
 
-		this._changeAmountForEffect[effectID][property] = ParserClass.getZeroProperty();
+		this._changeAmountForEffect[effectID][property] = this._propertyStartValue[property].clone();
 	}
 });
 

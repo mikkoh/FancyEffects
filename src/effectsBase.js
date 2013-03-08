@@ -48,6 +48,7 @@ var Effect = new Class({
 	_effectEffectIdx: null,
 	_effects: null,
 	_effectEffects: null,
+	_animation: null,
 
 	getId: function() {
 		return this._id;
@@ -109,7 +110,16 @@ var Effect = new Class({
 			this._effects[i].setItemToEffect( itemToEffect, itemProperties );
 		};
 	},
-	effectPercentage: function(percentage) {
+	animate: function( targetPercentage, duration, onComplete ) {
+		if( this._animation )
+			Animator.destroyAnimation( this._animation );
+
+		this._animation = Animator.createAnimation( this, targetPercentage, duration, onComplete );
+	},
+	stopAnimate: function() {
+		Animator.destroyAnimation( this._animation );
+	},
+	effectPercentage: function( percentage ) {
 		this._percentageToApply += percentage;
 	},
 	reset: function() {
