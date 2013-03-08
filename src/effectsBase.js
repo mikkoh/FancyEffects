@@ -277,8 +277,11 @@ var EffectChangeProp = new Class({
 
 			//if an effect was initialized without a item to effect this can be null
 			if( this._itemProperties != null ) {
-				var cValue = this._itemProperties.getChange( this.id, this._propertyToEffect ); //this._itemProperties.get(this._propertyToEffect);
-				//var cValue = this._itemProperties.get(this._propertyToEffect);
+				//var cValue = this._itemProperties.getChange( this.id, this._propertyToEffect );
+				var cValue = this._itemProperties.get(this._propertyToEffect);
+
+				if( this._propertyToEffect == 'left' )
+					console.log( value, this.id, cValue.value );
 
 				this._itemProperties.change(this.id,
 											this._propertyToEffect,

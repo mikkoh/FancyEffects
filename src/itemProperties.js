@@ -294,6 +294,9 @@ var PropertyColour = new Class({
 		var rVal = new PropertyColour(this.r, this.g, this.b, this.a);
 
 		return rVal;
+	},
+	toString: function() {
+		return this._r + ', ' + this._g + ', ' + this._b + ', ' + this._a;
 	}
 });
 
