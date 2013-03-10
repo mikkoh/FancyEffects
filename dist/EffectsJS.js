@@ -54,7 +54,7 @@ Animator.destroyAnimation = function( animation ) {
 
 Animator.tick =function() {
 	var animations = Animator.animations;
-	
+
 	for(var i = animations.length - 1; i >= 0 ; i-- ) {
 		if( !animations[i].shouldBeDeleted ) {
 			animations[i].tick();
@@ -162,12 +162,23 @@ var EffectTimeline = new Class({
 				if( this._itemToEffect )
 					effect.setItemToEffect( this._itemToEffect, this._itemProperties );
 
-				effect.enabled = this._percentage >= startPerc && this._percentage <= endPerc;
+			
 				
 				//we don't want it to effect this timeline unless
 				//it should effect it otherwise we just add it straight up
-				if( effect.enabled ) {
-					effect.percentage = ( this.percentage - startPerc ) / this._effectDuration[ effect.id ];	
+				if( this._percentageToApply < this._effectStart[ effect.id ] ) {
+					effect.setPercentage( 0 );
+					effect.enabled = false;
+				} else if( this._percentageToApply > this._effectEnd[ effect.id ] ) {
+					effect.setPercentage( 1 );
+					effect.enabled = false;
+				} else {
+					var startTime = this._effectStart[ effect.id ];
+					var duration = this._effectDuration[ effect.id ];
+					var curTime = ( this._percentageToApply - startTime ) / duration;
+
+					effect.enabled = true;
+					effect.setPercentage( curTime );
 				}
 			}
 		}
@@ -209,7 +220,7 @@ var EffectTimeline = new Class({
 			for (var i = 0; i < this._effects.length; i++) {
 				//check whether this effect should effect
 				//is it in a position in the timeline where it should be doing stuff
-				if(this._percentageToApply < this._effectStart[ this._effects[i].id ]) {
+				if( this._percentageToApply < this._effectStart[ this._effects[i].id ] ) {
 					this._effects[i].setPercentage( 0 );
 					this._effects[i].enabled = false;
 				} else if( this._percentageToApply > this._effectEnd[ this._effects[i].id ] ) {
@@ -470,6 +481,17 @@ var EffectChangeProp = new Class({
 	_endValue: null,
 	_propertyToEffect: null,
 
+	setEnabled: function( value ) {
+		if( this._itemProperties && this.enabled != value ) {
+			if( value ) {
+				this._itemProperties.enable( this.id, this._propertyToEffect );
+			} else {
+				this._itemProperties.disable( this.id, this._propertyToEffect );
+			}
+		}
+
+		this.parent( value );
+	},
 	setItemToEffect: function(itemToEffect, itemProperties) {
 		this.parent(itemToEffect, itemProperties);
 
@@ -507,10 +529,9 @@ var EffectChangeProp = new Class({
 	setPercentage: function(value) {
 		if( this.enabled ) {
 			this.parent( value );
-
 			//if an effect was initialized without a item to effect this can be null
 			if( this._itemProperties != null ) {
-				var cValue = this._itemProperties.getChange( this.id, this._propertyToEffect ); //this._itemProperties.get(this._propertyToEffect);
+				var cValue = this._itemProperties.getEffectChange( this.id, this._propertyToEffect );
 				//var cValue = this._itemProperties.get(this._propertyToEffect);
 
 				this._itemProperties.change(this.id,
@@ -581,6 +602,12 @@ var EffectChangePropColour = new Class({
 			} else if (arguments.length == 9) {
 				startVal = new PropertyColour(arguments[1], arguments[2], arguments[3], arguments[4]);
 				endVal = new PropertyColour(arguments[5], arguments[6], arguments[7], arguments[8]);
+			} else {
+				throw new Error('You should instantiate this colour with either: \n' +
+								'itemToEffect, r, g, b\n' +
+								'itemToEffect, r, g, b, a\n' +
+								'itemToEffect, r, g, b, r, g, b\n' +
+								'itemToEffect, r, g, b, a, r, g, b, a\n');
 			}
 
 			this.parent.apply(this, [arguments[0], startVal, endVal]);
@@ -595,6 +622,12 @@ var EffectChangePropColour = new Class({
 			} else if (arguments.length == 8) {
 				startVal = new PropertyColour(arguments[0], arguments[1], arguments[2], arguments[3]);
 				endVal = new PropertyColour(arguments[4], arguments[5], arguments[6], arguments[7]);
+			} else {
+				throw new Error('You should instantiate this colour with either: \n' +
+								'r, g, b\n' +
+								'r, g, b, a\n' +
+								'r, g, b, r, g, b\n' +
+								'r, g, b, a, r, g, b, a\n');
 			}
 
 			this.parent.apply(this, [startVal, endVal]);
@@ -775,23 +808,26 @@ var ItemProperties = new Class({
 		this._propertyValue = {};
 		this._propertyStartValue = {};
 		this._changeAmountForEffect = {};
+		this._enabled = {};
 	},
 
 	_itemToEffect: null,
 	_propertiesWatching: null,
 	_propertyValue: null,
 	_changeAmountForEffect: null,
+	_enabled: null,
 
 	setupEffect: function( effect ) {
 		var effectID = effect.id;
 
 		if (!this._changeAmountForEffect[ effectID ]) {
 			this._changeAmountForEffect[ effectID ] = {};
+			this._enabled[ effectID ] = {};
 
 			for (var i = 1; i < arguments.length; i++) {
 				var property = arguments[i];
 
-				this._setupProperty(effectID, property);
+				this._setupProperty( effectID, property );
 			}
 		}
 	},
@@ -801,15 +837,31 @@ var ItemProperties = new Class({
 	getStart: function( property ) {
 		return this._propertyStartValue[property];
 	},
-	getChange: function( effectID, property ) {
+	getEffectChange: function( effectID, property ) {
 		return this._changeAmountForEffect[ effectID ][ property ];
 	},
 	change: function( effectID, property, amount ) {
-		this._propertyValue[property].add(amount);
+		this._propertyValue[property].add( amount );
 
-		this._changeAmountForEffect[effectID][property].add(amount);
+		this._changeAmountForEffect[effectID][property].add( amount );
 
-		this._itemToEffect.css(property, this._propertyValue[property].getCSS());
+		this._itemToEffect.css( property, this._propertyValue[ property ].getCSS() );
+	},
+	enable: function( effectID, property ) {
+		console.log( 'enable:', effectID, property );
+
+		if( !this._enabled[ effectID ][ property ] ) {
+			this._enabled[ effectID ][ property ] = true;
+			this._propertyValue[property].add( this._changeAmountForEffect[ effectID ][ property ] );
+		}
+	},
+	disable: function( effectID, property ) {
+		console.log( 'disable:', effectID, property );
+
+		if( this._enabled[ effectID ][ property ] ) {
+			this._enabled[ effectID ][ property ] = false;
+			this._propertyValue[property].sub( this._changeAmountForEffect[ effectID ][ property ] );
+		}
 	},
 	reset: function( effectID, property ) {
 		this._propertyValue[property].sub(this._changeAmountForEffect[effectID][property]);
@@ -832,14 +884,15 @@ var ItemProperties = new Class({
 
 				var parser = new ParserClass(this._itemToEffect.css(property));
 
-				this._propertyStartValue[property] = parser.getValue();
-				this._propertyValue[property] = parser.getValue();
+				this._propertyStartValue[ property ] = parser.getValue();
+				this._propertyValue[ property ] = parser.getValue();
 			} else {
 				throw new Error('There is no parser defined for ' + property);
 			}
 		}
 
-		this._changeAmountForEffect[effectID][property] = this._propertyStartValue[property].clone();
+		this._enabled[ effectID ][ property ] = true;
+		this._changeAmountForEffect[ effectID ][ property ] = ParserClass.getZeroProperty(); //this._propertyStartValue[property].clone();
 	}
 });
 
@@ -1027,6 +1080,9 @@ var PropertyColour = new Class({
 		var rVal = new PropertyColour(this.r, this.g, this.b, this.a);
 
 		return rVal;
+	},
+	toString: function() {
+		return this._r + ', ' + this._g + ', ' + this._b + ', ' + this._a;
 	}
 });
 

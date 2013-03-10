@@ -237,6 +237,17 @@ var EffectChangeProp = new Class({
 	_endValue: null,
 	_propertyToEffect: null,
 
+	setEnabled: function( value ) {
+		if( this._itemProperties && this.enabled != value ) {
+			if( value ) {
+				this._itemProperties.enable( this.id, this._propertyToEffect );
+			} else {
+				this._itemProperties.disable( this.id, this._propertyToEffect );
+			}
+		}
+
+		this.parent( value );
+	},
 	setItemToEffect: function(itemToEffect, itemProperties) {
 		this.parent(itemToEffect, itemProperties);
 
@@ -274,13 +285,10 @@ var EffectChangeProp = new Class({
 	setPercentage: function(value) {
 		if( this.enabled ) {
 			this.parent( value );
-
 			//if an effect was initialized without a item to effect this can be null
 			if( this._itemProperties != null ) {
-				//var cValue = this._itemProperties.getChange( this.id, this._propertyToEffect );
-				console.log(this._itemProperties._itemToEffect[0].$itemPropertiesIndex);
-
-				var cValue = this._itemProperties.get(this._propertyToEffect);
+				var cValue = this._itemProperties.getEffectChange( this.id, this._propertyToEffect );
+				//var cValue = this._itemProperties.get(this._propertyToEffect);
 
 				this._itemProperties.change(this.id,
 											this._propertyToEffect,

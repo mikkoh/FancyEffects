@@ -13,7 +13,6 @@ ItemPropertiesBank.get = function( jQueryItem ) {
 		rVal = new ItemProperties( jQueryItem );
 		ItemPropertiesBank.items[ ItemPropertiesBank.curKey ] = rVal;
 
-		console.log('got key', ItemPropertiesBank.curKey);
 		ItemPropertiesBank.curKey++;
 	} else {
 		rVal = ItemPropertiesBank.items[ jQueryItem[0].$itemPropertiesIndex ];
@@ -43,23 +42,26 @@ var ItemProperties = new Class({
 		this._propertyValue = {};
 		this._propertyStartValue = {};
 		this._changeAmountForEffect = {};
+		this._enabled = {};
 	},
 
 	_itemToEffect: null,
 	_propertiesWatching: null,
 	_propertyValue: null,
 	_changeAmountForEffect: null,
+	_enabled: null,
 
 	setupEffect: function( effect ) {
 		var effectID = effect.id;
 
 		if (!this._changeAmountForEffect[ effectID ]) {
 			this._changeAmountForEffect[ effectID ] = {};
+			this._enabled[ effectID ] = {};
 
 			for (var i = 1; i < arguments.length; i++) {
 				var property = arguments[i];
 
-				this._setupProperty(effectID, property);
+				this._setupProperty( effectID, property );
 			}
 		}
 	},
@@ -69,15 +71,31 @@ var ItemProperties = new Class({
 	getStart: function( property ) {
 		return this._propertyStartValue[property];
 	},
-	getChange: function( effectID, property ) {
+	getEffectChange: function( effectID, property ) {
 		return this._changeAmountForEffect[ effectID ][ property ];
 	},
 	change: function( effectID, property, amount ) {
-		this._propertyValue[property].add(amount);
+		this._propertyValue[property].add( amount );
 
-		this._changeAmountForEffect[effectID][property].add(amount);
+		this._changeAmountForEffect[effectID][property].add( amount );
 
-		this._itemToEffect.css(property, this._propertyValue[property].getCSS());
+		this._itemToEffect.css( property, this._propertyValue[ property ].getCSS() );
+	},
+	enable: function( effectID, property ) {
+		console.log( 'enable:', effectID, property );
+
+		if( !this._enabled[ effectID ][ property ] ) {
+			this._enabled[ effectID ][ property ] = true;
+			this._propertyValue[property].add( this._changeAmountForEffect[ effectID ][ property ] );
+		}
+	},
+	disable: function( effectID, property ) {
+		console.log( 'disable:', effectID, property );
+
+		if( this._enabled[ effectID ][ property ] ) {
+			this._enabled[ effectID ][ property ] = false;
+			this._propertyValue[property].sub( this._changeAmountForEffect[ effectID ][ property ] );
+		}
 	},
 	reset: function( effectID, property ) {
 		this._propertyValue[property].sub(this._changeAmountForEffect[effectID][property]);
@@ -100,14 +118,15 @@ var ItemProperties = new Class({
 
 				var parser = new ParserClass(this._itemToEffect.css(property));
 
-				this._propertyStartValue[property] = parser.getValue();
-				this._propertyValue[property] = parser.getValue();
+				this._propertyStartValue[ property ] = parser.getValue();
+				this._propertyValue[ property ] = parser.getValue();
 			} else {
 				throw new Error('There is no parser defined for ' + property);
 			}
 		}
 
-		this._changeAmountForEffect[effectID][property] = this._propertyStartValue[property].clone();
+		this._enabled[ effectID ][ property ] = true;
+		this._changeAmountForEffect[ effectID ][ property ] = ParserClass.getZeroProperty(); //this._propertyStartValue[property].clone();
 	}
 });
 
