@@ -75,26 +75,36 @@ var ItemProperties = new Class({
 		return this._changeAmountForEffect[ effectID ][ property ];
 	},
 	change: function( effectID, property, amount ) {
-		this._propertyValue[property].add( amount );
+		this._propertyValue[ property ].add( amount );
 
-		this._changeAmountForEffect[effectID][property].add( amount );
+		this._changeAmountForEffect[ effectID ][ property ].add( amount );
 
 		this._itemToEffect.css( property, this._propertyValue[ property ].getCSS() );
+
+		if( property == 'opacity' )
+			console.log( 'change', property, this._propertyValue[ property ].getCSS(), amount.value );
 	},
 	enable: function( effectID, property ) {
-		console.log( 'enable:', effectID, property );
-
 		if( !this._enabled[ effectID ][ property ] ) {
 			this._enabled[ effectID ][ property ] = true;
 			this._propertyValue[property].add( this._changeAmountForEffect[ effectID ][ property ] );
+
+			this._itemToEffect.css(property, this._propertyValue[property].getCSS());
+
+			if( property == 'opacity' )
+				console.log( 'enable', property, this._propertyValue[ property ].getCSS() );
 		}
 	},
 	disable: function( effectID, property ) {
-		console.log( 'disable:', effectID, property );
-
 		if( this._enabled[ effectID ][ property ] ) {
 			this._enabled[ effectID ][ property ] = false;
+
+			if( property == 'opacity' )
+				console.log( 'disable', property,  this._changeAmountForEffect[ effectID ][ property ].value );
+
 			this._propertyValue[property].sub( this._changeAmountForEffect[ effectID ][ property ] );
+
+			this._itemToEffect.css(property, this._propertyValue[property].getCSS());
 		}
 	},
 	reset: function( effectID, property ) {
@@ -116,7 +126,7 @@ var ItemProperties = new Class({
 			if (ParserClass) {
 				this._propertiesWatching[property] = true;
 
-				var parser = new ParserClass(this._itemToEffect.css(property));
+				var parser = new ParserClass( this._itemToEffect.css( property ) );
 
 				this._propertyStartValue[ property ] = parser.getValue();
 				this._propertyValue[ property ] = parser.getValue();
@@ -125,8 +135,10 @@ var ItemProperties = new Class({
 			}
 		}
 
+		console.log( property, 'start:', this._propertyStartValue[property].value );
+
 		this._enabled[ effectID ][ property ] = true;
-		this._changeAmountForEffect[ effectID ][ property ] = ParserClass.getZeroProperty(); //this._propertyStartValue[property].clone();
+		this._changeAmountForEffect[ effectID ][ property ] = this._propertyStartValue[property].clone();// ParserClass.getZeroProperty(); // this._propertyValue[ property ].clone();
 	}
 });
 
@@ -194,6 +206,8 @@ var PropertyNumber = new Class({
 	},
 	getChange: function(percentage, curValue, startValue, endValue) {
 		this._value = (endValue.value - startValue.value) * percentage + startValue.value;
+
+		console.log( this._value, curValue.value );
 
 		this._value -= curValue.value;
 

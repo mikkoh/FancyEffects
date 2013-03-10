@@ -41,7 +41,7 @@ var ParseNumberValue = new Class({
 		var valueResult = REGEX_VALUE_EXTENSION.exec(this._cssValue);
 
 		if( valueResult != null )
-			this._value = new PropertyNumber( parseFloat(valueResult[1]) );
+			this._value = new PropertyNumber( parseFloat( valueResult[1]) );
 		else
 			this._value = new PropertyNumber();
 	}
@@ -63,10 +63,10 @@ var ParserColour = new Class({
 			//when css is set to 0.5 jQuery returns 0.498046875 which is 127.5/255
 			//we just drop the precision slightly in hopes that it will be more acurate
 			//I know it's sort of bad
-			this._value = new PropertyColour(parseFloat(valArr[1]), 
-											 parseFloat(valArr[2]), 
-											 parseFloat(valArr[3]), 
-											 parseFloat(parseFloat(valArr[5]).toPrecision(2)));
+			this._value = new PropertyColour( parseFloat(valArr[1]), 
+											  parseFloat(valArr[2]), 
+											  parseFloat(valArr[3]), 
+											  parseFloat(parseFloat(valArr[5]).toPrecision(2)) );
 		} else {
 			this._value = new PropertyColour();
 		}

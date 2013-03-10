@@ -38,10 +38,10 @@ var EffectTimeline = new Class({
 				//we don't want it to effect this timeline unless
 				//it should effect it otherwise we just add it straight up
 				if( this._percentageToApply < this._effectStart[ effect.id ] ) {
-					effect.setPercentage( 0 );
+					//effect.setPercentage( 0 );
 					effect.enabled = false;
 				} else if( this._percentageToApply > this._effectEnd[ effect.id ] ) {
-					effect.setPercentage( 1 );
+					//effect.setPercentage( 1 );
 					effect.enabled = false;
 				} else {
 					var startTime = this._effectStart[ effect.id ];
