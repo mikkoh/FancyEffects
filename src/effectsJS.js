@@ -82,7 +82,9 @@ var EffectFilter = new Class({
 	initialize: function() {
 		this._type =  'EffectFilter';
 		this._propertyToEffect = '-webkit-filter';
-		this._temp = new PropertyFilter();
+		this._tempChangeAmount = new PropertyFilter();
+		this._modifiedStart = new PropertyFilter();
+		this._modifiedEnd = new PropertyFilter();
 
 		this.parent.apply(this, arguments);
 	}
@@ -96,7 +98,10 @@ var EffectBoxShadow = new Class({
 	initialize: function() {
 		this._type =  'EffectBoxShadow';
 		this._propertyToEffect = 'box-shadow';
-		this._temp = new PropertyBoxShadow();
+		this._tempChangeAmount = new PropertyBoxShadow();
+		this._modifiedStart = new PropertyBoxShadow();
+		this._modifiedEnd = new PropertyBoxShadow();
+
 
 		this.parent.apply(this, arguments);
 	}

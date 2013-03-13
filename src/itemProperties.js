@@ -135,10 +135,10 @@ var ItemProperties = new Class({
 			}
 		}
 
-		console.log( property, 'start:', this._propertyStartValue[property].value );
-
 		this._enabled[ effectID ][ property ] = true;
-		this._changeAmountForEffect[ effectID ][ property ] = this._propertyStartValue[property].clone();// ParserClass.getZeroProperty(); // this._propertyValue[ property ].clone();
+		this._changeAmountForEffect[ effectID ][ property ] = ParserClass.getZeroProperty();
+
+		console.log( 'start', this._changeAmountForEffect[ effectID ][ property ].toString() );
 	}
 });
 
@@ -152,12 +152,19 @@ var Property = new Class({
 
 	add: function(otherItem) {
 		throw new Error('You must override this function');
+		return this;
 	},
 	sub: function(otherItem) {
 		throw new Error('You must override this function');
+		return this;
+	},
+	mulScalar: function(scalar) {
+		throw new Error('You must override this function');
+		return this;
 	},
 	equals: function(otherItem) {
 		throw new Error('You must override this function');
+		return this;
 	},
 	getChange: function(percentage, curValue, startValue, endValue) {
 		throw new Error('You must override this function');
@@ -194,20 +201,29 @@ var PropertyNumber = new Class({
 	},
 	add: function(otherItem) {
 		this._value += otherItem.value;
+
+		return this;
 	},
 	sub: function(otherItem) {
 		this._value -= otherItem.value;
+
+		return this;
+	},
+	mulScalar: function(scalar) {
+		this._value *= scalar;
+
+		return this;
 	},
 	equals: function(otherItem) {
 		this._value = otherItem.value;
+
+		return this;
 	},
 	reset: function() {
 		this._value = 0;
 	},
 	getChange: function(percentage, curValue, startValue, endValue) {
 		this._value = (endValue.value - startValue.value) * percentage + startValue.value;
-
-		console.log( this._value, curValue.value );
 
 		this._value -= curValue.value;
 
@@ -285,18 +301,32 @@ var PropertyColour = new Class({
 		this._g += otherItem.g;
 		this._b += otherItem.b;
 		this._a += otherItem.a;
+
+		return this;
 	},
 	sub: function(otherItem) {
 		this._r -= otherItem.r;
 		this._g -= otherItem.g;
 		this._b -= otherItem.b;
 		this._a -= otherItem.a;
+
+		return this;
+	},
+	mulScalar: function(scalar) {
+		this._r *= scalar;
+		this._g *= scalar;
+		this._b *= scalar;
+		this._a *= scalar;
+
+		return this;
 	},
 	equals: function(startVal) {
 		this._r = startVal.r;
 		this._g = startVal.g;
 		this._b = startVal.b;
 		this._a = startVal.a;
+
+		return this;
 	},
 	reset: function() {
 		this._r = 0;
@@ -474,6 +504,8 @@ var PropertyFilter = new Class({
 		this._sepia += otherItem.sepia;
 
 		this.dropShadow.add(otherItem.dropShadow);
+
+		return this;
 	},
 	sub: function(otherItem) {
 		this._blur -= otherItem.blur;
@@ -487,6 +519,21 @@ var PropertyFilter = new Class({
 		this._sepia -= otherItem.sepia;
 
 		this.dropShadow.sub(otherItem.dropShadow);
+
+		return this;
+	},
+	mulScalar: function(scalar) {
+		this._blur *= scalar;
+		this._brightness *= scalar;
+		this._contrast *= scalar;
+		this._grayScale *= scalar;
+		this._hueRotation *= scalar;
+		this._invert *= scalar;
+		this._opacity *= scalar;
+		this._saturate *= scalar;
+		this._sepia *= scalar;
+
+		return this;
 	},
 	equals: function(otherItem) {
 		this._blur = otherItem.blur;
@@ -498,6 +545,8 @@ var PropertyFilter = new Class({
 		this._opacity = otherItem.opacity;
 		this._saturate = otherItem.saturate;
 		this._sepia = otherItem.sepia;
+
+		return this;
 	},
 	reset: function() {
 		this._blur = 0;
@@ -671,6 +720,8 @@ var PropertyBoxShadow = new Class({
 		this._offY += otherItem.offY;
 		this._blur += otherItem.blur;
 		this._spread += otherItem.spread;
+
+		return this;
 	},
 	sub: function(otherItem) {
 		this.parent(otherItem);
@@ -679,6 +730,16 @@ var PropertyBoxShadow = new Class({
 		this._offY -= otherItem.offY;
 		this._blur -= otherItem.blur;
 		this._spread -= otherItem.spread;
+
+		return this;
+	},
+	mulScalar: function(scalar) {
+		this._offX *= scalar;
+		this._offY *= scalar;
+		this._blur *= scalar;
+		this._spread *= scalar;
+
+		return this;
 	},
 	equals: function(otherItem) {
 		this.parent(otherItem);
@@ -687,6 +748,8 @@ var PropertyBoxShadow = new Class({
 		this._offY = otherItem.offY;
 		this._blur = otherItem.blur;
 		this._spread = otherItem.spread;
+
+		return this;
 	},
 	reset: function() {
 		this._offX = 0;

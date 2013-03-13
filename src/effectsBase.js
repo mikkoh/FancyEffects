@@ -232,7 +232,9 @@ var EffectChangeProp = new Class({
 		this.__defineSetter__('end', this.setEndValue);
 	},
 
-	_temp: null,
+	_tempChangeAmount: null,
+	_modifiedStart: null,
+	_modifiedEnd: null,
 	_startValue: null,
 	_endValue: null,
 	_propertyToEffect: null,
@@ -263,8 +265,13 @@ var EffectChangeProp = new Class({
 			this._endValue = this._itemProperties.getStart(this._propertyToEffect).clone();
 		}
 
-		this._startValue.onPropertyChange.add(this.applyPercentage.bind(this));
-		this._endValue.onPropertyChange.add(this.applyPercentage.bind(this));
+
+		var itemToEffectStartVal = this._itemProperties.getStart( this._propertyToEffect );
+		this._modifiedStart.equals( this._startValue ).sub( itemToEffectStartVal );
+		this._modifiedEnd.equals( this._endValue ).sub( itemToEffectStartVal );
+	
+		this._startValue.onPropertyChange.add(this._onPropertyChange.bind(this));
+		this._endValue.onPropertyChange.add(this._onPropertyChange.bind(this));
 	},
 	getStartValue: function() {
 		return this._startValue;
@@ -288,20 +295,24 @@ var EffectChangeProp = new Class({
 			//if an effect was initialized without a item to effect this can be null
 			if( this._itemProperties != null ) {
 				var cValue = this._itemProperties.getEffectChange( this.id, this._propertyToEffect );
-				//var cValue = this._itemProperties.get(this._propertyToEffect);
 
+				//var cValue = this._itemProperties.get(this._propertyToEffect);
 				this._itemProperties.change(this.id,
 											this._propertyToEffect,
-											this._temp.getChange( this._percentageToApply, cValue, this._startValue, this._endValue ));
+											this._tempChangeAmount.getChange( this._percentageToApply, cValue, this._modifiedStart, this._modifiedEnd ));
 			}
 		}
 	},
-	applyPercentage: function() {
+	_onPropertyChange: function() {
+		var itemToEffectStartVal = this._itemProperties.getStart( this._propertyToEffect );
+		this._modifiedStart.equals( this._startValue ).sub( itemToEffectStartVal );
+		this._modifiedEnd.equals( this._endValue ).sub( itemToEffectStartVal );
+
 		this.setPercentage( this.percentage );
 	},
 	_onStartValueChange: function() {
 		this._startValue.equals(this._itemProperties.getStart(this._propertyToEffect));
-		this.applyPercentage();
+		this._onPropertyChange();
 	},
 });
 
@@ -332,7 +343,9 @@ var EffectChangePropNumber = new Class({
 			this.parent.apply(this, [startVal, endVal]);
 		}
 
-		this._temp = new PropertyNumber();
+		this._tempChangeAmount = new PropertyNumber();
+		this._modifiedStart = new PropertyNumber();
+		this._modifiedEnd = new PropertyNumber();
 	}
 });
 
@@ -347,18 +360,18 @@ var EffectChangePropColour = new Class({
 		var endVal = undefined;
 
 		//just end values sent
-		if (typeof arguments[0] == 'object') {
-			if (arguments.length == 4) {
+		if ( typeof arguments[0] == 'object' ) {
+			if ( arguments.length == 4 ) {
 				endVal = new PropertyColour(arguments[1], arguments[2], arguments[3]);
-			} else if (arguments.length == 7) {
+			} else if ( arguments.length == 7 ) {
 				startVal = new PropertyColour(arguments[1], arguments[2], arguments[3]);
 				endVal = new PropertyColour(arguments[4], arguments[5], arguments[6]);
-			} else if (arguments.length == 5) {
+			} else if ( arguments.length == 5 ) {
 				endVal = new PropertyColour(arguments[1], arguments[2], arguments[3], arguments[4]);
-			} else if (arguments.length == 9) {
+			} else if ( arguments.length == 9 ) {
 				startVal = new PropertyColour(arguments[1], arguments[2], arguments[3], arguments[4]);
 				endVal = new PropertyColour(arguments[5], arguments[6], arguments[7], arguments[8]);
-			} else {
+			} else if ( arguments.length > 0 ) {
 				throw new Error('You should instantiate this colour with either: \n' +
 								'itemToEffect, r, g, b\n' +
 								'itemToEffect, r, g, b, a\n' +
@@ -368,17 +381,17 @@ var EffectChangePropColour = new Class({
 
 			this.parent.apply(this, [arguments[0], startVal, endVal]);
 		} else {
-			if (arguments.length == 3) {
+			if ( arguments.length == 3 ) {
 				endVal = new PropertyColour(arguments[0], arguments[1], arguments[2]);
-			} else if (arguments.length == 6) {
+			} else if ( arguments.length == 6 ) {
 				startVal = new PropertyColour(arguments[0], arguments[1], arguments[2]);
 				endVal = new PropertyColour(arguments[3], arguments[4], arguments[5]);
-			} else if (arguments.length == 4) {
+			} else if ( arguments.length == 4 ) {
 				endVal = new PropertyColour(arguments[0], arguments[1], arguments[2], arguments[3]);
-			} else if (arguments.length == 8) {
+			} else if ( arguments.length == 8 ) {
 				startVal = new PropertyColour(arguments[0], arguments[1], arguments[2], arguments[3]);
 				endVal = new PropertyColour(arguments[4], arguments[5], arguments[6], arguments[7]);
-			} else {
+			} else if ( arguments.length > 0 ){
 				throw new Error('You should instantiate this colour with either: \n' +
 								'r, g, b\n' +
 								'r, g, b, a\n' +
@@ -389,6 +402,8 @@ var EffectChangePropColour = new Class({
 			this.parent.apply(this, [startVal, endVal]);
 		}
 	
-		this._temp = new PropertyColour();
+		this._tempChangeAmount = new PropertyColour();
+		this._modifiedStart = new PropertyColour();
+		this._modifiedEnd = new PropertyColour();
 	}
 });

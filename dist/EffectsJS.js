@@ -476,7 +476,9 @@ var EffectChangeProp = new Class({
 		this.__defineSetter__('end', this.setEndValue);
 	},
 
-	_temp: null,
+	_tempChangeAmount: null,
+	_modifiedStart: null,
+	_modifiedEnd: null,
 	_startValue: null,
 	_endValue: null,
 	_propertyToEffect: null,
@@ -507,8 +509,13 @@ var EffectChangeProp = new Class({
 			this._endValue = this._itemProperties.getStart(this._propertyToEffect).clone();
 		}
 
-		this._startValue.onPropertyChange.add(this.applyPercentage.bind(this));
-		this._endValue.onPropertyChange.add(this.applyPercentage.bind(this));
+
+		var itemToEffectStartVal = this._itemProperties.getStart( this._propertyToEffect );
+		this._modifiedStart.equals( this._startValue ).sub( itemToEffectStartVal );
+		this._modifiedEnd.equals( this._endValue ).sub( itemToEffectStartVal );
+	
+		this._startValue.onPropertyChange.add(this._onPropertyChange.bind(this));
+		this._endValue.onPropertyChange.add(this._onPropertyChange.bind(this));
 	},
 	getStartValue: function() {
 		return this._startValue;
@@ -532,20 +539,24 @@ var EffectChangeProp = new Class({
 			//if an effect was initialized without a item to effect this can be null
 			if( this._itemProperties != null ) {
 				var cValue = this._itemProperties.getEffectChange( this.id, this._propertyToEffect );
-				//var cValue = this._itemProperties.get(this._propertyToEffect);
 
+				//var cValue = this._itemProperties.get(this._propertyToEffect);
 				this._itemProperties.change(this.id,
 											this._propertyToEffect,
-											this._temp.getChange( this._percentageToApply, cValue, this._startValue, this._endValue ));
+											this._tempChangeAmount.getChange( this._percentageToApply, cValue, this._modifiedStart, this._modifiedEnd ));
 			}
 		}
 	},
-	applyPercentage: function() {
+	_onPropertyChange: function() {
+		var itemToEffectStartVal = this._itemProperties.getStart( this._propertyToEffect );
+		this._modifiedStart.equals( this._startValue ).sub( itemToEffectStartVal );
+		this._modifiedEnd.equals( this._endValue ).sub( itemToEffectStartVal );
+
 		this.setPercentage( this.percentage );
 	},
 	_onStartValueChange: function() {
 		this._startValue.equals(this._itemProperties.getStart(this._propertyToEffect));
-		this.applyPercentage();
+		this._onPropertyChange();
 	},
 });
 
@@ -576,7 +587,9 @@ var EffectChangePropNumber = new Class({
 			this.parent.apply(this, [startVal, endVal]);
 		}
 
-		this._temp = new PropertyNumber();
+		this._tempChangeAmount = new PropertyNumber();
+		this._modifiedStart = new PropertyNumber();
+		this._modifiedEnd = new PropertyNumber();
 	}
 });
 
@@ -591,18 +604,18 @@ var EffectChangePropColour = new Class({
 		var endVal = undefined;
 
 		//just end values sent
-		if (typeof arguments[0] == 'object') {
-			if (arguments.length == 4) {
+		if ( typeof arguments[0] == 'object' ) {
+			if ( arguments.length == 4 ) {
 				endVal = new PropertyColour(arguments[1], arguments[2], arguments[3]);
-			} else if (arguments.length == 7) {
+			} else if ( arguments.length == 7 ) {
 				startVal = new PropertyColour(arguments[1], arguments[2], arguments[3]);
 				endVal = new PropertyColour(arguments[4], arguments[5], arguments[6]);
-			} else if (arguments.length == 5) {
+			} else if ( arguments.length == 5 ) {
 				endVal = new PropertyColour(arguments[1], arguments[2], arguments[3], arguments[4]);
-			} else if (arguments.length == 9) {
+			} else if ( arguments.length == 9 ) {
 				startVal = new PropertyColour(arguments[1], arguments[2], arguments[3], arguments[4]);
 				endVal = new PropertyColour(arguments[5], arguments[6], arguments[7], arguments[8]);
-			} else {
+			} else if ( arguments.length > 0 ) {
 				throw new Error('You should instantiate this colour with either: \n' +
 								'itemToEffect, r, g, b\n' +
 								'itemToEffect, r, g, b, a\n' +
@@ -612,17 +625,17 @@ var EffectChangePropColour = new Class({
 
 			this.parent.apply(this, [arguments[0], startVal, endVal]);
 		} else {
-			if (arguments.length == 3) {
+			if ( arguments.length == 3 ) {
 				endVal = new PropertyColour(arguments[0], arguments[1], arguments[2]);
-			} else if (arguments.length == 6) {
+			} else if ( arguments.length == 6 ) {
 				startVal = new PropertyColour(arguments[0], arguments[1], arguments[2]);
 				endVal = new PropertyColour(arguments[3], arguments[4], arguments[5]);
-			} else if (arguments.length == 4) {
+			} else if ( arguments.length == 4 ) {
 				endVal = new PropertyColour(arguments[0], arguments[1], arguments[2], arguments[3]);
-			} else if (arguments.length == 8) {
+			} else if ( arguments.length == 8 ) {
 				startVal = new PropertyColour(arguments[0], arguments[1], arguments[2], arguments[3]);
 				endVal = new PropertyColour(arguments[4], arguments[5], arguments[6], arguments[7]);
-			} else {
+			} else if ( arguments.length > 0 ){
 				throw new Error('You should instantiate this colour with either: \n' +
 								'r, g, b\n' +
 								'r, g, b, a\n' +
@@ -633,7 +646,9 @@ var EffectChangePropColour = new Class({
 			this.parent.apply(this, [startVal, endVal]);
 		}
 	
-		this._temp = new PropertyColour();
+		this._tempChangeAmount = new PropertyColour();
+		this._modifiedStart = new PropertyColour();
+		this._modifiedEnd = new PropertyColour();
 	}
 });
 var EffectWidth = new Class({
@@ -720,7 +735,9 @@ var EffectFilter = new Class({
 	initialize: function() {
 		this._type =  'EffectFilter';
 		this._propertyToEffect = '-webkit-filter';
-		this._temp = new PropertyFilter();
+		this._tempChangeAmount = new PropertyFilter();
+		this._modifiedStart = new PropertyFilter();
+		this._modifiedEnd = new PropertyFilter();
 
 		this.parent.apply(this, arguments);
 	}
@@ -734,7 +751,10 @@ var EffectBoxShadow = new Class({
 	initialize: function() {
 		this._type =  'EffectBoxShadow';
 		this._propertyToEffect = 'box-shadow';
-		this._temp = new PropertyBoxShadow();
+		this._tempChangeAmount = new PropertyBoxShadow();
+		this._modifiedStart = new PropertyBoxShadow();
+		this._modifiedEnd = new PropertyBoxShadow();
+
 
 		this.parent.apply(this, arguments);
 	}
@@ -901,10 +921,10 @@ var ItemProperties = new Class({
 			}
 		}
 
-		console.log( property, 'start:', this._propertyStartValue[property].value );
-
 		this._enabled[ effectID ][ property ] = true;
-		this._changeAmountForEffect[ effectID ][ property ] = this._propertyStartValue[property].clone();// ParserClass.getZeroProperty(); // this._propertyValue[ property ].clone();
+		this._changeAmountForEffect[ effectID ][ property ] = ParserClass.getZeroProperty();
+
+		console.log( 'start', this._changeAmountForEffect[ effectID ][ property ].toString() );
 	}
 });
 
@@ -918,12 +938,19 @@ var Property = new Class({
 
 	add: function(otherItem) {
 		throw new Error('You must override this function');
+		return this;
 	},
 	sub: function(otherItem) {
 		throw new Error('You must override this function');
+		return this;
+	},
+	mulScalar: function(scalar) {
+		throw new Error('You must override this function');
+		return this;
 	},
 	equals: function(otherItem) {
 		throw new Error('You must override this function');
+		return this;
 	},
 	getChange: function(percentage, curValue, startValue, endValue) {
 		throw new Error('You must override this function');
@@ -960,20 +987,29 @@ var PropertyNumber = new Class({
 	},
 	add: function(otherItem) {
 		this._value += otherItem.value;
+
+		return this;
 	},
 	sub: function(otherItem) {
 		this._value -= otherItem.value;
+
+		return this;
+	},
+	mulScalar: function(scalar) {
+		this._value *= scalar;
+
+		return this;
 	},
 	equals: function(otherItem) {
 		this._value = otherItem.value;
+
+		return this;
 	},
 	reset: function() {
 		this._value = 0;
 	},
 	getChange: function(percentage, curValue, startValue, endValue) {
 		this._value = (endValue.value - startValue.value) * percentage + startValue.value;
-
-		console.log( this._value, curValue.value );
 
 		this._value -= curValue.value;
 
@@ -1051,18 +1087,32 @@ var PropertyColour = new Class({
 		this._g += otherItem.g;
 		this._b += otherItem.b;
 		this._a += otherItem.a;
+
+		return this;
 	},
 	sub: function(otherItem) {
 		this._r -= otherItem.r;
 		this._g -= otherItem.g;
 		this._b -= otherItem.b;
 		this._a -= otherItem.a;
+
+		return this;
+	},
+	mulScalar: function(scalar) {
+		this._r *= scalar;
+		this._g *= scalar;
+		this._b *= scalar;
+		this._a *= scalar;
+
+		return this;
 	},
 	equals: function(startVal) {
 		this._r = startVal.r;
 		this._g = startVal.g;
 		this._b = startVal.b;
 		this._a = startVal.a;
+
+		return this;
 	},
 	reset: function() {
 		this._r = 0;
@@ -1240,6 +1290,8 @@ var PropertyFilter = new Class({
 		this._sepia += otherItem.sepia;
 
 		this.dropShadow.add(otherItem.dropShadow);
+
+		return this;
 	},
 	sub: function(otherItem) {
 		this._blur -= otherItem.blur;
@@ -1253,6 +1305,21 @@ var PropertyFilter = new Class({
 		this._sepia -= otherItem.sepia;
 
 		this.dropShadow.sub(otherItem.dropShadow);
+
+		return this;
+	},
+	mulScalar: function(scalar) {
+		this._blur *= scalar;
+		this._brightness *= scalar;
+		this._contrast *= scalar;
+		this._grayScale *= scalar;
+		this._hueRotation *= scalar;
+		this._invert *= scalar;
+		this._opacity *= scalar;
+		this._saturate *= scalar;
+		this._sepia *= scalar;
+
+		return this;
 	},
 	equals: function(otherItem) {
 		this._blur = otherItem.blur;
@@ -1264,6 +1331,8 @@ var PropertyFilter = new Class({
 		this._opacity = otherItem.opacity;
 		this._saturate = otherItem.saturate;
 		this._sepia = otherItem.sepia;
+
+		return this;
 	},
 	reset: function() {
 		this._blur = 0;
@@ -1437,6 +1506,8 @@ var PropertyBoxShadow = new Class({
 		this._offY += otherItem.offY;
 		this._blur += otherItem.blur;
 		this._spread += otherItem.spread;
+
+		return this;
 	},
 	sub: function(otherItem) {
 		this.parent(otherItem);
@@ -1445,6 +1516,16 @@ var PropertyBoxShadow = new Class({
 		this._offY -= otherItem.offY;
 		this._blur -= otherItem.blur;
 		this._spread -= otherItem.spread;
+
+		return this;
+	},
+	mulScalar: function(scalar) {
+		this._offX *= scalar;
+		this._offY *= scalar;
+		this._blur *= scalar;
+		this._spread *= scalar;
+
+		return this;
 	},
 	equals: function(otherItem) {
 		this.parent(otherItem);
@@ -1453,6 +1534,8 @@ var PropertyBoxShadow = new Class({
 		this._offY = otherItem.offY;
 		this._blur = otherItem.blur;
 		this._spread = otherItem.spread;
+
+		return this;
 	},
 	reset: function() {
 		this._offX = 0;
