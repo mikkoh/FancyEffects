@@ -2,3 +2,4 @@ effectJS.sublime-project
 effectJS.sublime-workspace
 *.zargo~
 node_modules
+scratch

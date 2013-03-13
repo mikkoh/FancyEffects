@@ -80,9 +80,6 @@ var ItemProperties = new Class({
 		this._changeAmountForEffect[ effectID ][ property ].add( amount );
 
 		this._itemToEffect.css( property, this._propertyValue[ property ].getCSS() );
-
-		if( property == 'opacity' )
-			console.log( 'change', property, this._propertyValue[ property ].getCSS(), amount.value );
 	},
 	enable: function( effectID, property ) {
 		if( !this._enabled[ effectID ][ property ] ) {
@@ -137,8 +134,6 @@ var ItemProperties = new Class({
 
 		this._enabled[ effectID ][ property ] = true;
 		this._changeAmountForEffect[ effectID ][ property ] = ParserClass.getZeroProperty();
-
-		console.log( 'start', this._changeAmountForEffect[ effectID ][ property ].toString() );
 	}
 });
 
