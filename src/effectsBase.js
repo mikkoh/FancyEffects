@@ -323,6 +323,10 @@ var EffectChangePropNumber = new Class({
 		var startVal = undefined;
 		var endVal = undefined;
 
+		this._tempChangeAmount = new PropertyNumber();
+		this._modifiedStart = new PropertyNumber();
+		this._modifiedEnd = new PropertyNumber();
+
 		if (typeof arguments[0] == 'object') {
 			if (arguments.length == 2) {
 				endVal = new PropertyNumber(arguments[1]);
@@ -342,10 +346,6 @@ var EffectChangePropNumber = new Class({
 
 			this.parent.apply(this, [startVal, endVal]);
 		}
-
-		this._tempChangeAmount = new PropertyNumber();
-		this._modifiedStart = new PropertyNumber();
-		this._modifiedEnd = new PropertyNumber();
 	}
 });
 
@@ -358,6 +358,10 @@ var EffectChangePropColour = new Class({
 
 		var startVal = undefined;
 		var endVal = undefined;
+
+		this._tempChangeAmount = new PropertyColour();
+		this._modifiedStart = new PropertyColour();
+		this._modifiedEnd = new PropertyColour();
 
 		//just end values sent
 		if ( typeof arguments[0] == 'object' ) {
@@ -401,9 +405,5 @@ var EffectChangePropColour = new Class({
 
 			this.parent.apply(this, [startVal, endVal]);
 		}
-	
-		this._tempChangeAmount = new PropertyColour();
-		this._modifiedStart = new PropertyColour();
-		this._modifiedEnd = new PropertyColour();
 	}
 });
