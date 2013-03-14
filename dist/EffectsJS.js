@@ -1849,9 +1849,8 @@ var SpriteSheet = new Class({
 		this.__defineSetter__( 'totalFrames', this.getTotalFrames );
 
 		this._container = container;
-		this._container.css( 'background-image', bgImageURL );
+		this._container.css( 'background-image', 'url(' + bgImageURL + ')' );
 		this._container.css( 'background-repeat', 'no-repeat' );
-		this._container.css( 'background-attachment', 'fixed' );
 
 		this._parseData( data );
 
@@ -1886,15 +1885,79 @@ var SpriteSheetAdobeJSONArray = new Class({
 	_frames: null,
 
 	setCurrentFrame: function( value ) {
-		this.super( value );
-
-		this._container.css( 'width', this._frames[ value ].spriteSourceSize.w );
-		this._container.css( 'height', this._frames[ value ].spriteSourceSize.h );
-		this._container.css( 'background-position', this._frames[ this._currentFrame ].spriteSourceSize.x + 'px ' +
-												    this._frames[ this._currentFrame ].spriteSourceSize.y + 'px');
+		this.parent( value );
+		
+		this._container.css( 'width', this._frames[ this._currentFrame ].frame.w );
+		this._container.css( 'height', this._frames[ this._currentFrame ].frame.h );
+		
+		this._container.css( 'background-position', -this._frames[ this._currentFrame ].frame.x + 'px ' +
+												    -this._frames[ this._currentFrame ].frame.y + 'px');
 	},
 
 	_parseData: function( data ) {
 		this._frames = data.frames;
+		this._totalFrames = this._frames.length;
+	}
+});
+
+var EffectSpriteSheet = new Class({
+	Extends: Effect,
+
+	initialize: function() {
+		if( arguments.length == 3 ) {
+
+			if( arguments[ 0 ] instanceof jQuery && 
+				typeof arguments[ 1 ] == 'string' &&
+				typeof arguments[ 2 ] == 'object') {
+
+				this._spriteSheetURL = arguments[ 1 ];
+				this._spriteSheetData = arguments[ 2 ];
+
+				this.parent( arguments[0] );
+			} else {
+				this._displayInstantiationError();
+			}
+
+		} else if( arguments.length == 2 ) {
+
+			if( typeof arguments[ 0 ] == 'string' &&
+				typeof arguments[ 1 ] == 'object') {
+
+				this._spriteSheetURL = arguments[ 0 ];
+				this._spriteSheetData = arguments[ 1 ];
+
+				this.parent();
+			} else {
+				this._displayInstantiationError();
+			}
+
+		} else {
+			this._displayInstantiationError();
+		}
+	},
+
+	_spriteSheetURL: null,
+	_spriteSheetData: null,
+	_spriteSheetAnimation: null,
+
+	setPercentage: function( value ) {
+		this.parent( value );
+
+		this._spriteSheetAnimation.setCurrentFrame( value * (this._spriteSheetAnimation.getTotalFrames() - 1) );
+	},
+
+	setItemToEffect: function( itemToEffect, itemProperties ) {
+		this.parent( itemToEffect, itemProperties );
+
+		this._spriteSheetAnimation = new SpriteSheetAdobeJSONArray( itemToEffect, 
+																	this._spriteSheetURL,
+																	this._spriteSheetData );
+	},
+
+	_displayInstantiationError: function() {
+		throw new Error( 'When EffectSpriteSheet is intantiated you should pass in either: \n' +
+						 'itemToEffect, spriteSheetURL, spriteSheetJSON\n' +
+						 'or\n' +
+						 'spriteSheetURL, spriteSheetJSON');
 	}
 });
