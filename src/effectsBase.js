@@ -123,7 +123,7 @@ var Effect = new Class({
 		this._percentageToApply += percentage;
 	},
 	reset: function() {
-		this._itemProperties.resetAll(this.id);
+		this._itemProperties.resetAll( this.id );
 	},
 	destroy: function() {
 		this.reset();

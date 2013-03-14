@@ -367,7 +367,7 @@ var Effect = new Class({
 		this._percentageToApply += percentage;
 	},
 	reset: function() {
-		this._itemProperties.resetAll(this.id);
+		this._itemProperties.resetAll( this.id );
 	},
 	destroy: function() {
 		this.reset();
@@ -1953,6 +1953,9 @@ var EffectSpriteSheet = new Class({
 	_spriteSheetData: null,
 	_spriteSheetAnimation: null,
 	_temp: null,
+	_startBGPosition: '0% 0%',
+	_startBGRepeate: 'repeat',
+	_startBGRImage: 'none',
 
 	setPercentage: function( value ) {
 		this.parent( value );
@@ -1961,7 +1964,6 @@ var EffectSpriteSheet = new Class({
 
 		this._itemToEffect.css('background-position', -this._spriteSheetAnimation.getFrameX( frame ) + 'px ' +
 												      -this._spriteSheetAnimation.getFrameY( frame ) + 'px');
-
 
 		var cWidth = this._itemProperties.getEffectChange( this.id, 'width' );
 		var cHeight = this._itemProperties.getEffectChange( this.id, 'height' );
@@ -1988,6 +1990,10 @@ var EffectSpriteSheet = new Class({
 	setItemToEffect: function( itemToEffect, itemProperties ) {
 		this.parent( itemToEffect, itemProperties );
 
+		this._startBGPosition = this._itemToEffect.css( 'background-position' );
+		this._startBGRepeate = this._itemToEffect.css( 'background-repeat' );
+		this._startBGRImage = this._itemToEffect.css( 'background-image' );
+
 		this._spriteSheetAnimation = new SpriteSheetAdobeJSONArray( this._spriteSheetURL,
 																	this._spriteSheetData );
 
@@ -2002,5 +2008,13 @@ var EffectSpriteSheet = new Class({
 						 'itemToEffect, spriteSheetURL, spriteSheetJSON\n' +
 						 'or\n' +
 						 'spriteSheetURL, spriteSheetJSON');
+	},
+
+	destroy: function() {
+		this.parent();
+
+		this._itemToEffect.css( 'background-image', this._startBGRImage );
+		this._itemToEffect.css( 'background-repeat', this._startBGRepeate );
+		this._itemToEffect.css( 'background-position', this._startBGPosition );
 	}
 });
