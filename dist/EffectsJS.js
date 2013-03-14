@@ -362,6 +362,7 @@ var Effect = new Class({
 	},
 	stopAnimate: function() {
 		Animator.destroyAnimation( this._animation );
+		this._animation = null;
 	},
 	effectPercentage: function( percentage ) {
 		this._percentageToApply += percentage;
@@ -378,6 +379,10 @@ var Effect = new Class({
 
 		ItemPropertiesBank.destroy( this._itemToEffect );
 		this._effects.length = 0;
+
+		if( this._animation ) {
+			this.stopAnimate();
+		}
 	},
 	add: function(effect) {
 		//check if this effect being added will effect this effect
@@ -1917,8 +1922,6 @@ var EffectSpriteSheet = new Class({
 		this._type =  'EffectSprite';
 		this._temp = new PropertyNumber( 0 );
 
-		if( arguments.length == 3 ) {
-
 			if( arguments[ 0 ] instanceof jQuery && 
 				typeof arguments[ 1 ] == 'string' &&
 				typeof arguments[ 2 ] == 'object') {
@@ -1926,33 +1929,38 @@ var EffectSpriteSheet = new Class({
 				this._spriteSheetURL = arguments[ 1 ];
 				this._spriteSheetData = arguments[ 2 ];
 
+				//if a parser was passed in
+				if( typeof arguments[ 3 ] == 'function' ) {
+					this._parserType = arguments[ 3 ];
+				} else {
+					this._parserType = SpriteSheetAdobeJSONArray;
+				}
+
 				this.parent( arguments[0] );
-			} else {
-				this._displayInstantiationError();
-			}
-
-		} else if( arguments.length == 2 ) {
-
-			if( typeof arguments[ 0 ] == 'string' &&
-				typeof arguments[ 1 ] == 'object') {
+			} else if( typeof arguments[ 0 ] == 'string' &&
+					   typeof arguments[ 1 ] == 'object') {
 
 				this._spriteSheetURL = arguments[ 0 ];
 				this._spriteSheetData = arguments[ 1 ];
+
+				//if a parser was passed in
+				if( typeof arguments[ 2 ] == 'function' ) {
+					this._parserType = arguments[ 2 ];
+				} else {
+					this._parserType = SpriteSheetAdobeJSONArray;
+				}
 
 				this.parent();
 			} else {
 				this._displayInstantiationError();
 			}
-
-		} else {
-			this._displayInstantiationError();
-		}
 	},
 
 	_spriteSheetURL: null,
 	_spriteSheetData: null,
 	_spriteSheetAnimation: null,
 	_temp: null,
+	_parserType: null,
 	_startBGPosition: '0% 0%',
 	_startBGRepeate: 'repeat',
 	_startBGRImage: 'none',

@@ -118,6 +118,7 @@ var Effect = new Class({
 	},
 	stopAnimate: function() {
 		Animator.destroyAnimation( this._animation );
+		this._animation = null;
 	},
 	effectPercentage: function( percentage ) {
 		this._percentageToApply += percentage;
@@ -134,6 +135,10 @@ var Effect = new Class({
 
 		ItemPropertiesBank.destroy( this._itemToEffect );
 		this._effects.length = 0;
+
+		if( this._animation ) {
+			this.stopAnimate();
+		}
 	},
 	add: function(effect) {
 		//check if this effect being added will effect this effect
