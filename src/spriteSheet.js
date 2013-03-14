@@ -1,33 +1,29 @@
 
 var SpriteSheet = new Class({
-	initialize: function(container, bgImageURL, data) {
-		this.__defineGetter__( 'currentFrame', this.getCurrentFrame );
-		this.__defineSetter__( 'currentFrame', this.setCurrentFrame );
+	initialize: function( bgImageURL, data ) {
 		this.__defineSetter__( 'totalFrames', this.getTotalFrames );
 
-		this._container = container;
-		this._container.css( 'background-image', 'url(' + bgImageURL + ')' );
-		this._container.css( 'background-repeat', 'no-repeat' );
-
 		this._parseData( data );
-
-		this.setCurrentFrame( 0 );
-	},
-
-	_container: null,
-	_currentFrame: 0,
-	_totalFrames: 0,
-
-	setCurrentFrame: function( value ) {
-		this._currentFrame = Math.floor( value ) % this._totalFrames;
-	},
-
-	getCurrentFrame: function() {
-		return this._currentFrame;
 	},
 
 	getTotalFrames: function() {
 		return this._totalFrames;
+	},
+
+	getFrameX: function( frame ) {
+		throw new Error('You should override this function')
+	},
+
+	getFrameY: function( frame ) {
+		throw new Error('You should override this function')
+	},
+
+	getFrameWidth: function( frame ) {
+		throw new Error('You should override this function')
+	},
+
+	getFrameHeight: function( frame ) {
+		throw new Error('You should override this function')
 	},
 
 	_parseData: function( data ) {
@@ -41,14 +37,20 @@ var SpriteSheetAdobeJSONArray = new Class({
 
 	_frames: null,
 
-	setCurrentFrame: function( value ) {
-		this.parent( value );
-		
-		this._container.css( 'width', this._frames[ this._currentFrame ].frame.w );
-		this._container.css( 'height', this._frames[ this._currentFrame ].frame.h );
-		
-		this._container.css( 'background-position', -this._frames[ this._currentFrame ].frame.x + 'px ' +
-												    -this._frames[ this._currentFrame ].frame.y + 'px');
+	getFrameX: function( frame ) {
+		return this._frames[ frame ].frame.x;
+	},
+
+	getFrameY: function( frame ) {
+		return this._frames[ frame ].frame.y;
+	},
+
+	getFrameWidth: function( frame ) {
+		return this._frames[ frame ].frame.w;
+	},
+
+	getFrameHeight: function( frame ) {
+		return this._frames[ frame ].frame.h;
 	},
 
 	_parseData: function( data ) {
@@ -61,6 +63,8 @@ var EffectSpriteSheet = new Class({
 	Extends: Effect,
 
 	initialize: function() {
+		this._temp = new PropertyNumber( 0 );
+
 		if( arguments.length == 3 ) {
 
 			if( arguments[ 0 ] instanceof jQuery && 
@@ -96,19 +100,38 @@ var EffectSpriteSheet = new Class({
 	_spriteSheetURL: null,
 	_spriteSheetData: null,
 	_spriteSheetAnimation: null,
+	_temp: null,
 
 	setPercentage: function( value ) {
 		this.parent( value );
 
-		this._spriteSheetAnimation.setCurrentFrame( value * (this._spriteSheetAnimation.getTotalFrames() - 1) );
+		var frame = Math.floor( value * (this._spriteSheetAnimation.getTotalFrames() - 1) );
+
+		this._itemToEffect.css('background-position', -this._spriteSheetAnimation.getFrameX( frame ) + 'px ' +
+												      -this._spriteSheetAnimation.getFrameY( frame ) + 'px');
+
+		var cWidth = this._itemProperties.getEffectChange( this.id, 'width' );
+		var cHeight = this._itemProperties.getEffectChange( this.id, 'height' );
+		
+		this._temp.value = this._spriteSheetAnimation.getFrameWidth( frame );
+		this._temp.sub( cWidth );
+		this._itemProperties.change( this.id, 'width', this._temp );
+
+		this._temp.value = this._spriteSheetAnimation.getFrameHeight( frame );
+		this._temp.sub( cHeight );
+		this._itemProperties.change( this.id, 'height', this._temp );
 	},
 
 	setItemToEffect: function( itemToEffect, itemProperties ) {
 		this.parent( itemToEffect, itemProperties );
 
-		this._spriteSheetAnimation = new SpriteSheetAdobeJSONArray( itemToEffect, 
-																	this._spriteSheetURL,
+		this._spriteSheetAnimation = new SpriteSheetAdobeJSONArray( this._spriteSheetURL,
 																	this._spriteSheetData );
+
+		this._itemToEffect.css( 'background-image', 'url(' + this._spriteSheetURL + ')' );
+		this._itemToEffect.css( 'background-repeat', 'no-repeat' );
+
+		this._itemProperties.setupEffect(this, 'width', 'height', 'left', 'top');
 	},
 
 	_displayInstantiationError: function() {
