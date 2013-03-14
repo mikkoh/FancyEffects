@@ -1880,6 +1880,14 @@ var SpriteSheetAdobeJSONArray = new Class({
 
 	_frames: null,
 
+	getOffX: function( frame ) {
+		return this._frames[ frame ].spriteSourceSize.x;
+	},
+
+	getOffY: function( frame ) {
+		return this._frames[ frame ].spriteSourceSize.y;
+	},
+
 	getFrameX: function( frame ) {
 		return this._frames[ frame ].frame.x;
 	},
@@ -1906,6 +1914,7 @@ var EffectSpriteSheet = new Class({
 	Extends: Effect,
 
 	initialize: function() {
+		this._type =  'EffectSprite';
 		this._temp = new PropertyNumber( 0 );
 
 		if( arguments.length == 3 ) {
@@ -1953,8 +1962,11 @@ var EffectSpriteSheet = new Class({
 		this._itemToEffect.css('background-position', -this._spriteSheetAnimation.getFrameX( frame ) + 'px ' +
 												      -this._spriteSheetAnimation.getFrameY( frame ) + 'px');
 
+
 		var cWidth = this._itemProperties.getEffectChange( this.id, 'width' );
 		var cHeight = this._itemProperties.getEffectChange( this.id, 'height' );
+		var cLeft = this._itemProperties.getEffectChange( this.id, 'left' );
+		var cTop = this._itemProperties.getEffectChange( this.id, 'top' );
 		
 		this._temp.value = this._spriteSheetAnimation.getFrameWidth( frame );
 		this._temp.sub( cWidth );
@@ -1963,6 +1975,14 @@ var EffectSpriteSheet = new Class({
 		this._temp.value = this._spriteSheetAnimation.getFrameHeight( frame );
 		this._temp.sub( cHeight );
 		this._itemProperties.change( this.id, 'height', this._temp );
+
+		this._temp.value = this._spriteSheetAnimation.getOffX( frame );
+		this._temp.sub( cLeft );
+		this._itemProperties.change( this.id, 'left', this._temp );
+
+		this._temp.value = this._spriteSheetAnimation.getOffY( frame );
+		this._temp.sub( cTop );
+		this._itemProperties.change( this.id, 'top', this._temp );
 	},
 
 	setItemToEffect: function( itemToEffect, itemProperties ) {
