@@ -133,7 +133,7 @@ var ItemProperties = new Class({
 		}
 
 		this._enabled[ effectID ][ property ] = true;
-		this._changeAmountForEffect[ effectID ][ property ] = ParserClass.getZeroProperty();
+		this._changeAmountForEffect[ effectID ][ property ] = this._propertyStartValue[ property ].getZero();
 	}
 });
 
@@ -217,6 +217,9 @@ var PropertyNumber = new Class({
 	reset: function() {
 		this._value = 0;
 	},
+	getZero: function() {
+		return new PropertyNumber( 0 );
+	},
 	getChange: function(percentage, curValue, startValue, endValue) {
 		this._value = (endValue.value - startValue.value) * percentage + startValue.value;
 
@@ -231,6 +234,7 @@ var PropertyNumber = new Class({
 		return new PropertyNumber(this._value);
 	}
 });
+
 
 var PropertyColour = new Class({
 	Extends: Property,
@@ -329,6 +333,9 @@ var PropertyColour = new Class({
 		this._b = 0;
 		this._a = 1;
 	},
+	getZero: function() {
+		return new PropertyColour( 0, 0, 0, 0 );
+	},
 	getChange: function(percentage, curValue, startValue, endValue) {
 		this._r = (endValue.r - startValue.r) * percentage + startValue.r;
 		this._g = (endValue.g - startValue.g) * percentage + startValue.g;
@@ -359,10 +366,12 @@ var PropertyColour = new Class({
 	}
 });
 
+
+
 var PropertyFilter = new Class({
 	Extends: Property,
 
-	initialize: function(blur, brightness, contrast, dropShadow, grayScale, hueRotation, invert, opacity, saturate, sepia) {
+	initialize: function(blur, brightness, contrast, dropR, dropG, dropB, dropA, dropOffX, dropOffY, dropBlur, dropSpread, dropInset, grayScale, hueRotation, invert, opacity, saturate, sepia) {
 		this.parent();
 
 		this.__defineGetter__('blur', this.getBlur);
@@ -390,7 +399,7 @@ var PropertyFilter = new Class({
 		this._blur = blur == undefined ? 0 : blur;
 		this._brightness = brightness == undefined ? 0 : brightness;
 		this._contrast = contrast == undefined ? 1 : contrast;
-		this._dropShadow = dropShadow == undefined ? new PropertyBoxShadow() : dropShadow;
+		this._dropShadow = new PropertyBoxShadow(dropR, dropG, dropB, dropA, dropOffX, dropOffY, dropBlur, dropSpread, dropInset);
 		this._grayScale = grayScale == undefined ? 0 : grayScale;
 		this._hueRotation = hueRotation == undefined ? 0 : hueRotation;
 		this._invert = invert == undefined ? 0 : invert;
@@ -556,6 +565,9 @@ var PropertyFilter = new Class({
 
 		this._dropShadow.reset();
 	},
+	getZero: function() {
+		return new PropertyFilter(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false, 0, 0, 0, 0, 0, 0);
+	},
 	getChange: function(percentage, curValue, startValue, endValue) {
 		this._blur = (endValue.blur - startValue.blur) * percentage + startValue.blur;
 		this._brightness = (endValue.brightness - startValue.brightness) * percentage + startValue.brightness;
@@ -640,6 +652,7 @@ var PropertyFilter = new Class({
 	}
 });
 
+
 var PropertyBoxShadow = new Class({
 	Extends: PropertyColour,
 
@@ -659,7 +672,7 @@ var PropertyBoxShadow = new Class({
 		this._offY = offY == undefined ? 0 : parseFloat(offY);
 		this._blur = blur == undefined ? 0 : parseFloat(blur);
 		this._spread = spread == undefined ? 0 : parseFloat(spread);
-		this._inset = inset == 'inset';
+		this._inset = inset;
 
 		this.parent(r, g, b, a);
 	},
@@ -752,6 +765,9 @@ var PropertyBoxShadow = new Class({
 		this._blur = 0;
 		this._spread = 0;
 		this._inset = false;
+	},
+	getZero: function() {
+		return new PropertyBoxShadow(0, 0, 0, 0, 0, 0, 0, 0, false);
 	},
 	getChange: function(percentage, curValue, startValue, endValue) {
 		this.parent(percentage, curValue, startValue, endValue);

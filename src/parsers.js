@@ -1,6 +1,6 @@
 var REGEX_VALUE_EXTENSION = /^(-?\d+\.?\d*)((px)?(%)?)$/;
 var REGEX_VALUE_COLOUR_RGB = /^rgba?\((\d+), *(\d+), *(\d+)(, *(\d+\.?\d*))?\)$/;
-var REGEX_VALUE_BOX_SHADOW = /^rgba?\((\d+), *(\d+), *(\d+)(, *(\d+\.?\d*))?\) (-?\d+)px (-?\d+)px (-?\d+)px( (-?\d+)px( inset)?)?$/;
+var REGEX_VALUE_BOX_SHADOW = /rgba?\((\d+), *(\d+), *(\d+)(, *(\d+\.?\d*))?\) (-?\d+)px (-?\d+)px (-?\d+)px( (-?\d+)px( inset)?)?/;
 
 var REGEX_VALUE_FILTER_BLUR = /blur\((\d+)px\)/;
 var REGEX_VALUE_FILTER_BRIGHTNESS = /brightness\((-?\d+\.?\d*)\)/;
@@ -13,138 +13,210 @@ var REGEX_VALUE_FILTER_OPACITY = /opacity\((\d+\.?\d*)\)/;
 var REGEX_VALUE_FILTER_SATURATE = /saturate\((\d+\.?\d*)\)/;
 var REGEX_VALUE_FILTER_SEPIA = /sepia\((\d+\.?\d*)\)/;
 
-var Parser = new Class({
+
+
+
+
+
+
+
+
+
+
+
+var ParserBase = new Class({
 	initialize: function(cssValue) {
 		this._cssValue = cssValue;
 
 		this._parseCSSValue();
 	},
 
+	_parserDefinition: null,
+	_propertyType: null,
 	_cssValue: null,
 	_value: null,
+	
 
 	getValue: function() {
 		return this._value.clone();
 	},
-	getZeroProperty: function() {
-		throw new Error('You need to override this function');
+
+	setParserDefinition: function( definition ) {
+		this._parserDefinition = definition;
 	},
-	_parseCSSValue: function() {
-		throw new Error('You need to override this function');
-	}
-});
 
-var ParseNumberValue = new Class({
-	Extends: Parser,
+	setPropertyType: function( propertyType ) {
+		this._propertyType = propertyType;
+	},
 
 	_parseCSSValue: function() {
-		var valueResult = REGEX_VALUE_EXTENSION.exec(this._cssValue);
+		var propNames = [];
+		var propValues = [];
 
-		if( valueResult != null )
-			this._value = new PropertyNumber( parseFloat( valueResult[1]) );
-		else
-			this._value = new PropertyNumber();
-	}
-});
+		this._getPropertyArgs( this._parserDefinition, propNames, propValues );
 
-ParseNumberValue.getZeroProperty = function() {
-	return new PropertyNumber(0);
-};
+		//the following two lines are pretty nasty but it will construct a new property
+		//then apply its constructor on it's self. Only way you can "apply" on a constructor
+		this._value = Object.create( this._propertyType.prototype );
+		this._value = ( this._propertyType.apply( this._value, propValues ) || this._value );
 
-
-var ParserColour = new Class({
-	Extends: Parser,
-
-	_parseCSSValue: function() {
-		var valArr = REGEX_VALUE_COLOUR_RGB.exec(this._cssValue);
-
-		if (valArr != undefined) {
-			//we're doing something funky here with ALPHA because jquery may have a bug
-			//when css is set to 0.5 jQuery returns 0.498046875 which is 127.5/255
-			//we just drop the precision slightly in hopes that it will be more acurate
-			//I know it's sort of bad
-			this._value = new PropertyColour( parseFloat(valArr[1]), 
-											  parseFloat(valArr[2]), 
-											  parseFloat(valArr[3]), 
-											  parseFloat(parseFloat(valArr[5]).toPrecision(2)) );
-		} else {
-			this._value = new PropertyColour();
-		}
-	}
-});
-
-ParserColour.getZeroProperty = function() {
-	return new PropertyColour(0, 0, 0, 0);
-};
+		console.log( this._value.value || this._value );
+	},
 
 
-
-var ParserFilter = new Class({
-	Extends: Parser,
-
-	_parseCSSValue: function() {
-		var blur = REGEX_VALUE_FILTER_BLUR.exec(this._cssValue);
-		var brightness = REGEX_VALUE_FILTER_BRIGHTNESS.exec(this._cssValue);
-		var contrast = REGEX_VALUE_FILTER_CONTRAST.exec(this._cssValue);
-		var grayScale = REGEX_VALUE_FILTER_GRAY_SCALE.exec(this._cssValue);
-		var hueRotation = REGEX_VALUE_FILTER_HUE_ROTATION.exec(this._cssValue);
-		var invert = REGEX_VALUE_FILTER_INVERT.exec(this._cssValue);
-		var opacity = REGEX_VALUE_FILTER_OPACITY.exec(this._cssValue);
-		var saturate = REGEX_VALUE_FILTER_SATURATE.exec(this._cssValue);
-		var sepia = REGEX_VALUE_FILTER_SEPIA.exec(this._cssValue);
-
-		var dropShadow = REGEX_VALUE_FILTER_DROP_SHADOW.exec(this._cssValue);
-		var dropShadowVal = undefined;
-
-		if(dropShadow) {
-			dropShadowVal = (new ParseDropShadow(dropShadow[1])).getValue();
-		} else {
-			dropShadowVal = new PropertyBoxShadow();
-		}
-
-		this._value = new PropertyFilter(blur==undefined ? 0 : parseFloat(blur[1]),
-										 brightness == undefined ? 0 : parseFloat(brightness[1]),
-										 contrast == undefined ? 1 : parseFloat(contrast[1]),
-										 dropShadowVal,
-										 grayScale == undefined ? 0 : parseFloat(grayScale[1]),
-										 hueRotation == undefined ? 0 : parseFloat(hueRotation[1]),
-										 invert == undefined ? 0 : parseFloat(invert[1]),
-										 opacity == undefined ? 1 : parseFloat(opacity[1]),
-										 saturate == undefined ? 1 : parseFloat(saturate[1]),
-										 sepia == undefined ? 0 : parseFloat(sepia[1]));
-	}
-});
-
-ParserFilter.getZeroProperty = function() {
-	return new PropertyFilter(0, 0, 0, ParseDropShadow.getZeroProperty(), 0, 0, 0, 0, 0, 0);
-};
-
-
-var ParseDropShadow = new Class({
-	Extends: Parser,
-
-	_parseCSSValue: function() {
-		var valArr = REGEX_VALUE_BOX_SHADOW.exec(this._cssValue);
+	_getPropertyArgs: function( definition, propNames, propValues ) {
+		//check if this definition level has its own regex
+		var regex = definition.regex;
+		var props = definition.props;
 		
-		if ( valArr ) {
-			this._value = new PropertyBoxShadow( valArr[1], //r
-												 valArr[2], //g
-												 valArr[3], //b
-												 valArr[5], //a
-												 valArr[6], //offX
-												 valArr[7], //offY
-												 valArr[8], //blur
-												 valArr[10], //spread
-												 valArr[11] ); //inset
-		} else {
-			this._value = new PropertyBoxShadow();
+		//if no regex is defined there is an issue
+		if( regex == undefined && props == undefined ) {
+			throw new Error( 'Paser definition is malformed' );
+		}
+
+		if( regex != undefined ) {
+			var regexValues = regex.exec( this._cssValue );
+		}
+
+		for( var i = 0, len = props.length; i < len; i++ ) {
+			//check if theres another regex defined for this child property
+			//if so we should recurse to parse out the values for this
+			if( props[i].regex == undefined ) {
+				
+				//did we parse anything for values
+				if( regexValues != undefined ) {
+					var curVal = regexValues[ props[i].idx ];
+
+					if( curVal == undefined && props[ i ].default !== undefined ) {
+						curVal = props[ i ].default;
+					}
+
+					propNames.push( props[ i ].name );
+
+					//we want to figure out what type of property we're parsing
+					switch( props[ i ].type ) {
+						case Number:
+							propValues.push( parseFloat( curVal ) );
+						break;
+
+						case Boolean:
+							propValues.push( curVal != undefined );
+						break;
+
+						default:
+							propValues.push( curVal );
+						break;
+					}
+				} else {
+					propNames.push( props[ i ].name );
+					propValues.push( undefined );
+				}
+
+				console.log( propNames[ propNames.length - 1 ], propValues[ propValues.length -1 ] );
+			} else {
+				//since there was a regex defined we should execute that regex as its own prop
+				this._getPropertyArgs( props[i], propNames, propValues );
+			}
 		}
 	}
 });
 
-ParseDropShadow.getZeroProperty=function() {
-		return new PropertyBoxShadow( 0, 0, 0, 0, 0, 0, 0, 0 );
+
+
+
+
+function getNewParser( propertyType, parserDefinition ) {
+	return new Class({
+		Extends: ParserBase,
+
+		initialize: function(cssValue) {
+			this.setPropertyType( propertyType );
+			this.setParserDefinition( parserDefinition );
+
+			this.parent( cssValue );
+		}	
+	});
+}
+
+
+
+
+
+var definitionBasicNumber = {
+	regex: /.+/, //anything will be parsed to a Number
+	props: [
+		{ name: 'value', idx: 0, type: Number }
+	]
 };
+
+var definitionColour = {
+	regex: REGEX_VALUE_COLOUR_RGB,
+	props: [
+		{ name: 'r', idx: 1, type: Number},
+		{ name: 'b', idx: 2, type: Number},
+		{ name: 'g', idx: 3, type: Number},
+		{ name: 'a', idx: 5, type: Number, default: 1 }
+	]
+};
+
+var definitionBoxShadow = {
+	regex: REGEX_VALUE_BOX_SHADOW,
+	props: [
+		{ name: 'r', idx: 1, type: Number},
+		{ name: 'b', idx: 2, type: Number},
+		{ name: 'g', idx: 3, type: Number},
+		{ name: 'a', idx: 5, type: Number, default: 1 },
+		{ name: 'offX', idx: 6, type: Number, default: 0 },
+		{ name: 'offY', idx: 7, type: Number, default: 0 },
+		{ name: 'blur', idx: 7, type: Number, default: 0 },
+		{ name: 'spread', idx: 10, type: Number, default: 0 },
+		{ name: 'inset', idx: 11, type: Boolean}
+	]
+};
+
+var definitionFilter = {
+	props: [
+		{ regex: REGEX_VALUE_FILTER_BLUR, 
+		  props: [ {name: 'blur', idx: 1, type: Number, default: 0 } ] },
+
+		{ regex: REGEX_VALUE_FILTER_BRIGHTNESS, 
+		  props: [ {name: 'brightness', idx: 1, type: Number, default: 0 } ] },
+
+		{ regex: REGEX_VALUE_FILTER_CONTRAST, 
+		  props: [ {name: 'contrast', idx: 1, type: Number, default: 1 } ] },
+
+		definitionBoxShadow,
+
+		{ regex: REGEX_VALUE_FILTER_GRAY_SCALE, 
+		  props: [ {name: 'grayScale', idx: 1, type: Number, default: 0 } ] },
+
+		{ regex: REGEX_VALUE_FILTER_HUE_ROTATION, 
+		  props: [ {name: 'hueRotation', idx: 1, type: Number, default: 0 } ] },
+
+		{ regex: REGEX_VALUE_FILTER_INVERT, 
+		  props: [ {name: 'invert', idx: 1, type: Number, default: 0 } ] },
+
+		{ regex: REGEX_VALUE_FILTER_OPACITY, 
+		  props: [ {name: 'opacity', idx: 1, type: Number, default: 1 } ] },
+
+		{ regex: REGEX_VALUE_FILTER_SATURATE, 
+		  props: [ {name: 'saturate', idx: 1, type: Number, default: 1 } ] },
+
+		{ regex: REGEX_VALUE_FILTER_SEPIA, 
+		  props: [ {name: 'sepia', idx: 1, type: Number, default: 0 } ] }
+	]
+};
+
+
+
+
+
+
+var ParseNumberValue = getNewParser( PropertyNumber, definitionBasicNumber );
+var ParserColour = getNewParser( PropertyColour, definitionColour );
+var ParserFilter = getNewParser( PropertyFilter, definitionFilter );
+var ParseDropShadow = getNewParser( PropertyBoxShadow, definitionBoxShadow );
+
 
 var ParserLookUp = {};
 ParserLookUp['width'] = ParseNumberValue;
