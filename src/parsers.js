@@ -96,7 +96,12 @@ var ParserBase = new Class({
 					//we want to figure out what type of property we're parsing
 					switch( props[ i ].type ) {
 						case Number:
-							propValues.push( parseFloat( curVal ) );
+							var curNum = parseFloat( curVal );
+
+							if( isNaN(curNum) )
+								curNum = 0;
+
+							propValues.push( curNum );
 						break;
 
 						case Boolean:
@@ -111,8 +116,6 @@ var ParserBase = new Class({
 					propNames.push( props[ i ].name );
 					propValues.push( undefined );
 				}
-
-				console.log( propNames[ propNames.length - 1 ], propValues[ propValues.length -1 ] );
 			} else {
 				//since there was a regex defined we should execute that regex as its own prop
 				this._getPropertyArgs( props[i], propNames, propValues );
