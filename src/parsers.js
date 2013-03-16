@@ -59,8 +59,6 @@ var ParserBase = new Class({
 		//then apply its constructor on it's self. Only way you can "apply" on a constructor
 		this._value = Object.create( this._propertyType.prototype );
 		this._value = ( this._propertyType.apply( this._value, propValues ) || this._value );
-
-		console.log( this._value.value || this._value );
 	},
 
 

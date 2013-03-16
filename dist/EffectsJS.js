@@ -1197,6 +1197,10 @@ var PropertyFilter = new Class({
 		this._opacity = opacity == undefined ? 1 : opacity;
 		this._saturate = saturate == undefined ? 1 : saturate;
 		this._sepia = sepia == undefined ? 0 : sepia;
+
+		this._dropShadow.onPropertyChange.add( (function() {
+			this.onPropertyChange.dispatch();
+		}).bind( this ) );
 	},
 
 	_blur: 0,
@@ -1298,7 +1302,7 @@ var PropertyFilter = new Class({
 		this._saturate += otherItem.saturate;
 		this._sepia += otherItem.sepia;
 
-		this.dropShadow.add(otherItem.dropShadow);
+		this.dropShadow.add( otherItem.dropShadow );
 
 		return this;
 	},
@@ -1313,7 +1317,7 @@ var PropertyFilter = new Class({
 		this._saturate -= otherItem.saturate;
 		this._sepia -= otherItem.sepia;
 
-		this.dropShadow.sub(otherItem.dropShadow);
+		this.dropShadow.sub( otherItem.dropShadow );
 
 		return this;
 	},
@@ -1328,6 +1332,8 @@ var PropertyFilter = new Class({
 		this._saturate *= scalar;
 		this._sepia *= scalar;
 
+		this.dropShadow.mulScalar( scalar );
+
 		return this;
 	},
 	equals: function(otherItem) {
@@ -1340,6 +1346,8 @@ var PropertyFilter = new Class({
 		this._opacity = otherItem.opacity;
 		this._saturate = otherItem.saturate;
 		this._sepia = otherItem.sepia;
+
+		this.dropShadow.equals( otherItem.dropShadow );
 
 		return this;
 	},
@@ -1661,8 +1669,6 @@ var ParserBase = new Class({
 		//then apply its constructor on it's self. Only way you can "apply" on a constructor
 		this._value = Object.create( this._propertyType.prototype );
 		this._value = ( this._propertyType.apply( this._value, propValues ) || this._value );
-
-		console.log( this._value.value || this._value );
 	},
 
 
