@@ -138,28 +138,341 @@ var ItemProperties = new Class({
 });
 
 
+
+
+
+
+
+
+var PropertyClassBuilder = new Class({
+	initialize: function() {
+		this._properties = [];
+		this._value = [];
+		this._defaultValues = [];
+	},
+
+	_properties: null,
+	_value: null,
+	_defaultValues: null, 
+	_cssDefinition: null,
+
+	addProperty: function( name, value, defaultValue ) {
+		this._properties.push( name );
+		this._value.push( value );
+		this._defaultValues.push( defaultValue );
+	},
+
+	setCSSDefinition: function( definition ) {
+		this._cssDefinition = definition;
+	},
+
+	build: function() {
+		var src = this._getConstructorStr() +
+				  this._getSetterGetterStr() +
+				  this._getAddStr() +
+				  this._getSubStr() +
+				  this._getMulScalarStr() +
+				  this._getEqualsStr() +
+				  this._getResetStr() +
+				  this._getGetZeroStr() +
+				  this._getGetChangeStr() +
+				  this._getGetCSSStr();
+
+
+		src = src.substring( 0, src.length-2 );
+
+		ob = eval( '({' + src + '})' );
+
+		return ob;
+	},
+
+	_getConstructorStr: function() {
+		var rVal = 'initialize: function() {\n'
+
+		for(var i = 0, len = this._properties.length; i < len; i++ ) {
+			rVal += 'this._' + this._properties[ i ] + ' = arguments[ '+i+' ] == undefined ? ' + this._defaultValues[ i ] + ' : arguments[ '+i+' ];\n';
+			rVal += 'this.__defineGetter__("' + this._properties[ i ] + '", this.get' + this._properties[ i ] + ');\n';
+			rVal += 'this.__defineSetter__("' + this._properties[ i ] + '", this.set' + this._properties[ i ] + ');\n\n';
+		}
+
+		rVal += '},\n'
+
+		return rVal;
+	},
+
+	_getSetterGetterStr: function() {
+		var rVal = '';
+
+		for(var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			rVal += '\tget' + curProp + ': function() { return this._' + curProp + ' ; },\n';
+			rVal += '\tset' + curProp + ': function( value ) { \n'+
+				'\t\tthis._' + curProp + ' = value;' +
+				'\t\tthis.onPropertyChange.dispatch();' +
+			'},\n';
+		}
+
+		return rVal;
+	},
+
+	_getAddStr: function() {
+		var rVal = '\tadd: function(otherItem) {\n';
+
+		for(var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			rVal += '\t\tthis._' + curProp + ' += otherItem.' + curProp + ';\n';
+		}
+		
+		rVal += '\t\treturn this;\n \t},\n';
+
+		return rVal;
+	},
+
+	_getSubStr: function() {
+		var rVal = '\tsub: function(otherItem) {\n';
+
+		for(var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			rVal += '\t\tthis._' + curProp + ' -= otherItem.' + curProp + ';\n';
+		}
+		
+		rVal += '\t\treturn this;\n \t},\n';
+
+		return rVal;
+	},
+
+	_getMulScalarStr: function() {
+		var rVal = '\tmulScalar: function(scalar) {\n';
+
+		for(var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			rVal += '\t\tthis._' + curProp + ' *= scalar;\n';
+		}
+		
+		rVal += '\t\treturn this;\n \t},\n';
+
+		return rVal;
+	},
+
+	_getEqualsStr: function() {
+		var rVal = '\tequals: function(otherItem) {\n';
+
+		for(var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			rVal += '\t\tthis._' + curProp + ' = otherItem.' + curProp + ';\n';
+		}
+		
+		rVal += '\t\treturn this;\n \t},\n';
+
+		return rVal;
+	},
+
+	_getResetStr: function() {
+		var rVal = '\treset: function(otherItem) {\n';
+
+		for(var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			rVal += '\t\tthis._' + curProp + ' = ' + this._defaultValues[ i ] + ';\n';
+		}
+		
+		rVal += '\t\treturn this;\n \t},\n';
+
+		return rVal;
+	},
+
+	_getGetZeroStr: function() {
+		var rVal = '\tgetZero: function(otherItem) {\n';
+
+		for(var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			rVal += '\t\tthis._' + curProp + ' = 0;\n';
+		}
+		
+		rVal += '\t\treturn this;\n \t},\n';	
+
+		return rVal;
+	},
+
+	_getGetChangeStr: function() {
+		var rVal = '\tgetChange: function( percentage, curValue, startValue, endValue ) {\n';
+
+		for(var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			rVal += '\t\tthis._' + curProp + ' = (endValue.' + curProp + ' - startValue.' + curProp + ') * percentage + startValue.' + curProp + ';\n';
+			rVal += '\t\tthis._' + curProp + ' -= curValue.' + curProp + ';\n';
+		}
+
+		rVal += '\t\treturn this;\n\t},\n';
+
+		return rVal;
+	},
+
+	_getGetCSSStr: function() {
+		var rVal = '\tgetCSS: function() {\n';
+
+		var cssDef = this._cssDefinition.css;
+		var alternatives = this._cssDefinition.alternatives;
+
+		var regex = /%(\w+)%/g;
+		var valArr = null;
+
+		//update the definitions to use properties from this class
+		while( valArr = regex.exec( cssDef ) ) {
+			var curProp = valArr[ 1 ];
+
+			cssDef = cssDef.replace( valArr[0], '" + this.' + valArr[1] + ' + "');
+		}
+
+		//check if we have alternative css
+		if( alternatives ) {
+			for( var i = 0, len = alternatives.length; i < len ; i++ ) {
+				var curCSS = alternatives[ i ].css;
+				var curValuesToCheck = alternatives[ i ].values;
+				var ifStatement = '';
+
+				//update the definitions to use properties from this class
+				while( valArr = regex.exec( curCSS ) ) {
+					var curProp = valArr[ 1 ];
+
+					curCSS = curCSS.replace( valArr[0], '" + this.' + valArr[1] + ' + "');
+				}
+
+				for( var j = 0, lenJ = curValuesToCheck.length; j < lenJ; j++ ) {
+					var altValue = curValuesToCheck[ j ];
+
+					ifStatement += 'this.' + altValue.name + ' == ' + altValue.value + ' &&';
+				}
+
+				ifStatement = ifStatement.substring(0, ifStatement.length - 2);
+
+				if( i > 0) {
+					rVal += '\t\telse if( ' + ifStatement + ') { return "' + curCSS + '"; }'
+				} else {
+					rVal += '\t\tif( ' + ifStatement + ') { return "' + curCSS + '"; }'
+				}
+			}
+
+			rVal += '\t\telse { return "' + cssDef + '" };\n'
+		} else {
+			rVal += '\t\treturn "' + cssDef + '";\n'
+		}
+
+
+		rVal += '},\n';
+
+		return rVal;
+	}
+});
+
+
+
+
+
+var builder = new PropertyClassBuilder();
+builder.addProperty( 'r', 0, 0 );
+builder.addProperty( 'g', 0, 0 );
+builder.addProperty( 'b', 0, 0 );
+builder.addProperty( 'a', 1, 1 );
+builder.setCSSDefinition( { css: 'rgba(%r%, %g%, %b%, %a%)', 
+							alternatives: [
+								{ css: 'rgb(%r%, %g%, %b%)', values: [{ name: 'a', value: 1 }] },
+								{ css: 'transparent', values: [{ name: 'a', value: 0 }] }
+							]});
+
+var ColourProperty = new Class( builder.build() );
+
+var col = new ColourProperty();
+
+console.log( col.getCSS() );
+
+
+
+
+/*
+
+
+
+
 var Property = new Class({
 	onPropertyChange: null,
 
 	initialize: function() {
 		this.onPropertyChange = new Signal();
+
+		this._properties = [];
+		this._defaultValues = {};
 	},
 
+	_properties: null,
+	_defaultValues: null, 
+
+	addProperty: function( name, value, defaultValue ) {
+		var privateName = '_' + name;
+		var getterName = 'get' + name;
+		var setterName = 'set' + name;
+
+		this._defaultValues[ privateName ] = defaultValue;
+		this[ privateName ] = value;
+		this._properties.push( privateName );
+
+		this[ getterName ] = function() {
+			return this[ privateName ];
+		};
+
+		this[ setterName ] = function( value ) {
+			this[ privateName ] = value;
+
+			this.onPropertyChange.dispatch();
+		};
+
+		this.__defineGetter__( name, this[ getterName ] );
+		this.__defineSetter__( name, this[ setterName ] );
+	}
+
 	add: function(otherItem) {
-		throw new Error('You must override this function');
+		for( var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			this[ curProp ] += otherItem[ curProp ];
+		}
+
 		return this;
 	},
 	sub: function(otherItem) {
-		throw new Error('You must override this function');
-		return this;
+		
 	},
 	mulScalar: function(scalar) {
-		throw new Error('You must override this function');
-		return this;
+		
 	},
 	equals: function(otherItem) {
-		throw new Error('You must override this function');
+	
+	},
+	reset: function() {
+		for( var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			this[ curProp ] = this._defaultValues[ curProp ];
+		}
+
 		return this;
+	},
+	getZero: function() {
+		var args = [];
+		var rVal = Object.create( Property );
+	
+		for( var i = 0, len = this._properties.length; i < len; i++ ) {
+			args[ i ] = 0;
+		}
+
+		return ( this._propertyType.apply( this._value, propValues ) || rVal );
 	},
 	getChange: function(percentage, curValue, startValue, endValue) {
 		throw new Error('You must override this function');
@@ -169,9 +482,67 @@ var Property = new Class({
 		throw new Error('You must override this function');
 	},
 	clone: function() {
-		throw new Error('You must override this function');
+		var args = [];
+		var rVal = Object.create( Property );
+	
+		for( var i = 0, len = this._properties.length; i < len; i++ ) {
+			args[ i ] = this[ this._properties[ i ] ];
+		}
+
+		return ( this._propertyType.apply( this._value, propValues ) || rVal );
+	},
+	toString: function() {
+		var rVal = '';
+
+		for( var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			rVal += curProp + '=' this[ curProp ];
+		}
+
+		return rVal;
 	}
 });
+
+
+
+
+
+
+// var Property = new Class({
+// 	onPropertyChange: null,
+
+// 	initialize: function() {
+// 		this.onPropertyChange = new Signal();
+// 	},
+
+// 	add: function(otherItem) {
+// 		throw new Error('You must override this function');
+// 		return this;
+// 	},
+// 	sub: function(otherItem) {
+// 		throw new Error('You must override this function');
+// 		return this;
+// 	},
+// 	mulScalar: function(scalar) {
+// 		throw new Error('You must override this function');
+// 		return this;
+// 	},
+// 	equals: function(otherItem) {
+// 		throw new Error('You must override this function');
+// 		return this;
+// 	},
+// 	getChange: function(percentage, curValue, startValue, endValue) {
+// 		throw new Error('You must override this function');
+// 		return this;
+// 	},
+// 	getCSS: function() {
+// 		throw new Error('You must override this function');
+// 	},
+// 	clone: function() {
+// 		throw new Error('You must override this function');
+// 	}
+// });
 
 var PropertyNumber = new Class({
 	Extends: Property,
@@ -809,3 +1180,4 @@ var PropertyBoxShadow = new Class({
 		this._inset);
 	}
 });
+*/

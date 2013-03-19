@@ -929,28 +929,101 @@ var ItemProperties = new Class({
 });
 
 
+
+
+
+
+
 var Property = new Class({
 	onPropertyChange: null,
 
 	initialize: function() {
 		this.onPropertyChange = new Signal();
+		this._properties = [];
+		this._defaultValues = {};
 	},
 
+	_properties: null,
+	_defaultValues: null, 
+
+	addProperty: function( name, value, defaultValue ) {
+		var privateName = '_' + name;
+		var getterName = 'get' + name;
+		var setterName = 'set' + name;
+
+		this._defaultValues[ privateName ] = defaultValue;
+		this[ privateName ] = value;
+		this._properties.push( privateName );
+
+		this[ getterName ] = function() {
+			return this[ privateName ];
+		};
+
+		this[ setterName ] = function( value ) {
+			this[ privateName ] = value;
+
+			this.onPropertyChange.dispatch();
+		};
+
+		this.__defineGetter__( name, this[ getterName ] );
+		this.__defineSetter__( name, this[ setterName ] );
+	}
+
 	add: function(otherItem) {
-		throw new Error('You must override this function');
+		for( var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			this[ curProp ] += otherItem[ curProp ];
+		}
+
 		return this;
 	},
 	sub: function(otherItem) {
-		throw new Error('You must override this function');
+		for( var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			this[ curProp ] -= otherItem[ curProp ];
+		}
+
 		return this;
 	},
 	mulScalar: function(scalar) {
-		throw new Error('You must override this function');
+		for( var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			this[ curProp ] *= scalar;
+		}
+
 		return this;
 	},
 	equals: function(otherItem) {
-		throw new Error('You must override this function');
+		for( var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			this[ curProp ] = otherItem[ curProp ];
+		}
+
 		return this;
+	},
+	reset: function() {
+		for( var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			this[ curProp ] = this._defaultValues[ curProp ];
+		}
+
+		return this;
+	},
+	getZero: function() {
+		var args = [];
+
+		for( var i = 0, len = this._properties.length; i < len; i++ ) {
+			args[ i ] = 0;
+		}
+
+
+
+		return new PropertyNumber( 0 );
 	},
 	getChange: function(percentage, curValue, startValue, endValue) {
 		throw new Error('You must override this function');
@@ -961,8 +1034,51 @@ var Property = new Class({
 	},
 	clone: function() {
 		throw new Error('You must override this function');
+	},
+	toString: function() {
+
 	}
 });
+
+
+
+
+
+
+// var Property = new Class({
+// 	onPropertyChange: null,
+
+// 	initialize: function() {
+// 		this.onPropertyChange = new Signal();
+// 	},
+
+// 	add: function(otherItem) {
+// 		throw new Error('You must override this function');
+// 		return this;
+// 	},
+// 	sub: function(otherItem) {
+// 		throw new Error('You must override this function');
+// 		return this;
+// 	},
+// 	mulScalar: function(scalar) {
+// 		throw new Error('You must override this function');
+// 		return this;
+// 	},
+// 	equals: function(otherItem) {
+// 		throw new Error('You must override this function');
+// 		return this;
+// 	},
+// 	getChange: function(percentage, curValue, startValue, endValue) {
+// 		throw new Error('You must override this function');
+// 		return this;
+// 	},
+// 	getCSS: function() {
+// 		throw new Error('You must override this function');
+// 	},
+// 	clone: function() {
+// 		throw new Error('You must override this function');
+// 	}
+// });
 
 var PropertyNumber = new Class({
 	Extends: Property,
