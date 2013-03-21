@@ -262,8 +262,8 @@ var EffectChangeProp = new Class({
 
 		if (this._startValue == null) {
 			this._startValueNotDefined = true;
-			this._startValue = this._itemProperties.getStart(this._propertyToEffect).clone();
-			this._itemProperties.getStart(this._propertyToEffect).onPropertyChange.add(this._onStartValueChange.bind(this));
+			this._startValue = this._itemProperties.getStart( this._propertyToEffect ).clone();
+			this._itemProperties.getStart( this._propertyToEffect ).onPropertyChange.add( this._onStartValueChange.bind(this) );
 		}
 
 		if (this._endValue == null) {
