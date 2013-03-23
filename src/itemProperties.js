@@ -191,9 +191,11 @@ var PropertyClassBuilder = new Class({
 		rVal += 'this.onPropertyChange = new Signal();\n'
 
 		for(var i = 0, len = this._properties.length; i < len; i++ ) {
-			rVal += 'this._' + this._properties[ i ] + ' = arguments[ ' + i + ' ] == undefined ? ' + this._defaultValues[ i ] + ' : arguments[ ' + i + ' ];\n';
-			rVal += 'this.__defineGetter__("' + this._properties[ i ] + '", this.get' + this._properties[ i ] + ');\n';
-			rVal += 'this.__defineSetter__("' + this._properties[ i ] + '", this.set' + this._properties[ i ] + ');\n\n';
+			var curProp = this._properties[ i ];
+
+			rVal += 'this._' + curProp + ' = arguments[ ' + i + ' ] == undefined ? ' + this._defaultValues[ i ] + ' : arguments[ ' + i + ' ];\n';
+			rVal += 'this.__defineGetter__("' + curProp + '", this.get' + curProp + ');\n';
+			rVal += 'this.__defineSetter__("' + curProp + '", this.set' + curProp + ');\n\n';
 		}
 
 		rVal += '},\n'
