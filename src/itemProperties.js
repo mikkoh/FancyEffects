@@ -291,15 +291,15 @@ var PropertyClassBuilder = new Class({
 	},
 
 	_getGetZeroStr: function() {
-		var rVal = '\tgetZero: function(otherItem) {\n';
+		var rVal = '\getZero: function() {\n';
 
-		for(var i = 0, len = this._properties.length; i < len; i++ ) {
-			var curProp = this._properties[ i ];
+		rVal += '\t\treturn new ' + this._className + '('
 
-			rVal += '\t\tthis._' + curProp + ' = 0;\n';
+		for(var i = 0, len = this._properties.length - 1; i < len; i++ ) {
+			rVal += '0, ';	
 		}
-		
-		rVal += '\t\treturn this;\n \t},\n';	
+
+		rVal += '0);\n},\n';
 
 		return rVal;
 	},
