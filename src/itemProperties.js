@@ -364,8 +364,6 @@ builder.addProperty( 'g', 0, 0 );
 builder.addProperty( 'b', 0, 0 );
 builder.addProperty( 'a', 1, 1 );
 builder.setCSSDefinition( function() { 
-	console.log(this.a < 1, 'rgb(' + this.r + ', ' + this.g + ', ' + this.b + ')');
-
 	if( this.a < 1 ) {
 		return 'rgba(' + Math.round( this.r ) + ', ' + Math.round( this.g ) + ', ' + Math.round( this.b ) + ', ' + Math.round( this.a ) + ')';
 	} else {
@@ -407,7 +405,7 @@ builder.setCSSDefinition( function() {
 	var rVal = '';
 
 	if( this.blur > 0 ) {
-		rVal += 'blur(' + this.blur + ') ';
+		rVal += 'blur(' + Math.round( this.blur ) + 'px) ';
 	}
 
 	if( this.brightness > 0 ) {
@@ -422,7 +420,7 @@ builder.setCSSDefinition( function() {
 		rVal += 'grayscale(' + this.grayScale + ') ';
 	}
 
-	if( this.hueRotation != 0 || this.hueRotation != 360 ) {
+	if( this.hueRotation != 0 && this.hueRotation != 360 ) {
 		rVal += 'hue-rotation(' + this.hueRotation + 'deg) ';
 	}
 
@@ -451,6 +449,8 @@ builder.setCSSDefinition( function() {
 			rVal += 'inset)';
 		}
 	}
+
+	console.log( rVal );
 
 	if( rVal == '' ) {
 		return 'none';
