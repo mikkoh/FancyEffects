@@ -364,10 +364,12 @@ builder.addProperty( 'g', 0, 0 );
 builder.addProperty( 'b', 0, 0 );
 builder.addProperty( 'a', 1, 1 );
 builder.setCSSDefinition( function() { 
+	console.log(this.a < 1, 'rgb(' + this.r + ', ' + this.g + ', ' + this.b + ')');
+
 	if( this.a < 1 ) {
-		return 'rgba(' + this.r + ', ' + this.g + ', ' + this.b + ', ' + this.a + ')';
+		return 'rgba(' + Math.round( this.r ) + ', ' + Math.round( this.g ) + ', ' + Math.round( this.b ) + ', ' + Math.round( this.a ) + ')';
 	} else {
-		return 'rgb(' + this.r + ', ' + this.g + ', ' + this.b + ')';
+		return 'rgb(' + Math.round( this.r ) + ', ' + Math.round( this.g ) + ', ' + Math.round( this.b ) + ')';
 	}
 } );
 
