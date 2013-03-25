@@ -380,7 +380,7 @@ var EffectChangePropColour = new Class({
 			} else if ( arguments.length == 9 ) {
 				startVal = new PropertyColour(arguments[1], arguments[2], arguments[3], arguments[4]);
 				endVal = new PropertyColour(arguments[5], arguments[6], arguments[7], arguments[8]);
-			} else if ( arguments.length > 0 ) {
+			} else if ( arguments.length > 1 ) {
 				throw new Error('You should instantiate this colour with either: \n' +
 								'itemToEffect, r, g, b\n' +
 								'itemToEffect, r, g, b, a\n' +
