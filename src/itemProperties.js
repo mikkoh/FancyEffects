@@ -365,7 +365,7 @@ builder.addProperty( 'b', 0, 0 );
 builder.addProperty( 'a', 1, 1 );
 builder.setCSSDefinition( function() { 
 	if( this.a < 1 ) {
-		return 'rgba(' + Math.round( this.r ) + ', ' + Math.round( this.g ) + ', ' + Math.round( this.b ) + ', ' + Math.round( this.a ) + ')';
+		return 'rgba(' + Math.round( this.r ) + ', ' + Math.round( this.g ) + ', ' + Math.round( this.b ) + ', ' + this.a + ')';
 	} else {
 		return 'rgb(' + Math.round( this.r ) + ', ' + Math.round( this.g ) + ', ' + Math.round( this.b ) + ')';
 	}
@@ -450,8 +450,6 @@ builder.setCSSDefinition( function() {
 		}
 	}
 
-	console.log( rVal );
-
 	if( rVal == '' ) {
 		return 'none';
 	} else {
@@ -480,16 +478,18 @@ builder.setCSSDefinition( function() {
 		var rVal = '';
 
 		if( this.a < 1 ) {
-			rVal += 'rgba(' + this.r + ', ' + this.g + ', ' + this.b + ', ' + this.a + ') ';
+			rVal += 'rgba(' + Math.round( this.r ) + ', ' + Math.round( this.g ) + ', ' + Math.round( this.b ) + ', ' + this.a + ') ';
 		} else {
-			rVal += 'rgb(' + this.r + ', ' + this.g + ', ' + this.b + ') ';
+			rVal += 'rgb(' + Math.round( this.r ) + ', ' + Math.round( this.g ) + ', ' + Math.round( this.b ) + ') ';
 		}
 
-		rVal += this.offX + 'px, ' + this.offY + 'px ,' + this.blur + 'px ' + this.spread + 'px ';
+		rVal += this.offX + 'px ' + this.offY + 'px ' + this.blur + 'px ' + this.spread + 'px ';
 
 		if( this.dropInset ) {
 			rVal += 'inset';
 		}
+
+		console.log( rVal );
 
 		return rVal;
 	} else {
