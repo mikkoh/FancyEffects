@@ -421,7 +421,7 @@ builder.setCSSDefinition( function() {
 	}
 
 	if( this.hueRotation != 0 && this.hueRotation != 360 ) {
-		rVal += 'hue-rotation(' + this.hueRotation + 'deg) ';
+		rVal += 'hue-rotate(' + this.hueRotation + 'deg) ';
 	}
 
 	if( this.invert > 0 ) {
