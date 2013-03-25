@@ -59,8 +59,6 @@ var ParserBase = new Class({
 		//then apply its constructor on it's self. Only way you can "apply" on a constructor
 		this._value = Object.create( this._propertyType.prototype );
 		this._value = ( this._propertyType.apply( this._value, propValues ) || this._value );
-
-		console.log( this._value.value || this._value );
 	},
 
 
@@ -188,7 +186,19 @@ var definitionFilter = {
 		{ regex: REGEX_VALUE_FILTER_CONTRAST, 
 		  props: [ {name: 'contrast', idx: 1, type: Number, default: 1 } ] },
 
-		definitionBoxShadow,
+		//note that currently spread and inset are not supported for filter
+		{
+			regex: REGEX_VALUE_BOX_SHADOW,
+			props: [
+				{ name: 'r', idx: 1, type: Number},
+				{ name: 'b', idx: 2, type: Number},
+				{ name: 'g', idx: 3, type: Number},
+				{ name: 'a', idx: 5, type: Number, default: 1 },
+				{ name: 'offX', idx: 6, type: Number, default: 0 },
+				{ name: 'offY', idx: 7, type: Number, default: 0 },
+				{ name: 'blur', idx: 7, type: Number, default: 0 }
+			]
+		},
 
 		{ regex: REGEX_VALUE_FILTER_GRAY_SCALE, 
 		  props: [ {name: 'grayScale', idx: 1, type: Number, default: 0 } ] },

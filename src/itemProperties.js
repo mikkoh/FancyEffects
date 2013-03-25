@@ -87,17 +87,11 @@ var ItemProperties = new Class({
 			this._propertyValue[property].add( this._changeAmountForEffect[ effectID ][ property ] );
 
 			this._itemToEffect.css(property, this._propertyValue[property].getCSS());
-
-			if( property == 'opacity' )
-				console.log( 'enable', property, this._propertyValue[ property ].getCSS() );
 		}
 	},
 	disable: function( effectID, property ) {
 		if( this._enabled[ effectID ][ property ] ) {
 			this._enabled[ effectID ][ property ] = false;
-
-			if( property == 'opacity' )
-				console.log( 'disable', property,  this._changeAmountForEffect[ effectID ][ property ].value );
 
 			this._propertyValue[property].sub( this._changeAmountForEffect[ effectID ][ property ] );
 
@@ -388,7 +382,7 @@ builder.addProperty( 'contrast', 1, 1 );
 builder.addProperty( 'dropR', 0, 0 );
 builder.addProperty( 'dropG', 0, 0 );
 builder.addProperty( 'dropB', 0, 0 );
-builder.addProperty( 'dropA', 0, 0 );
+builder.addProperty( 'dropA', 1, 1 );
 builder.addProperty( 'dropOffX', 0, 0 );
 builder.addProperty( 'dropOffY', 0, 0 );
 builder.addProperty( 'dropBlur', 0, 0 );
@@ -441,12 +435,14 @@ builder.setCSSDefinition( function() {
 	}
 
 	if( this.dropBlur > 0 || this.dropOffY != 0 || this.dropOffX != 0 ) {
-		rVal += 'drop-shadow(' + this.dropOffX + 'px, ' + this.dropOffY + 'px ,' + this.dropBlur + 'px ' + this.dropSpread + 'px ';
+		rVal += 'drop-shadow(';
 
-		if( !this.dropInset ) {
-			rVal += ')';
+		rVal += Math.round( this.dropOffX ) + 'px ' + Math.round( this.dropOffY ) + 'px ' + Math.round( this.dropBlur ) + 'px ';
+
+		if( this.dropA < 1 ) {
+			rVal += 'rgba(' + Math.round( this.dropR ) + ', ' + Math.round( this.dropG ) + ', ' + Math.round( this.dropB ) + ', ' + this.dropA + '))';
 		} else {
-			rVal += 'inset)';
+			rVal += 'rgb(' + Math.round( this.dropR ) + ', ' + Math.round( this.dropG ) + ', ' + Math.round( this.dropB ) + '))';
 		}
 	}
 
@@ -488,8 +484,6 @@ builder.setCSSDefinition( function() {
 		if( this.dropInset ) {
 			rVal += 'inset';
 		}
-
-		console.log( rVal );
 
 		return rVal;
 	} else {
