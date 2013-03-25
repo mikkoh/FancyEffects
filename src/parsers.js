@@ -186,7 +186,19 @@ var definitionFilter = {
 		{ regex: REGEX_VALUE_FILTER_CONTRAST, 
 		  props: [ {name: 'contrast', idx: 1, type: Number, default: 1 } ] },
 
-		definitionBoxShadow,
+		//note that currently spread and inset are not supported for filter
+		{
+			regex: REGEX_VALUE_BOX_SHADOW,
+			props: [
+				{ name: 'r', idx: 1, type: Number},
+				{ name: 'b', idx: 2, type: Number},
+				{ name: 'g', idx: 3, type: Number},
+				{ name: 'a', idx: 5, type: Number, default: 1 },
+				{ name: 'offX', idx: 6, type: Number, default: 0 },
+				{ name: 'offY', idx: 7, type: Number, default: 0 },
+				{ name: 'blur', idx: 7, type: Number, default: 0 }
+			]
+		},
 
 		{ regex: REGEX_VALUE_FILTER_GRAY_SCALE, 
 		  props: [ {name: 'grayScale', idx: 1, type: Number, default: 0 } ] },
