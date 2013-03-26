@@ -15,7 +15,9 @@ var MoveUpAndFade = new Class({
 	_effMove: null,
 
 	setPercentage: function(value) {
-		this._effFade.percentage = value;
-		this._effMove.percentage = 1 - value;
+		this.parent( value );
+
+		this._effFade.percentage = this._percentageToApply;
+		this._effMove.percentage = 1 - this._percentageToApply;
 	}
 });
