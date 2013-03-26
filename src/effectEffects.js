@@ -6,7 +6,7 @@ var EffectPercentage = new Class({
 	}
 });
 
-var EffectPercentageElasticEaseOut = new Class({
+var ElasticEaseOut = new Class({
 	Extends: EffectPercentage,
 
 	setPercentage: function(value) {
