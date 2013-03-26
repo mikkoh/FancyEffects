@@ -22,6 +22,7 @@ var Effect = new Class({
 		this.__defineGetter__( 'enabled', this.getEnabled );
 		this.__defineSetter__( 'enabled', this.setEnabled );
 		this.__defineGetter__( 'id', this.getId );
+		this.__defineGetter__( 'effects', this.getEffects );
 
 
 		this._id = EffectIds.getId( this._type );
@@ -89,6 +90,9 @@ var Effect = new Class({
 	},
 	getStart: function(property) {
 		return this._itemProperties.getStart(property);
+	},
+	getEffects: function() {
+		return this._effects;
 	},
 	setItemToEffect: function(itemToEffect, itemProperties) {
 		if( !this._itemToEffect )
