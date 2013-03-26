@@ -153,8 +153,8 @@ var Effect = new Class({
 			}
 		} else {
 			//check to see if this effect has already been added
-			if( this._effectIdx[effect.id] === undefined ) {
-				this._effectIdx[effect.id] = this._effects.length;
+			if( this._effectIdx[ effect.id ] === undefined ) {
+				this._effectIdx[ effect.id ] = this._effects.length;
 				this._effects.push( effect );
 
 				effect.setItemToEffect( this._itemToEffect, this._itemProperties );

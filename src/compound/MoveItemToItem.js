@@ -2,6 +2,8 @@ var MoveItemToItem = new Class({
 	Extends: EffectTimeline,
 
 	initialize: function() {
+		this._type = 'MoveItemToItem';
+
 		this.parent();
 
 		this._numItems = arguments.length;
