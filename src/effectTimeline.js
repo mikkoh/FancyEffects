@@ -40,7 +40,7 @@ var EffectTimeline = new Class({
 				if( this._percentageToApply < this._effectStart[ effect.id ] ) {
 					//effect.setPercentage( 0 );
 					effect.enabled = false;
-				} else if( this._percentageToApply > this._effectEnd[ effect.id ] ) {
+				} else if( this._percentageToApply >= this._effectEnd[ effect.id ] && this._effectEnd[ effect.id ] != 1 ) {
 					//effect.setPercentage( 1 );
 					effect.enabled = false;
 				} else {
@@ -94,7 +94,7 @@ var EffectTimeline = new Class({
 				if( this._percentageToApply < this._effectStart[ this._effects[i].id ] ) {
 					this._effects[i].setPercentage( 0 );
 					this._effects[i].enabled = false;
-				} else if( this._percentageToApply > this._effectEnd[ this._effects[i].id ] ) {
+				} else if( this._percentageToApply >= this._effectEnd[ this._effects[i].id ] && this._effectEnd[ this._effects[i].id ] != 1 ) {
 					this._effects[i].setPercentage( 1 );
 					this._effects[i].enabled = false;
 				} else {
