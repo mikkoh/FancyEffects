@@ -346,6 +346,19 @@ var PropertyNumber = new Class( builder.build() );
 
 
 
+var builder = new PropertyClassBuilder( 'PropertyNumberWhole' );
+builder.addProperty( 'value', 0, 0 );
+builder.setCSSDefinition( function() {
+	return Math.round( this.value );
+});
+
+
+var PropertyNumberWhole = new Class( builder.build() );
+
+
+
+
+
 
 
 

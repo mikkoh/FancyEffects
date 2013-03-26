@@ -1,5 +1,5 @@
 var EffectWidth = new Class({
-	Extends: EffectChangePropNumber,
+	Extends: EffectChangePropNumberWhole,
 
 	initialize: function() {
 		this._type =  'EffectWidth';
@@ -10,7 +10,7 @@ var EffectWidth = new Class({
 
 
 var EffectHeight = new Class({
-	Extends: EffectChangePropNumber,
+	Extends: EffectChangePropNumberWhole,
 
 	initialize: function() {
 		this._type =  'EffectHeight';
@@ -21,7 +21,7 @@ var EffectHeight = new Class({
 
 
 var EffectLeft = new Class({
-	Extends: EffectChangePropNumber,
+	Extends: EffectChangePropNumberWhole,
 	initialize: function() {
 		this._type =  'EffectLeft';
 		this._propertyToEffect = 'left';
@@ -30,7 +30,7 @@ var EffectLeft = new Class({
 });
 
 var EffectTop = new Class({
-	Extends: EffectChangePropNumber,
+	Extends: EffectChangePropNumberWhole,
 	initialize: function() {
 		this._type =  'EffectTop';
 		this._propertyToEffect = 'top';
@@ -48,7 +48,7 @@ var EffectOpacity = new Class({
 });
 
 var EffectBorderWidth = new Class({
-	Extends: EffectChangePropNumber,
+	Extends: EffectChangePropNumberWhole,
 	initialize: function() {
 		this._type =  'EffectBorderWidth';
 		this._propertyToEffect = 'border-width';

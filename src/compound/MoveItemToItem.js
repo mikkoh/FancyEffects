@@ -46,8 +46,6 @@ var MoveItemToItem = new Class({
 	animateToItem: function( idx, duration ) {
 		var targetPerc = idx / (this._numItems - 1);
 
-		console.log( targetPerc );
-
 		this.animate( targetPerc, Math.abs( targetPerc - this.percentage ) * duration );
 	}
 })

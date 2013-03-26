@@ -226,18 +226,19 @@ var definitionFilter = {
 
 
 var ParseNumberValue = getNewParser( PropertyNumber, definitionBasicNumber );
+var ParseNumberValueWhole = getNewParser( PropertyNumberWhole, definitionBasicNumber );
 var ParserColour = getNewParser( PropertyColour, definitionColour );
 var ParserFilter = getNewParser( PropertyFilter, definitionFilter );
 var ParseDropShadow = getNewParser( PropertyBoxShadow, definitionBoxShadow );
 
 
 var ParserLookUp = {};
-ParserLookUp['width'] = ParseNumberValue;
-ParserLookUp['height'] = ParseNumberValue;
-ParserLookUp['left'] = ParseNumberValue;
-ParserLookUp['top'] = ParseNumberValue;
+ParserLookUp['width'] = ParseNumberValueWhole;
+ParserLookUp['height'] = ParseNumberValueWhole;
+ParserLookUp['left'] = ParseNumberValueWhole;
+ParserLookUp['top'] = ParseNumberValueWhole;
 ParserLookUp['opacity'] = ParseNumberValue;
-ParserLookUp['border-width'] = ParseNumberValue;
+ParserLookUp['border-width'] = ParseNumberValueWhole;
 ParserLookUp['color'] = ParserColour;
 ParserLookUp['background-color'] = ParserColour;
 ParserLookUp['-webkit-filter'] = ParserFilter;
