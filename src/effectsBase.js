@@ -36,6 +36,8 @@ var Effect = new Class({
 		if (itemToEffect) {
 			this.setItemToEffect( itemToEffect );
 		}
+
+		this.setPercentage( 0 );
 	},
 
 	_enabled: true,
