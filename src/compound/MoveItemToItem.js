@@ -15,9 +15,9 @@ var MoveItemToItem = new Class({
 		//cache them for further use so we don't have to use jQuery position over
 		//and over again
 		for( var i = 0; i < this._numItems; i++ ) {
-			positions[ i ] = arguments[i].position();
+			positions[ i ] = arguments[ i ].position();
 		}
-		
+
 		var startItemPos = positions[ 0 ];
 
 		for( var i = 1; i < this._numItems; i++ ) {

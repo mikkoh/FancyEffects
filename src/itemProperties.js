@@ -187,7 +187,7 @@ var PropertyClassBuilder = new Class({
 		for(var i = 0, len = this._properties.length; i < len; i++ ) {
 			var curProp = this._properties[ i ];
 
-			rVal += 'this._' + curProp + ' = arguments[ ' + i + ' ] == undefined ? ' + this._defaultValues[ i ] + ' : arguments[ ' + i + ' ];\n';
+			rVal += 'this._' + curProp + ' = arguments[ ' + i + ' ] === undefined ? ' + this._defaultValues[ i ] + ' : arguments[ ' + i + ' ];\n';
 			rVal += 'this.__defineGetter__("' + curProp + '", this.get' + curProp + ');\n';
 			rVal += 'this.__defineSetter__("' + curProp + '", this.set' + curProp + ');\n\n';
 		}
