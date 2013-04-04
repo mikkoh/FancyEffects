@@ -23,31 +23,34 @@ var ScaleItemToItem = new Class({
 			itemProperties = ItemPropertiesBank.get( arguments[ i ] );
 
 			//now setup all the timeline effects
-			var startPerc = ( i - 1 ) / this._numItems;
-			var endPerc = i / this._numItems;
+			var startPerc = ( i - 1 ) / ( this._numItems - 1 );
+			var endPerc = i / ( this._numItems - 1 );
 
 			var bottom = startItemTop + startItemHeight;
 
 
 			//zero the position of this item
 			this._initPosEffects.push( new EffectLeft( arguments[ i ], startItemLeft, startItemLeft) );
-			//this._initPosEffects.push( new EffectTop( arguments[ i ], startItemTop, startItemTop) );
-
 
 			this.add( new EffectTop( arguments[ i - 1 ], startItemTop, bottom ), startPerc, endPerc );
-			this.add( new EffectHeight( arguments[ i - 1 ], startItemHeight, 0 ), startPerc, endPerc );
+		this.add( new EffectHeight( arguments[ i - 1 ], startItemHeight, 0 ), startPerc, endPerc );
 
 			//make it 0 till the end
-			this.add( new EffectTop( arguments[ i - 1 ], bottom, bottom ), endPerc, 1 );
-			this.add( new EffectHeight( arguments[ i - 1 ], 0, 0 ), endPerc, 1 );
+			if( i != this._numItems - 1) {
+				this.add( new EffectTop( arguments[ i - 1 ], bottom, bottom ), endPerc, 1 );
+				this.add( new EffectHeight( arguments[ i - 1 ], 0, 0 ), endPerc, 1 );
+			}
 
 
 			this.add( new EffectTop( arguments[ i ], startItemTop, startItemTop ), startPerc, endPerc );
-			this.add( new EffectHeight( arguments[ i ], 0, startItemHeight ), startPerc, endPerc );
+		this.add( new EffectHeight( arguments[ i ], 0, startItemHeight ), startPerc, endPerc );
 
-			//make it 0 before the end
-			this.add( new EffectHeight( arguments[ i ], 0, 0 ), 0, startPerc );
+			//make it 0 before the start
+		this.add( new EffectHeight( arguments[ i ], 0, 0 ), 0, startPerc );
+
+			console.log(startPerc, endPerc);
 		}
+		console.log('------');
 
 		this.setPercentage( 0 );
 	},
