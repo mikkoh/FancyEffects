@@ -99,7 +99,7 @@ var ItemProperties = new Class({
 		}
 	},
 	reset: function( effectID, property ) {
-		this._propertyValue[property].sub(this._changeAmountForEffect[effectID][property]);
+		this._propertyValue[property].sub( this._changeAmountForEffect[effectID][property] );
 		
 		this._changeAmountForEffect[effectID][property].reset();
 

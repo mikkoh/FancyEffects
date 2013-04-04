@@ -130,7 +130,9 @@ var Effect = new Class({
 		this._percentageToApply += percentage;
 	},
 	reset: function() {
-		this._itemProperties.resetAll( this.id );
+		if( this._itemProperties ) {
+			this._itemProperties.resetAll( this.id );
+		}
 	},
 	destroy: function() {
 		this.reset();
@@ -139,7 +141,10 @@ var Effect = new Class({
 			this._effects[i].destroy();
 		}
 
-		ItemPropertiesBank.destroy( this._itemToEffect );
+		if( this._itemToEffect ) {
+			ItemPropertiesBank.destroy( this._itemToEffect );
+		}
+		
 		this._effects.length = 0;
 
 		if( this._animation ) {
