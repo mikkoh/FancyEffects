@@ -99,11 +99,13 @@ var ItemProperties = new Class({
 		}
 	},
 	reset: function( effectID, property ) {
-		this._propertyValue[property].sub( this._changeAmountForEffect[effectID][property] );
-		
-		this._changeAmountForEffect[effectID][property].reset();
+		if( this._enabled[ effectID ][ property ] ) {
+			this._propertyValue[property].sub( this._changeAmountForEffect[effectID][property] );
+			
+			this._changeAmountForEffect[effectID][property].reset();
 
-		this._itemToEffect.css(property, this._propertyValue[property].getCSS());
+			this._itemToEffect.css(property, this._propertyValue[property].getCSS());
+		}
 	},
 	resetAll: function( effectID ) {
 		for (var i in this._changeAmountForEffect[effectID]) {
