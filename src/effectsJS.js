@@ -56,6 +56,42 @@ var EffectBorderWidth = new Class({
 	}
 });
 
+var EffectMarginTop = new Class({
+	Extends: EffectChangePropNumberWhole,
+	initialize: function() {
+		this._type =  'EffectMarginTop';
+		this._propertyToEffect = 'margin-top';
+		this.parent.apply(this, arguments);
+	}
+});
+
+var EffectMarginRight = new Class({
+	Extends: EffectChangePropNumberWhole,
+	initialize: function() {
+		this._type =  'EffectMarginRight';
+		this._propertyToEffect = 'margin-right';
+		this.parent.apply(this, arguments);
+	}
+});
+
+var EffectMarginBottom = new Class({
+	Extends: EffectChangePropNumberWhole,
+	initialize: function() {
+		this._type =  'EffectMarginBottom';
+		this._propertyToEffect = 'margin-bottom';
+		this.parent.apply(this, arguments);
+	}
+});
+
+var EffectMarginLeft = new Class({
+	Extends: EffectChangePropNumberWhole,
+	initialize: function() {
+		this._type =  'EffectMarginLeft';
+		this._propertyToEffect = 'margin-left';
+		this.parent.apply(this, arguments);
+	}
+});
+
 var EffectBackgroundColor = new Class({
 	Extends: EffectChangePropColour,
 	initialize: function() {
