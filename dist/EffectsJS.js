@@ -103,14 +103,347 @@ var Animation = new Class({
 		this._effect.percentage = this._startPercentage + this._percentageChange * curPerc;
 	}
 });
+var MoveItemToItem = new Class({
+	Extends: EffectTimeline,
+
+	initialize: function() {
+		this._type = 'MoveItemToItem';
+
+		this.parent();
+
+		this._numItems = arguments.length;
+
+		var lastItemIdx = this._numItems - 1;
+		var positions = [];
+
+		//since we're going to be using these positions over and over again I will
+		//cache them for further use so we don't have to use jQuery position over
+		//and over again
+		for( var i = 0; i < this._numItems; i++ ) {
+			positions[ i ] = arguments[ i ].position();
+		}
+
+		var startItemPos = positions[ 0 ];
+
+		for( var i = 1; i < this._numItems; i++ ) {
+			var startPerc = (i - 1) / lastItemIdx;
+			var endPerc = i / lastItemIdx;
+			
+			var prevItemPos = positions[ i -1 ];
+			var curItemPos = positions[ i ];
+			var prevEndOffX = startItemPos.left - prevItemPos.left;
+			var prevEndOffY = startItemPos.top - prevItemPos.top;
+			var endOffX = startItemPos.left - curItemPos.left;
+			var endOffY = startItemPos.top - curItemPos.top;
+
+			for( var j = 0; j < this._numItems; j++ ) {
+				var itemToEffect = arguments[ j ];
+				var itemToEffectPos = positions[ j ];
+				var startOffX = itemToEffectPos.left;
+				var startOffY = itemToEffectPos.top;
+				
+				this.add( new EffectLeft( itemToEffect, itemToEffectPos.left + prevEndOffX, itemToEffectPos.left + endOffX ), startPerc, endPerc );
+				this.add( new EffectTop( itemToEffect, itemToEffectPos.top + prevEndOffY, itemToEffectPos.top + endOffY ), startPerc, endPerc );
+			}			
+		}
+	},
+
+	_numItems: 0,
+
+	animateToItem: function( idx, duration ) {
+		var targetPerc = idx / (this._numItems - 1);
+
+		this.animate( targetPerc, Math.abs( targetPerc - this.percentage ) * duration );
+	}
+})
+var MoveUpAndFade = new Class({
+	Extends: Effect,
+	initialize: function(itemToEffect, offY) {
+		this._type = 'EffectMoveUpAndFade';
+		this.parent(itemToEffect);
+
+		this._effFade = new EffectOpacity( 0, 1 );
+		this._effMove = new EffectTop( offY == undefined ? 200 : offY );
+
+		this.add(this._effFade);
+		this.add(this._effMove);
+	},
+
+	_effFade: null,
+	_effMove: null,
+
+	setPercentage: function(value) {
+		this.parent( value );
+
+		this._effFade.percentage = this._percentageToApply;
+		this._effMove.percentage = 1 - this._percentageToApply;
+	}
+});
+var ScaleItemToItem = new Class({
+	Extends: EffectTimeline,
+
+	_initPosEffects: null,
+
+	initialize: function() {
+		this._type = 'MoveItemToItem';
+
+		this.parent();
+
+		this._numItems = arguments.length;
+		this._initPosEffects = [];
+
+		var startItem = arguments[ 0 ];
+		var itemProperties = ItemPropertiesBank.get( arguments[ 0 ] );
+		var startItemLeft = itemProperties.getStart( 'left' ) == undefined ? startItem.position().left : itemProperties.getStart( 'left' );
+		var startItemTop = itemProperties.getStart( 'top' ) == undefined ? startItem.position().left : itemProperties.getStart( 'top' );
+		var startItemHeight = itemProperties.getStart( 'height' ) == undefined ? startItem.height() : itemProperties.getStart( 'height' );
+		var lastItemIdx = this._numItems - 1;
+
+		//check if the first item doesn't have absolute positioning if so throw a warning
+		if( startItem.css( 'position' ) != 'absolute' ) {
+			this._throwAbsoluteWarning( 0 );
+		}
+
+		for( var i = 1; i < this._numItems; i++ ) {
+			//now setup all the timeline effects
+			var startPerc = ( i - 1 ) / lastItemIdx;
+			var endPerc = i / lastItemIdx;
+			var bottom = startItemTop + startItemHeight;
+
+			//zero the left position of this item to the startItem
+			this._initPosEffects.push( new EffectLeft( arguments[ i ], startItemLeft, startItemLeft) );
+
+			//make the previous item go from the top to bottom and make it go to zero height
+			this.add( new EffectTop( arguments[ i - 1 ], startItemTop, bottom ), startPerc, endPerc );
+			this.add( new EffectHeight( arguments[ i - 1 ], startItemHeight, 0 ), startPerc, endPerc );
+
+			//also make this item stay on the bottom after theyve animated down
+			//if we do it for the last item then there will be overlap of two effects and we really dont want that
+			if( i != lastItemIdx) {
+				this.add( new EffectTop( arguments[ i - 1 ], bottom, bottom ), endPerc, 1 );
+				this.add( new EffectHeight( arguments[ i - 1 ], 0, 0 ), endPerc, 1 );
+			}
+
+			//now make the current item go to the top of the startItem and then just make it scale from 0px height to
+			//the startItems height
+			this.add( new EffectTop( arguments[ i ], startItemTop, startItemTop ), startPerc, endPerc );
+			this.add( new EffectHeight( arguments[ i ], 0, startItemHeight ), startPerc, endPerc );
+
+			//before this point we want the item to be at the top and at height 0
+			this.add( new EffectTop( arguments[ i ], startItemTop, startItemTop ), 0, startPerc );
+			this.add( new EffectHeight( arguments[ i ], 0, 0 ), 0, startPerc );
+
+			if( arguments[ i ].css('position') != 'absolute' ) {
+				this._throwAbsoluteWarning( i );
+			}
+		}
+
+		//initialize all effects to 0 percentage
+		this.setPercentage( 0 );
+	},
+
+	_numItems: 0,
+	_initPosEffects: null,
+
+	destroy: function() {
+		for( var i = 0, len = this._initPosEffects.length; i < len; i++ ) {
+			this._initPosEffects[ i ].destroy();
+		}
+
+		this.parent();
+	},
+
+	_throwAbsoluteWarning: function( idx ) {
+		console.warn( 'The item at index ' + idx + ' does not have absolute positioning. This effect may not look right if we\'re using relative positioning or something else' );
+	}
+});
+/***************************************************************
+****************************************************************
+****************************************************************
+******** NOTE THE FOLLOWING ARE PENNER EASING EQUATIONS ********
+******** ROBERT PENNER IS THE MAN ******************************
+****************************************************************
+******** Copyright © 2001 Robert Penner ************************
+******** All rights reserved. **********************************
+****************************************************************
+***************************************************************/
+
 var easing = {};
+
+
+//SINE
+easing.SineEaseIn = function( t, b, c, d ) {
+	return -c * Math.cos(t/d * PI_D2) + c + b;
+};
+
+easing.SineEaseOut = function( t, b, c, d ) {
+	return c * Math.sin(t/d * PI_D2) + b;
+};
+
+easing.SineEaseInOut = function( t, b, c, d ) {
+	return -c/2 * (Math.cos(Math.PI*t/d) - 1) + b;
+};
+
+
+//QUINT
+easing.QuintEaseIn = function( t, b, c, d ) {
+	return c*(t/=d)*t*t*t*t + b;
+};
+
+easing.QuintEaseOut = function( t, b, c, d ) {
+	return c*((t=t/d-1)*t*t*t*t + 1) + b;
+};
+
+easing.QuintEaseInOut = function( t, b, c, d ) {
+	if ((t/=d/2) < 1) return c/2*t*t*t*t*t + b;
+	return c/2*((t-=2)*t*t*t*t + 2) + b;
+};
+
+
+//QUART
+easing.QuartEaseIn = function( t, b, c, d ) {
+	return c*(t/=d)*t*t*t + b;
+};
+
+easing.QuartEaseOut = function( t, b, c, d ) {
+	return -c * ((t=t/d-1)*t*t*t - 1) + b;
+};
+
+easing.QuartEaseInOut = function( t, b, c, d ) {
+	if ((t/=d/2) < 1) return c/2*t*t*t*t + b;
+	return -c/2 * ((t-=2)*t*t*t - 2) + b;
+};
+
+
+//QUAD
+easing.QuadEaseIn = function( t, b, c, d ) {
+	return c*(t/=d)*t + b;
+};
+
+easing.QuadEaseOut = function( t, b, c, d ) {
+	return -c *(t/=d)*(t-2) + b;
+};
+
+easing.QuadEaseInOut = function( t, b, c, d ) {
+	if ((t/=d/2) < 1) return c/2*t*t + b;
+	return -c/2 * ((--t)*(t-2) - 1) + b;
+};
+
+
+//EXPO
+easing.ExpoEaseIn = function( t, b, c, d ) {
+	return (t==0) ? b : c * Math.pow(2, 10 * (t/d - 1)) + b;
+};
+
+easing.ExpoEaseOut = function( t, b, c, d ) {
+	return (t==d) ? b+c : c * (-Math.pow(2, -10 * t/d) + 1) + b;
+};
+
+easing.ExpoEaseInOut = function( t, b, c, d ) {
+	if (t==0) return b;
+	if (t==d) return b+c;
+	if ((t/=d/2) < 1) return c/2 * Math.pow(2, 10 * (t - 1)) + b;
+	return c/2 * (-Math.pow(2, -10 * --t) + 2) + b;
+};
+
+
+//ELASTIC
+easing.ElasticEaseIn = function( t, b, c, d, a, p ) {
+	var s;
+	if (t==0) return b;  if ((t/=d)==1) return b+c;  if (!p) p=d*.3;
+	if (!a || a < Math.abs(c)) { a=c; s=p/4; }
+	else s = p/PI_M2 * Math.asin (c/a);
+	return -(a*Math.pow(2,10*(t-=1)) * Math.sin( (t*d-s)*PI_M2/p )) + b;
+};
 
 easing.ElasticEaseOut = function( t, b, c, d, a, p ) {
 	if (t==0) return b;  if ((t/=d)==1) return b+c;  if (!p) p=d*.3;
 	if (!a || a < Math.abs(c)) { a=c; var s=p/4; }
 	else var s = p/(2*Math.PI) * Math.asin (c/a);
 	return (a*Math.pow(2,-10*t) * Math.sin( (t*d-s)*(2*Math.PI)/p ) + c + b);
-}
+};
+
+easing.ElasticEaseInOut = function( t, b, c, d, a, p ) {
+	var s;
+	if (t==0) return b;  if ((t/=d/2)==2) return b+c;  if (!p) p=d*(.3*1.5);
+	if (!a || a < Math.abs(c)) { a=c; s=p/4; }
+	else s = p/PI_M2 * Math.asin (c/a);
+	if (t < 1) return -.5*(a*Math.pow(2,10*(t-=1)) * Math.sin( (t*d-s)*PI_M2/p )) + b;
+	return a*Math.pow(2,-10*(t-=1)) * Math.sin( (t*d-s)*PI_M2/p )*.5 + c + b;
+};
+
+
+//CIRCULAR
+easing.CircularEaseIn = function( t, b, c, d ) {
+	return -c * (Math.sqrt(1 - (t/=d)*t) - 1) + b;
+};
+
+easing.CircularEaseOut = function( t, b, c, d ) {
+	return c * Math.sqrt(1 - (t=t/d-1)*t) + b;
+};
+
+easing.CircularEaseInOut = function( t, b, c, d ) {
+	if ((t/=d/2) < 1) return -c/2 * (Math.sqrt(1 - t*t) - 1) + b;
+	return c/2 * (Math.sqrt(1 - (t-=2)*t) + 1) + b;
+};
+
+
+//BACK
+easing.BackEaseIn = function( t, b, c, d, s ) {
+	if( s == undefined ) s = 1.70158;
+	return c*(t/=d)*t*((s+1)*t - s) + b;
+};
+
+easing.BackEaseOut = function( t, b, c, d, s ) {
+	if( s == undefined ) s = 1.70158;
+	return c*((t=t/d-1)*t*((s+1)*t + s) + 1) + b;
+};
+
+easing.BackEaseInOut = function( t, b, c, d, s ) {
+	if ((t/=d/2) < 1) return c/2*(t*t*(((s*=(1.525))+1)*t - s)) + b;
+	return c/2*((t-=2)*t*(((s*=(1.525))+1)*t + s) + 2) + b;
+};
+
+
+//BOUNCE
+easing.BounceEaseIn = function( t, b, c, d ) {
+	return c - easeOutBounce (d-t, 0, c, d) + b;
+};
+
+easing.BounceEaseOut = function( t, b, c, d ) {
+	if ((t/=d) < (1/2.75)) {
+		return c*(7.5625*t*t) + b;
+	} else if (t < (2/2.75)) {
+		return c*(7.5625*(t-=(1.5/2.75))*t + .75) + b;
+	} else if (t < (2.5/2.75)) {
+		return c*(7.5625*(t-=(2.25/2.75))*t + .9375) + b;
+	} else {
+		return c*(7.5625*(t-=(2.625/2.75))*t + .984375) + b;
+	}
+};
+
+easing.BounceEaseInOut = function( t, b, c, d ) {
+	if (t < d/2) return easeInBounce (t*2, 0, c, d) * .5 + b;
+	else return easeOutBounce (t*2-d, 0, c, d) * .5 + c*.5 + b;
+};
+
+
+//CUBIC
+easing.CubicEaseIn = function( t, b, c, d ) {
+	return c*(t/=d)*t*t + b;
+};
+
+easing.CubicEaseOut = function( t, b, c, d ) {
+	return c*((t=t/d-1)*t*t + 1) + b;
+};
+
+easing.CubicEaseInOut = function( t, b, c, d ) {
+	if ((t/=d/2) < 1) return c/2*t*t*t + b;
+	return c/2*((t-=2)*t*t + 2) + b;
+};
+
+
+
 
 var EffectPercentage = new Class({
 	Extends: Effect,
@@ -120,13 +453,289 @@ var EffectPercentage = new Class({
 	}
 });
 
-var EffectPercentageElasticEaseOut = new Class({
+
+
+
+
+
+
+
+
+
+//SINE
+var SineEaseIn = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.SineEaseIn( value, 0, 1, 1 ) );
+	}
+});
+
+var SineEaseOut = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.SineEaseOut( value, 0, 1, 1 ) );
+	}
+});
+
+var SineEaseInOut = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.SineEaseInOut( value, 0, 1, 1 ) );
+	}
+});
+
+
+//QUINT
+var QuintEaseIn = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.QuintEaseIn( value, 0, 1, 1 ) );
+	}
+});
+
+var QuintEaseOut = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.QuintEaseOut( value, 0, 1, 1 ) );
+	}
+});
+
+var QuintEaseInOut = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.QuintEaseInOut( value, 0, 1, 1 ) );
+	}
+});
+
+
+//QUART
+var QuartEaseIn = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.QuartEaseIn( value, 0, 1, 1 ) );
+	}
+});
+
+var QuartEaseOut = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.QuartEaseOut( value, 0, 1, 1 ) );
+	}
+});
+
+var QuartEaseInOut = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.QuartEaseInOut( value, 0, 1, 1 ) );
+	}
+});
+
+
+//QUAD
+var QuadEaseIn = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.QuadEaseIn( value, 0, 1, 1 ) );
+	}
+});
+
+var QuadEaseOut = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.QuadEaseOut( value, 0, 1, 1 ) );
+	}
+});
+
+var QuadEaseInOut = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.QuadEaseInOut( value, 0, 1, 1 ) );
+	}
+});
+
+
+//EXPO
+var ExpoEaseIn = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.ExpoEaseIn( value, 0, 1, 1 ) );
+	}
+});
+
+var ExpoEaseOut = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.ExpoEaseOut( value, 0, 1, 1 ) );
+	}
+});
+
+var ExpoEaseInOut = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.ExpoEaseInOut( value, 0, 1, 1 ) );
+	}
+});
+
+
+//ELASTIC
+var ElasticEaseIn = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.ElasticEaseIn( value, 0, 1, 1 ) );
+	}
+});
+
+var ElasticEaseOut = new Class({
 	Extends: EffectPercentage,
 
 	setPercentage: function(value) {
 		this._itemToEffect.effectPercentage( easing.ElasticEaseOut( value, 0, 1, 1 ) );
 	}
 });
+
+var ElasticEaseInOut = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.ElasticEaseInOut( value, 0, 1, 1 ) );
+	}
+});
+
+
+//CIRCULAR
+var CircularEaseIn = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.CircularEaseIn( value, 0, 1, 1 ) );
+	}
+});
+
+var CircularEaseOut = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.CircularEaseOut( value, 0, 1, 1 ) );
+	}
+});
+
+var CircularEaseInOut = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.CircularEaseInOut( value, 0, 1, 1 ) );
+	}
+});
+
+//BACK
+var BackEaseIn = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.BackEaseIn( value, 0, 1, 1 ) );
+	}
+});
+
+var BackEaseOut = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.BackEaseOut( value, 0, 1, 1 ) );
+	}
+});
+
+var BackEaseInOut = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.BackEaseInOut( value, 0, 1, 1 ) );
+	}
+});
+
+
+//BOUNCE
+var BounceEaseIn = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.BounceEaseIn( value, 0, 1, 1 ) );
+	}
+});
+
+var BounceEaseOut = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.BounceEaseOut( value, 0, 1, 1 ) );
+	}
+});
+
+var BounceEaseInOut = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.BounceEaseInOut( value, 0, 1, 1 ) );
+	}
+});
+
+
+//CUBIC
+var ElasticEaseIn = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.CubicEaseIn( value, 0, 1, 1 ) );
+	}
+});
+
+var CubicEaseOut = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.CubicEaseOut( value, 0, 1, 1 ) );
+	}
+});
+
+var CubicEaseInOut = new Class({
+	Extends: EffectPercentage,
+
+	setPercentage: function(value) {
+		this._itemToEffect.effectPercentage( easing.CubicEaseInOut( value, 0, 1, 1 ) );
+	}
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 var EffectTimeline = new Class({
 	Extends: Effect,
 
@@ -169,7 +778,7 @@ var EffectTimeline = new Class({
 				if( this._percentageToApply < this._effectStart[ effect.id ] ) {
 					//effect.setPercentage( 0 );
 					effect.enabled = false;
-				} else if( this._percentageToApply > this._effectEnd[ effect.id ] ) {
+				} else if( this._percentageToApply >= this._effectEnd[ effect.id ] && this._effectEnd[ effect.id ] != 1 ) {
 					//effect.setPercentage( 1 );
 					effect.enabled = false;
 				} else {
@@ -223,7 +832,7 @@ var EffectTimeline = new Class({
 				if( this._percentageToApply < this._effectStart[ this._effects[i].id ] ) {
 					this._effects[i].setPercentage( 0 );
 					this._effects[i].enabled = false;
-				} else if( this._percentageToApply > this._effectEnd[ this._effects[i].id ] ) {
+				} else if( this._percentageToApply >= this._effectEnd[ this._effects[i].id ] && this._effectEnd[ this._effects[i].id ] != 1 ) {
 					this._effects[i].setPercentage( 1 );
 					this._effects[i].enabled = false;
 				} else {
@@ -266,6 +875,7 @@ var Effect = new Class({
 		this.__defineGetter__( 'enabled', this.getEnabled );
 		this.__defineSetter__( 'enabled', this.setEnabled );
 		this.__defineGetter__( 'id', this.getId );
+		this.__defineGetter__( 'effects', this.getEffects );
 
 
 		this._id = EffectIds.getId( this._type );
@@ -279,6 +889,8 @@ var Effect = new Class({
 		if (itemToEffect) {
 			this.setItemToEffect( itemToEffect );
 		}
+
+		this.setPercentage( 0 );
 	},
 
 	_enabled: true,
@@ -334,6 +946,9 @@ var Effect = new Class({
 	getStart: function(property) {
 		return this._itemProperties.getStart(property);
 	},
+	getEffects: function() {
+		return this._effects;
+	},
 	setItemToEffect: function(itemToEffect, itemProperties) {
 		if( !this._itemToEffect )
 		{
@@ -368,7 +983,9 @@ var Effect = new Class({
 		this._percentageToApply += percentage;
 	},
 	reset: function() {
-		this._itemProperties.resetAll( this.id );
+		if( this._itemProperties ) {
+			this._itemProperties.resetAll( this.id );
+		}
 	},
 	destroy: function() {
 		this.reset();
@@ -377,7 +994,10 @@ var Effect = new Class({
 			this._effects[i].destroy();
 		}
 
-		ItemPropertiesBank.destroy( this._itemToEffect );
+		if( this._itemToEffect ) {
+			ItemPropertiesBank.destroy( this._itemToEffect );
+		}
+		
 		this._effects.length = 0;
 
 		if( this._animation ) {
@@ -397,8 +1017,8 @@ var Effect = new Class({
 			}
 		} else {
 			//check to see if this effect has already been added
-			if( this._effectIdx[effect.id] === undefined ) {
-				this._effectIdx[effect.id] = this._effects.length;
+			if( this._effectIdx[ effect.id ] === undefined ) {
+				this._effectIdx[ effect.id ] = this._effects.length;
 				this._effects.push( effect );
 
 				effect.setItemToEffect( this._itemToEffect, this._itemProperties );
@@ -506,8 +1126,8 @@ var EffectChangeProp = new Class({
 
 		if (this._startValue == null) {
 			this._startValueNotDefined = true;
-			this._startValue = this._itemProperties.getStart(this._propertyToEffect).clone();
-			this._itemProperties.getStart(this._propertyToEffect).onPropertyChange.add(this._onStartValueChange.bind(this));
+			this._startValue = this._itemProperties.getStart( this._propertyToEffect ).clone();
+			this._itemProperties.getStart( this._propertyToEffect ).onPropertyChange.add( this._onStartValueChange.bind(this) );
 		}
 
 		if (this._endValue == null) {
@@ -599,6 +1219,40 @@ var EffectChangePropNumber = new Class({
 });
 
 
+var EffectChangePropNumberWhole = new Class({
+	Extends: EffectChangeProp,
+
+	initialize: function() {
+		var startVal = undefined;
+		var endVal = undefined;
+
+		this._tempChangeAmount = new PropertyNumberWhole();
+		this._modifiedStart = new PropertyNumberWhole();
+		this._modifiedEnd = new PropertyNumberWhole();
+
+		if (typeof arguments[0] == 'object') {
+			if (arguments.length == 2) {
+				endVal = new PropertyNumberWhole(arguments[1]);
+			} else if (arguments.length == 3) {
+				startVal = new PropertyNumberWhole(arguments[1]);
+				endVal = new PropertyNumberWhole(arguments[2]);
+			}
+
+			this.parent.apply(this, [arguments[0], startVal, endVal]);
+		} else {
+			if (arguments.length == 1) {
+				endVal = new PropertyNumberWhole(arguments[0]);
+			} else if (arguments.length == 2) {
+				startVal = new PropertyNumberWhole(arguments[0]);
+				endVal = new PropertyNumberWhole(arguments[1]);
+			}
+
+			this.parent.apply(this, [startVal, endVal]);
+		}
+	}
+});
+
+
 var EffectChangePropColour = new Class({
 	Extends: EffectChangeProp,
 
@@ -624,7 +1278,7 @@ var EffectChangePropColour = new Class({
 			} else if ( arguments.length == 9 ) {
 				startVal = new PropertyColour(arguments[1], arguments[2], arguments[3], arguments[4]);
 				endVal = new PropertyColour(arguments[5], arguments[6], arguments[7], arguments[8]);
-			} else if ( arguments.length > 0 ) {
+			} else if ( arguments.length > 1 ) {
 				throw new Error('You should instantiate this colour with either: \n' +
 								'itemToEffect, r, g, b\n' +
 								'itemToEffect, r, g, b, a\n' +
@@ -657,7 +1311,7 @@ var EffectChangePropColour = new Class({
 	}
 });
 var EffectWidth = new Class({
-	Extends: EffectChangePropNumber,
+	Extends: EffectChangePropNumberWhole,
 
 	initialize: function() {
 		this._type =  'EffectWidth';
@@ -668,7 +1322,7 @@ var EffectWidth = new Class({
 
 
 var EffectHeight = new Class({
-	Extends: EffectChangePropNumber,
+	Extends: EffectChangePropNumberWhole,
 
 	initialize: function() {
 		this._type =  'EffectHeight';
@@ -679,7 +1333,7 @@ var EffectHeight = new Class({
 
 
 var EffectLeft = new Class({
-	Extends: EffectChangePropNumber,
+	Extends: EffectChangePropNumberWhole,
 	initialize: function() {
 		this._type =  'EffectLeft';
 		this._propertyToEffect = 'left';
@@ -688,7 +1342,7 @@ var EffectLeft = new Class({
 });
 
 var EffectTop = new Class({
-	Extends: EffectChangePropNumber,
+	Extends: EffectChangePropNumberWhole,
 	initialize: function() {
 		this._type =  'EffectTop';
 		this._propertyToEffect = 'top';
@@ -706,7 +1360,7 @@ var EffectOpacity = new Class({
 });
 
 var EffectBorderWidth = new Class({
-	Extends: EffectChangePropNumber,
+	Extends: EffectChangePropNumberWhole,
 	initialize: function() {
 		this._type =  'EffectBorderWidth';
 		this._propertyToEffect = 'border-width';
@@ -762,31 +1416,6 @@ var EffectBoxShadow = new Class({
 
 
 		this.parent.apply(this, arguments);
-	}
-});
-
-
-/* COMPOSITE EFFECTS */
-var EffectMoveUpAndFade = new Class({
-	Extends: Effect,
-	initialize: function(itemToEffect, offY) {
-		this._type = 'EffectMoveUpAndFade';
-
-		this._effFade = new EffectOpacity(0, 1);
-		this._effMove = new EffectTop(offY == undefined ? 200 : offY);
-
-		this.add(this._effFade);
-		this.add(this._effMove);
-
-		this.parent(itemToEffect);
-	},
-
-	_effFade: null,
-	_effMove: null,
-
-	setPercentage: function(value) {
-		this._effFade.percentage = value;
-		this._effMove.percentage = 1 - value;
 	}
 });
 var ItemPropertiesBank = {};
@@ -878,17 +1507,11 @@ var ItemProperties = new Class({
 			this._propertyValue[property].add( this._changeAmountForEffect[ effectID ][ property ] );
 
 			this._itemToEffect.css(property, this._propertyValue[property].getCSS());
-
-			if( property == 'opacity' )
-				console.log( 'enable', property, this._propertyValue[ property ].getCSS() );
 		}
 	},
 	disable: function( effectID, property ) {
 		if( this._enabled[ effectID ][ property ] ) {
 			this._enabled[ effectID ][ property ] = false;
-
-			if( property == 'opacity' )
-				console.log( 'disable', property,  this._changeAmountForEffect[ effectID ][ property ].value );
 
 			this._propertyValue[property].sub( this._changeAmountForEffect[ effectID ][ property ] );
 
@@ -896,11 +1519,13 @@ var ItemProperties = new Class({
 		}
 	},
 	reset: function( effectID, property ) {
-		this._propertyValue[property].sub(this._changeAmountForEffect[effectID][property]);
-		
-		this._changeAmountForEffect[effectID][property].reset();
+		if( this._enabled[ effectID ][ property ] ) {
+			this._propertyValue[property].sub( this._changeAmountForEffect[effectID][property] );
+			
+			this._changeAmountForEffect[effectID][property].reset();
 
-		this._itemToEffect.css(property, this._propertyValue[property].getCSS());
+			this._itemToEffect.css(property, this._propertyValue[property].getCSS());
+		}
 	},
 	resetAll: function( effectID ) {
 		for (var i in this._changeAmountForEffect[effectID]) {
@@ -930,800 +1555,385 @@ var ItemProperties = new Class({
 
 
 
-
-
-
-
-var Property = new Class({
-	onPropertyChange: null,
-
-	initialize: function() {
-		this.onPropertyChange = new Signal();
+var PropertyClassBuilder = new Class({
+	initialize: function( className ) {
+		this._className = className;
 		this._properties = [];
-		this._defaultValues = {};
+		this._value = [];
+		this._defaultValues = [];
 	},
 
+	_className: null,
 	_properties: null,
+	_value: null,
 	_defaultValues: null, 
+	_cssDefinition: null,
 
 	addProperty: function( name, value, defaultValue ) {
-		var privateName = '_' + name;
-		var getterName = 'get' + name;
-		var setterName = 'set' + name;
+		this._properties.push( name );
+		this._value.push( value );
+		this._defaultValues.push( defaultValue );
+	},
 
-		this._defaultValues[ privateName ] = defaultValue;
-		this[ privateName ] = value;
-		this._properties.push( privateName );
+	setCSSDefinition: function( definition ) {
+		this._cssDefinition = definition;
+	},
 
-		this[ getterName ] = function() {
-			return this[ privateName ];
-		};
+	build: function() {
+		var src = this._getConstructorStr() +
+				  this._getSetterGetterStr() +
+				  this._getAddStr() +
+				  this._getSubStr() +
+				  this._getMulScalarStr() +
+				  this._getEqualsStr() +
+				  this._getResetStr() +
+				  this._getGetZeroStr() +
+				  this._getGetChangeStr() + 
+				  this._getCloneStr();
 
-		this[ setterName ] = function( value ) {
-			this[ privateName ] = value;
 
-			this.onPropertyChange.dispatch();
-		};
+		src = src.substring( 0, src.length-2 );
 
-		this.__defineGetter__( name, this[ getterName ] );
-		this.__defineSetter__( name, this[ setterName ] );
-	}
+		ob = eval( '({' + src + '})' );
 
-	add: function(otherItem) {
-		for( var i = 0, len = this._properties.length; i < len; i++ ) {
+		ob.getCSS = this._cssDefinition;
+
+		return ob;
+	},
+
+	_getConstructorStr: function() {
+		var rVal = 'initialize: function() {\n'
+
+		rVal += 'this.onPropertyChange = new Signal();\n'
+
+		for(var i = 0, len = this._properties.length; i < len; i++ ) {
 			var curProp = this._properties[ i ];
 
-			this[ curProp ] += otherItem[ curProp ];
+			rVal += 'this._' + curProp + ' = arguments[ ' + i + ' ] === undefined ? ' + this._defaultValues[ i ] + ' : arguments[ ' + i + ' ];\n';
+			rVal += 'this.__defineGetter__("' + curProp + '", this.get' + curProp + ');\n';
+			rVal += 'this.__defineSetter__("' + curProp + '", this.set' + curProp + ');\n\n';
 		}
 
-		return this;
-	},
-	sub: function(otherItem) {
-		for( var i = 0, len = this._properties.length; i < len; i++ ) {
-			var curProp = this._properties[ i ];
-
-			this[ curProp ] -= otherItem[ curProp ];
-		}
-
-		return this;
-	},
-	mulScalar: function(scalar) {
-		for( var i = 0, len = this._properties.length; i < len; i++ ) {
-			var curProp = this._properties[ i ];
-
-			this[ curProp ] *= scalar;
-		}
-
-		return this;
-	},
-	equals: function(otherItem) {
-		for( var i = 0, len = this._properties.length; i < len; i++ ) {
-			var curProp = this._properties[ i ];
-
-			this[ curProp ] = otherItem[ curProp ];
-		}
-
-		return this;
-	},
-	reset: function() {
-		for( var i = 0, len = this._properties.length; i < len; i++ ) {
-			var curProp = this._properties[ i ];
-
-			this[ curProp ] = this._defaultValues[ curProp ];
-		}
-
-		return this;
-	},
-	getZero: function() {
-		var args = [];
-
-		for( var i = 0, len = this._properties.length; i < len; i++ ) {
-			args[ i ] = 0;
-		}
-
-
-
-		return new PropertyNumber( 0 );
-	},
-	getChange: function(percentage, curValue, startValue, endValue) {
-		throw new Error('You must override this function');
-		return this;
-	},
-	getCSS: function() {
-		throw new Error('You must override this function');
-	},
-	clone: function() {
-		throw new Error('You must override this function');
-	},
-	toString: function() {
-
-	}
-});
-
-
-
-
-
-
-// var Property = new Class({
-// 	onPropertyChange: null,
-
-// 	initialize: function() {
-// 		this.onPropertyChange = new Signal();
-// 	},
-
-// 	add: function(otherItem) {
-// 		throw new Error('You must override this function');
-// 		return this;
-// 	},
-// 	sub: function(otherItem) {
-// 		throw new Error('You must override this function');
-// 		return this;
-// 	},
-// 	mulScalar: function(scalar) {
-// 		throw new Error('You must override this function');
-// 		return this;
-// 	},
-// 	equals: function(otherItem) {
-// 		throw new Error('You must override this function');
-// 		return this;
-// 	},
-// 	getChange: function(percentage, curValue, startValue, endValue) {
-// 		throw new Error('You must override this function');
-// 		return this;
-// 	},
-// 	getCSS: function() {
-// 		throw new Error('You must override this function');
-// 	},
-// 	clone: function() {
-// 		throw new Error('You must override this function');
-// 	}
-// });
-
-var PropertyNumber = new Class({
-	Extends: Property,
-
-	initialize: function(value) {
-		this.parent();
-
-		this.__defineGetter__('value', this.getValue);
-		this.__defineSetter__('value', this.setValue);
-
-		this._value = value == undefined ? 0 : value;
-	},
-
-	_value: 0,
-
-	getValue: function() {
-		return this._value;
-	},
-	setValue: function(value) {
-		this._value = value;
-		this.onPropertyChange.dispatch();
-	},
-	add: function(otherItem) {
-		this._value += otherItem.value;
-
-		return this;
-	},
-	sub: function(otherItem) {
-		this._value -= otherItem.value;
-
-		return this;
-	},
-	mulScalar: function(scalar) {
-		this._value *= scalar;
-
-		return this;
-	},
-	equals: function(otherItem) {
-		this._value = otherItem.value;
-
-		return this;
-	},
-	reset: function() {
-		this._value = 0;
-	},
-	getZero: function() {
-		return new PropertyNumber( 0 );
-	},
-	getChange: function(percentage, curValue, startValue, endValue) {
-		this._value = (endValue.value - startValue.value) * percentage + startValue.value;
-
-		this._value -= curValue.value;
-
-		return this;
-	},
-	getCSS: function() {
-		return this._value;
-	},
-	clone: function() {
-		return new PropertyNumber(this._value);
-	}
-});
-
-
-var PropertyColour = new Class({
-	Extends: Property,
-
-	initialize: function(r, g, b, a) {
-		this.parent();
-
-		this.__defineGetter__('r', this.getR);
-		this.__defineGetter__('g', this.getG);
-		this.__defineGetter__('b', this.getB);
-		this.__defineGetter__('a', this.getA);
-
-		this.__defineSetter__('r', this.setR);
-		this.__defineSetter__('g', this.setG);
-		this.__defineSetter__('b', this.setB);
-		this.__defineSetter__('a', this.setA);
-
-		this._r = r == undefined ? 0 : parseFloat(r);
-		this._g = g == undefined ? 0 : parseFloat(g);
-		this._b = b == undefined ? 0 : parseFloat(b);
-		this._a = a == undefined || isNaN(a) ? 1 : parseFloat(a);
-	},
-
-	_r: 0,
-	_g: 0,
-	_b: 0,
-	_a: 1,
-
-	getR: function() {
-		return this._r;
-	},
-	getG: function() {
-		return this._g;
-	},
-	getB: function() {
-		return this._b;
-	},
-	getA: function() {
-		return this._a;
-	},
-	setR: function(value) {
-		this._r = value;
-
-		this.onPropertyChange.dispatch();
-	},
-	setG: function(value) {
-		this._g = value;
-
-		this.onPropertyChange.dispatch();
-	},
-	setB: function(value) {
-		this._b = value;
-
-		this.onPropertyChange.dispatch();
-	},
-	setA: function(value) {
-		this._a = value;
-
-		this.onPropertyChange.dispatch();
-	},
-	add: function(otherItem) {
-		this._r += otherItem.r;
-		this._g += otherItem.g;
-		this._b += otherItem.b;
-		this._a += otherItem.a;
-
-		return this;
-	},
-	sub: function(otherItem) {
-		this._r -= otherItem.r;
-		this._g -= otherItem.g;
-		this._b -= otherItem.b;
-		this._a -= otherItem.a;
-
-		return this;
-	},
-	mulScalar: function(scalar) {
-		this._r *= scalar;
-		this._g *= scalar;
-		this._b *= scalar;
-		this._a *= scalar;
-
-		return this;
-	},
-	equals: function(startVal) {
-		this._r = startVal.r;
-		this._g = startVal.g;
-		this._b = startVal.b;
-		this._a = startVal.a;
-
-		return this;
-	},
-	reset: function() {
-		this._r = 0;
-		this._g = 0;
-		this._b = 0;
-		this._a = 1;
-	},
-	getZero: function() {
-		return new PropertyColour( 0, 0, 0, 0 );
-	},
-	getChange: function(percentage, curValue, startValue, endValue) {
-		this._r = (endValue.r - startValue.r) * percentage + startValue.r;
-		this._g = (endValue.g - startValue.g) * percentage + startValue.g;
-		this._b = (endValue.b - startValue.b) * percentage + startValue.b;
-		this._a = (endValue.a - startValue.a) * percentage + startValue.a;
-
-		this._r -= curValue.r;
-		this._g -= curValue.g;
-		this._b -= curValue.b;
-		this._a -= curValue.a;
-
-		return this;
-	},
-	getCSS: function() {
-		if (this.a == 1) {
-			return 'rgb(' + Math.round(this.r) + ', ' + Math.round(this.g) + ', ' + Math.round(this.b) + ')';
-		} else {
-			return 'rgba(' + Math.round(this.r) + ', ' + Math.round(this.g) + ', ' + Math.round(this.b) + ', ' + this.a + ')';
-		}
-	},
-	clone: function() {
-		var rVal = new PropertyColour(this.r, this.g, this.b, this.a);
+		rVal += '},\n'
 
 		return rVal;
 	},
-	toString: function() {
-		return this._r + ', ' + this._g + ', ' + this._b + ', ' + this._a;
-	}
-});
 
-
-
-var PropertyFilter = new Class({
-	Extends: Property,
-
-	initialize: function(blur, brightness, contrast, dropR, dropG, dropB, dropA, dropOffX, dropOffY, dropBlur, dropSpread, dropInset, grayScale, hueRotation, invert, opacity, saturate, sepia) {
-		this.parent();
-
-		this.__defineGetter__('blur', this.getBlur);
-		this.__defineGetter__('brightness', this.getBrightness);
-		this.__defineGetter__('contrast', this.getContrast);
-		this.__defineGetter__('dropShadow', this.getDropShadow);
-		this.__defineGetter__('grayScale', this.getGrayScale);
-		this.__defineGetter__('hueRotation', this.getHueRotation);
-		this.__defineGetter__('invert', this.getInvert);
-		this.__defineGetter__('opacity', this.getOpacity);
-		this.__defineGetter__('saturate', this.getSaturate);
-		this.__defineGetter__('sepia', this.getSepia);
-
-		this.__defineSetter__('blur', this.setBlur);
-		this.__defineSetter__('brightness', this.setBrightness);
-		this.__defineSetter__('contrast', this.setContrast);
-		this.__defineSetter__('dropShadow', this.setDropShadow);
-		this.__defineSetter__('grayScale', this.setGrayScale);
-		this.__defineSetter__('hueRotation', this.setHueRotation);
-		this.__defineSetter__('invert', this.setInvert);
-		this.__defineSetter__('opacity', this.setOpacity);
-		this.__defineSetter__('saturate', this.setSaturate);
-		this.__defineSetter__('sepia', this.setSepia);
-
-		this._blur = blur == undefined ? 0 : blur;
-		this._brightness = brightness == undefined ? 0 : brightness;
-		this._contrast = contrast == undefined ? 1 : contrast;
-		this._dropShadow = new PropertyBoxShadow(dropR, dropG, dropB, dropA, dropOffX, dropOffY, dropBlur, dropSpread, dropInset);
-		this._grayScale = grayScale == undefined ? 0 : grayScale;
-		this._hueRotation = hueRotation == undefined ? 0 : hueRotation;
-		this._invert = invert == undefined ? 0 : invert;
-		this._opacity = opacity == undefined ? 1 : opacity;
-		this._saturate = saturate == undefined ? 1 : saturate;
-		this._sepia = sepia == undefined ? 0 : sepia;
-
-		this._dropShadow.onPropertyChange.add( (function() {
-			this.onPropertyChange.dispatch();
-		}).bind( this ) );
-	},
-
-	_blur: 0,
-	_brightness: 0,
-	_contrast: 1,
-	_dropShadow: null,
-	_grayScale: 0,
-	_hueRotation: 0,
-	_invert: 0,
-	_opacity: 1,
-	_saturate: 1,
-	_sepia: 0,
-
-	getBlur: function() {
-		return this._blur;
-	},
-	getBrightness: function() {
-		return this._brightness;
-	},
-	getContrast: function() {
-		return this._contrast;
-	},
-	getDropShadow: function() {
-		return this._dropShadow;
-	},
-	getGrayScale: function() {
-		return this._grayScale;
-	},
-	getHueRotation: function() {
-		return this._hueRotation;
-	},
-	getInvert: function() {
-		return this._invert;
-	},
-	getOpacity: function() {
-		return this._opacity;
-	},
-	getSaturate: function() {
-		return this._saturate;
-	},
-	getSepia: function() {
-		return this._sepia;
-	},
-	setPropertyChange: function(value) {
-		this.parent(value);
-
-		this.dropShadow.onPropertyChange = value;
-	},
-	setBlur: function(value) {
-		this._blur = value;
-
-		this.onPropertyChange.dispatch();
-	},
-	setBrightness: function(value) {
-		this._brightness = value;
-		this.onPropertyChange.dispatch();
-	},
-	setContrast: function(value) {
-		this._contrast = value;
-		this.onPropertyChange.dispatch();
-	},
-	setDropShadow: function(value) {
-		this._dropShadow = value;
-		this.onPropertyChange.dispatch();
-	},
-	setGrayScale: function(value) {
-		this._grayScale = value;
-
-		this.onPropertyChange.dispatch();
-	},
-	setHueRotation: function(value) {
-		this._hueRotation = value;
-		this.onPropertyChange.dispatch();
-	},
-	setInvert: function(value) {
-		this._invert = value;
-		this.onPropertyChange.dispatch();
-	},
-	setOpacity: function(value) {
-		this._opacity = value;
-		this.onPropertyChange.dispatch();
-	},
-	setSaturate: function(value) {
-		this._saturate = value;
-		this.onPropertyChange.dispatch();
-	},
-	setSepia: function(value) {
-		this._sepia = value;
-		this.onPropertyChange.dispatch();
-	},
-	add: function(otherItem) {
-		this._blur += otherItem.blur;
-		this._brightness += otherItem.brightness;
-		this._contrast += otherItem.contrast;
-		this._grayScale += otherItem.grayScale;
-		this._hueRotation += otherItem.hueRotation;
-		this._invert += otherItem.invert;
-		this._opacity += otherItem.opacity;
-		this._saturate += otherItem.saturate;
-		this._sepia += otherItem.sepia;
-
-		this.dropShadow.add( otherItem.dropShadow );
-
-		return this;
-	},
-	sub: function(otherItem) {
-		this._blur -= otherItem.blur;
-		this._brightness -= otherItem.brightness;
-		this._contrast -= otherItem.contrast;
-		this._grayScale -= otherItem.grayScale;
-		this._hueRotation -= otherItem.hueRotation;
-		this._invert -= otherItem.invert;
-		this._opacity -= otherItem.opacity;
-		this._saturate -= otherItem.saturate;
-		this._sepia -= otherItem.sepia;
-
-		this.dropShadow.sub( otherItem.dropShadow );
-
-		return this;
-	},
-	mulScalar: function(scalar) {
-		this._blur *= scalar;
-		this._brightness *= scalar;
-		this._contrast *= scalar;
-		this._grayScale *= scalar;
-		this._hueRotation *= scalar;
-		this._invert *= scalar;
-		this._opacity *= scalar;
-		this._saturate *= scalar;
-		this._sepia *= scalar;
-
-		this.dropShadow.mulScalar( scalar );
-
-		return this;
-	},
-	equals: function(otherItem) {
-		this._blur = otherItem.blur;
-		this._brightness = otherItem.brightness;
-		this._contrast = otherItem.contrast;
-		this._grayScale = otherItem.grayScale;
-		this._hueRotation = otherItem.hueRotation;
-		this._invert = otherItem.invert;
-		this._opacity = otherItem.opacity;
-		this._saturate = otherItem.saturate;
-		this._sepia = otherItem.sepia;
-
-		this.dropShadow.equals( otherItem.dropShadow );
-
-		return this;
-	},
-	reset: function() {
-		this._blur = 0;
-		this._brightness = 0;
-		this._contrast = 1;
-		this._grayScale = 0;
-		this._hueRotation = 0;
-		this._invert = 0;
-		this._opacity = 1;
-		this._saturate = 1;
-		this._sepia = 0;
-
-		this._dropShadow.reset();
-	},
-	getZero: function() {
-		return new PropertyFilter(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false, 0, 0, 0, 0, 0, 0);
-	},
-	getChange: function(percentage, curValue, startValue, endValue) {
-		this._blur = (endValue.blur - startValue.blur) * percentage + startValue.blur;
-		this._brightness = (endValue.brightness - startValue.brightness) * percentage + startValue.brightness;
-		this._contrast = (endValue.contrast - startValue.contrast) * percentage + startValue.contrast;
-		this._grayScale = (endValue.grayScale - startValue.grayScale) * percentage + startValue.grayScale;
-		this._hueRotation = (endValue.hueRotation - startValue.hueRotation) * percentage + startValue.hueRotation;
-		this._invert = (endValue.invert - startValue.invert) * percentage + startValue.invert;
-		this._opacity = (endValue.opacity - startValue.opacity) * percentage + startValue.opacity;
-		this._saturate = (endValue.saturate - startValue.saturate) * percentage + startValue.saturate;
-		this._sepia = (endValue.sepia - startValue.sepia) * percentage + startValue.sepia;
-
-		this._blur -= curValue.blur;
-		this._brightness -= curValue.brightness;
-		this._contrast -= curValue.contrast;
-		this._grayScale -= curValue.grayScale;
-		this._hueRotation -= curValue.hueRotation;
-		this._invert -= curValue.invert;
-		this._opacity -= curValue.opacity;
-		this._saturate -= curValue.saturate;
-		this._sepia -= curValue.sepia;
-
-		this.dropShadow.getChange(percentage, curValue.dropShadow, startValue.dropShadow, endValue.dropShadow);
-
-		return this;
-	},
-	getCSS: function() {
+	_getSetterGetterStr: function() {
 		var rVal = '';
 
-		if (this._blur > 0) {
-			rVal += 'blur(' + Math.round(this._blur) + 'px) ';
+		for(var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			rVal += '\tget' + curProp + ': function() { return this._' + curProp + ' ; },\n';
+
+			rVal += '\tset' + curProp + ': function( value ) { \n'+
+				'\t\tthis._' + curProp + ' = value;' +
+				'\t\tthis.onPropertyChange.dispatch();' +
+			'},\n';
 		}
-
-		if (this._brightness > 0) {
-			rVal += 'brightness(' + this._brightness + ') ';
-		}
-
-		if (this._contrast != 1) {
-			rVal += 'contrast(' + this._contrast + ') ';
-		}
-
-		if (this._grayScale > 0) {
-			rVal += 'grayscale(' + this._grayScale + ') ';
-		}
-
-		if (this._hueRotation > 0 && this._hueRotation < 360) {
-			rVal += 'hue-rotate(' + this._hueRotation + 'deg) ';
-		}
-
-		if (this._invert > 0) {
-			rVal += 'invert(' + this._invert + ') ';
-		}
-
-		if (this._opacity < 1) {
-			rVal += 'opacity(' + this._opacity + ') ';
-		}
-
-		if (this._saturate != 1) {
-			rVal += 'saturate(' + this._saturate + ') ';
-		}
-
-		if (this._sepia > 0) {
-			rVal += 'sepia(' + this._sepia + ')';
-		}
-
-		if (this._dropShadow.isNotDefault()) rVal += 'drop-shadow(' + this._dropShadow.getCSS() + ') ';
-
-		if (rVal == '') rVal = 'none';
 
 		return rVal;
 	},
-	clone: function() {
-		return new PropertyFilter(this._blur,
-		this._brightness,
-		this._contrast,
-		this._dropShadow.clone(),
-		this._grayScale,
-		this._hueRotation,
-		this._invert,
-		this._opacity,
-		this._saturate,
-		this._sepia);
+
+	_getAddStr: function() {
+		var rVal = '\tadd: function(otherItem) {\n';
+
+		for(var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			rVal += '\t\tthis._' + curProp + ' += otherItem.' + curProp + ';\n';
+		}
+		
+		rVal += '\t\treturn this;\n \t},\n';
+
+		return rVal;
+	},
+
+	_getSubStr: function() {
+		var rVal = '\tsub: function(otherItem) {\n';
+
+		for(var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			rVal += '\t\tthis._' + curProp + ' -= otherItem.' + curProp + ';\n';
+		}
+		
+		rVal += '\t\treturn this;\n \t},\n';
+
+		return rVal;
+	},
+
+	_getMulScalarStr: function() {
+		var rVal = '\tmulScalar: function(scalar) {\n';
+
+		for(var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			rVal += '\t\tthis._' + curProp + ' *= scalar;\n';
+		}
+		
+		rVal += '\t\treturn this;\n \t},\n';
+
+		return rVal;
+	},
+
+	_getEqualsStr: function() {
+		var rVal = '\tequals: function(otherItem) {\n';
+
+		for(var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			rVal += '\t\tthis._' + curProp + ' = otherItem.' + curProp + ';\n';
+		}
+		
+		rVal += '\t\treturn this;\n \t},\n';
+
+		return rVal;
+	},
+
+	_getResetStr: function() {
+		var rVal = '\treset: function(otherItem) {\n';
+
+		for(var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			rVal += '\t\tthis._' + curProp + ' = ' + this._defaultValues[ i ] + ';\n';
+		}
+		
+		rVal += '\t\treturn this;\n \t},\n';
+
+		return rVal;
+	},
+
+	_getGetZeroStr: function() {
+		var rVal = '\getZero: function() {\n';
+
+		rVal += '\t\treturn new ' + this._className + '('
+
+		for(var i = 0, len = this._properties.length - 1; i < len; i++ ) {
+			rVal += '0, ';	
+		}
+
+		rVal += '0);\n},\n';
+
+		return rVal;
+	},
+
+	_getGetChangeStr: function() {
+		var rVal = '\tgetChange: function( percentage, curValue, startValue, endValue ) {\n';
+
+		for(var i = 0, len = this._properties.length; i < len; i++ ) {
+			var curProp = this._properties[ i ];
+
+			rVal += '\t\tthis._' + curProp + ' = (endValue.' + curProp + ' - startValue.' + curProp + ') * percentage + startValue.' + curProp + ';\n';
+			rVal += '\t\tthis._' + curProp + ' -= curValue.' + curProp + ';\n';
+		}
+
+		rVal += '\t\treturn this;\n\t},\n';
+
+		return rVal;
+	},
+
+	_getCloneStr: function() {
+		var rVal = '\tclone: function() {\n';
+
+		rVal += '\t\treturn new ' + this._className + '('
+
+		for(var i = 0, len = this._properties.length - 1; i < len; i++ ) {
+			rVal += 'this._' + this._properties[ i ] + ', ';	
+		}
+
+		rVal += 'this._' + this._properties[ i ] + ');\n},\n';
+
+		return rVal;
 	}
 });
 
 
-var PropertyBoxShadow = new Class({
-	Extends: PropertyColour,
 
-	initialize: function(r, g, b, a, offX, offY, blur, spread, inset) {
-		this.__defineGetter__('offX', this.getOffX);
-		this.__defineGetter__('offY', this.getOffY);
-		this.__defineGetter__('blur', this.getBlur);
-		this.__defineGetter__('spread', this.getSpread);
-		this.__defineGetter__('inset', this.getInset);
-		this.__defineSetter__('offX', this.setOffX);
-		this.__defineSetter__('offY', this.setOffY);
-		this.__defineSetter__('blur', this.setBlur);
-		this.__defineSetter__('spread', this.setSpread);
-		this.__defineSetter__('inset', this.setInset);
 
-		this._offX = offX == undefined ? 0 : parseFloat(offX);
-		this._offY = offY == undefined ? 0 : parseFloat(offY);
-		this._blur = blur == undefined ? 0 : parseFloat(blur);
-		this._spread = spread == undefined ? 0 : parseFloat(spread);
-		this._inset = inset;
 
-		this.parent(r, g, b, a);
-	},
 
-	_offX: 0,
-	_offY: 0,
-	_blur: 0,
-	_spread: 0,
-	_inset: false,
+var builder = new PropertyClassBuilder( 'PropertyNumber' );
+builder.addProperty( 'value', 0, 0 );
+builder.setCSSDefinition( function() {
+	return this.value;
+});
 
-	getOffX: function() {
-		return this._offX
-	},
-	getOffY: function() {
-		return this._offY
-	},
-	getBlur: function() {
-		return this._blur
-	},
-	getSpread: function() {
-		return this._spread
-	},
-	getInset: function() {
-		return this._inset
-	},
-	setOffX: function(value) {
-		this._offX = value;
-		this.onPropertyChange.dispatch();
-	},
-	setOffY: function(value) {
-		this._offY = value;
-		this.onPropertyChange.dispatch();
-	},
-	setBlur: function(value) {
-		this._blur = value;
-		this.onPropertyChange.dispatch();
-	},
-	setSpread: function(value) {
-		this._spread = value;
-		this.onPropertyChange.dispatch();
-	},
-	setInset: function(value) {
-		this._inset = value;
-		this.onPropertyChange.dispatch();
-	},
-	isNotDefault: function() {
-		return this._offX != 0 || this._offY != 0 || this._blur != 0 || this._spread != 0;
-	},
-	add: function(otherItem) {
-		this.parent(otherItem);
 
-		this._offX += otherItem.offX;
-		this._offY += otherItem.offY;
-		this._blur += otherItem.blur;
-		this._spread += otherItem.spread;
+var PropertyNumber = new Class( builder.build() );
 
-		return this;
-	},
-	sub: function(otherItem) {
-		this.parent(otherItem);
 
-		this._offX -= otherItem.offX;
-		this._offY -= otherItem.offY;
-		this._blur -= otherItem.blur;
-		this._spread -= otherItem.spread;
 
-		return this;
-	},
-	mulScalar: function(scalar) {
-		this._offX *= scalar;
-		this._offY *= scalar;
-		this._blur *= scalar;
-		this._spread *= scalar;
 
-		return this;
-	},
-	equals: function(otherItem) {
-		this.parent(otherItem);
 
-		this._offX = otherItem.offX;
-		this._offY = otherItem.offY;
-		this._blur = otherItem.blur;
-		this._spread = otherItem.spread;
+var builder = new PropertyClassBuilder( 'PropertyNumberWhole' );
+builder.addProperty( 'value', 0, 0 );
+builder.setCSSDefinition( function() {
+	return Math.round( this.value );
+});
 
-		return this;
-	},
-	reset: function() {
-		this._offX = 0;
-		this._offY = 0;
-		this._blur = 0;
-		this._spread = 0;
-		this._inset = false;
-	},
-	getZero: function() {
-		return new PropertyBoxShadow(0, 0, 0, 0, 0, 0, 0, 0, false);
-	},
-	getChange: function(percentage, curValue, startValue, endValue) {
-		this.parent(percentage, curValue, startValue, endValue);
 
-		this._offX = (endValue.offX - startValue.offX) * percentage + startValue.offX;
-		this._offY = (endValue.offY - startValue.offY) * percentage + startValue.offY;
-		this._blur = (endValue.blur - startValue.blur) * percentage + startValue.blur;
-		this._spread = (endValue.spread - startValue.spread) * percentage + startValue.spread;
+var PropertyNumberWhole = new Class( builder.build() );
 
-		this._offX -= curValue.offX;
-		this._offY -= curValue.offY;
-		this._blur -= curValue.blur;
-		this._spread -= curValue.spread;
 
-		return this;
-	},
-	getCSS: function() {
-		var rVal = this.parent() + ' ';
 
-		rVal += Math.round(this.offX) + 'px ' + Math.round(this.offY) + 'px ';
 
-		if (this.blur > 0) rVal += Math.round(this.blur) + 'px ';
 
-		if (this.spread > 0) rVal += Math.round(this.spread) + 'px ';
 
-		if (this.inset) rVal += 'inset';
+
+
+
+
+
+var builder = new PropertyClassBuilder( 'PropertyColour' );
+builder.addProperty( 'r', 0, 0 );
+builder.addProperty( 'g', 0, 0 );
+builder.addProperty( 'b', 0, 0 );
+builder.addProperty( 'a', 1, 1 );
+builder.setCSSDefinition( function() { 
+	if( this.a < 1 ) {
+		return 'rgba(' + Math.round( this.r ) + ', ' + Math.round( this.g ) + ', ' + Math.round( this.b ) + ', ' + this.a + ')';
+	} else {
+		return 'rgb(' + Math.round( this.r ) + ', ' + Math.round( this.g ) + ', ' + Math.round( this.b ) + ')';
+	}
+} );
+
+
+var PropertyColour = new Class( builder.build() );
+
+
+
+
+
+
+
+
+var builder = new PropertyClassBuilder( 'PropertyFilter' );
+builder.addProperty( 'blur', 0, 0 );
+builder.addProperty( 'brightness', 0, 0 );
+builder.addProperty( 'contrast', 1, 1 );
+builder.addProperty( 'dropR', 0, 0 );
+builder.addProperty( 'dropG', 0, 0 );
+builder.addProperty( 'dropB', 0, 0 );
+builder.addProperty( 'dropA', 1, 1 );
+builder.addProperty( 'dropOffX', 0, 0 );
+builder.addProperty( 'dropOffY', 0, 0 );
+builder.addProperty( 'dropBlur', 0, 0 );
+builder.addProperty( 'dropSpread', 0, 0 );
+builder.addProperty( 'dropInset', 0, 0 );
+builder.addProperty( 'grayScale', 0, 0 );
+builder.addProperty( 'hueRotation', 0, 0 );
+builder.addProperty( 'invert', 0, 0 );
+builder.addProperty( 'opacity', 1, 1 );
+builder.addProperty( 'saturate', 1, 1 );
+builder.addProperty( 'sepia', 0, 0 );
+
+builder.setCSSDefinition( function() {
+	var rVal = '';
+
+	if( this.blur > 0 ) {
+		rVal += 'blur(' + Math.round( this.blur ) + 'px) ';
+	}
+
+	if( this.brightness > 0 ) {
+		rVal += 'brightness(' + this.brightness + ') ';
+	}
+
+	if( this.contrast != 1 ) {
+		rVal += 'contrast(' + this.contrast + ') ';
+	}
+
+	if( this.grayScale > 0 ) {
+		rVal += 'grayscale(' + this.grayScale + ') ';
+	}
+
+	if( this.hueRotation != 0 && this.hueRotation != 360 ) {
+		rVal += 'hue-rotate(' + this.hueRotation + 'deg) ';
+	}
+
+	if( this.invert > 0 ) {
+		rVal += 'invert(' + this.invert + ') ';
+	}
+
+	if( this.opacity < 1 ) {
+		rVal += 'opacity(' + this.opacity + ') ';
+	}
+
+	if( this.saturate != 1 ) {
+		rVal += 'saturate(' + this.saturate + ') ';
+	}
+
+	if( this.sepia > 0 ) {
+		rVal += 'sepia(' + this.sepia + ') ';
+	}
+
+	if( this.dropBlur > 0 || this.dropOffY != 0 || this.dropOffX != 0 ) {
+		rVal += 'drop-shadow(';
+
+		rVal += Math.round( this.dropOffX ) + 'px ' + Math.round( this.dropOffY ) + 'px ' + Math.round( this.dropBlur ) + 'px ';
+
+		if( this.dropA < 1 ) {
+			rVal += 'rgba(' + Math.round( this.dropR ) + ', ' + Math.round( this.dropG ) + ', ' + Math.round( this.dropB ) + ', ' + this.dropA + '))';
+		} else {
+			rVal += 'rgb(' + Math.round( this.dropR ) + ', ' + Math.round( this.dropG ) + ', ' + Math.round( this.dropB ) + '))';
+		}
+	}
+
+	if( rVal == '' ) {
+		return 'none';
+	} else {
+		return rVal;
+	}
+} );
+
+var PropertyFilter = new Class( builder.build() );
+
+
+
+
+var builder = new PropertyClassBuilder( 'PropertyBoxShadow' );
+builder.addProperty( 'r', 0, 0 );
+builder.addProperty( 'g', 0, 0 );
+builder.addProperty( 'b', 0, 0 );
+builder.addProperty( 'a', 0, 0 );
+builder.addProperty( 'offX', 0, 0 );
+builder.addProperty( 'offY', 0, 0 );
+builder.addProperty( 'blur', 0, 0 );
+builder.addProperty( 'spread', 0, 0 );
+builder.addProperty( 'inset', 0, 0 );
+
+builder.setCSSDefinition( function() {
+	if( this.blur > 0 || this.offX != 0 || this.offY != 0 ) {
+		var rVal = '';
+
+		if( this.a < 1 ) {
+			rVal += 'rgba(' + Math.round( this.r ) + ', ' + Math.round( this.g ) + ', ' + Math.round( this.b ) + ', ' + this.a + ') ';
+		} else {
+			rVal += 'rgb(' + Math.round( this.r ) + ', ' + Math.round( this.g ) + ', ' + Math.round( this.b ) + ') ';
+		}
+
+		rVal += this.offX + 'px ' + this.offY + 'px ' + this.blur + 'px ' + this.spread + 'px ';
+
+		if( this.dropInset ) {
+			rVal += 'inset';
+		}
 
 		return rVal;
-	},
-	clone: function() {
-		return new PropertyBoxShadow(this._r,
-		this._g,
-		this._b,
-		this._a,
-		this._offY,
-		this._offY,
-		this._blur,
-		this._spread,
-		this._inset);
+	} else {
+		return 'none';
 	}
 });
+
+
+var PropertyBoxShadow = new Class( builder.build() );
+
+//NEED TO HANDLE COLOUR IN THE ABOCE
+
+
+
+
 var REGEX_VALUE_EXTENSION = /^(-?\d+\.?\d*)((px)?(%)?)$/;
 var REGEX_VALUE_COLOUR_RGB = /^rgba?\((\d+), *(\d+), *(\d+)(, *(\d+\.?\d*))?\)$/;
 var REGEX_VALUE_BOX_SHADOW = /rgba?\((\d+), *(\d+), *(\d+)(, *(\d+\.?\d*))?\) (-?\d+)px (-?\d+)px (-?\d+)px( (-?\d+)px( inset)?)?/;
@@ -1912,7 +2122,19 @@ var definitionFilter = {
 		{ regex: REGEX_VALUE_FILTER_CONTRAST, 
 		  props: [ {name: 'contrast', idx: 1, type: Number, default: 1 } ] },
 
-		definitionBoxShadow,
+		//note that currently spread and inset are not supported for filter
+		{
+			regex: REGEX_VALUE_BOX_SHADOW,
+			props: [
+				{ name: 'r', idx: 1, type: Number},
+				{ name: 'b', idx: 2, type: Number},
+				{ name: 'g', idx: 3, type: Number},
+				{ name: 'a', idx: 5, type: Number, default: 1 },
+				{ name: 'offX', idx: 6, type: Number, default: 0 },
+				{ name: 'offY', idx: 7, type: Number, default: 0 },
+				{ name: 'blur', idx: 7, type: Number, default: 0 }
+			]
+		},
 
 		{ regex: REGEX_VALUE_FILTER_GRAY_SCALE, 
 		  props: [ {name: 'grayScale', idx: 1, type: Number, default: 0 } ] },
@@ -1940,18 +2162,19 @@ var definitionFilter = {
 
 
 var ParseNumberValue = getNewParser( PropertyNumber, definitionBasicNumber );
+var ParseNumberValueWhole = getNewParser( PropertyNumberWhole, definitionBasicNumber );
 var ParserColour = getNewParser( PropertyColour, definitionColour );
 var ParserFilter = getNewParser( PropertyFilter, definitionFilter );
 var ParseDropShadow = getNewParser( PropertyBoxShadow, definitionBoxShadow );
 
 
 var ParserLookUp = {};
-ParserLookUp['width'] = ParseNumberValue;
-ParserLookUp['height'] = ParseNumberValue;
-ParserLookUp['left'] = ParseNumberValue;
-ParserLookUp['top'] = ParseNumberValue;
+ParserLookUp['width'] = ParseNumberValueWhole;
+ParserLookUp['height'] = ParseNumberValueWhole;
+ParserLookUp['left'] = ParseNumberValueWhole;
+ParserLookUp['top'] = ParseNumberValueWhole;
 ParserLookUp['opacity'] = ParseNumberValue;
-ParserLookUp['border-width'] = ParseNumberValue;
+ParserLookUp['border-width'] = ParseNumberValueWhole;
 ParserLookUp['color'] = ParserColour;
 ParserLookUp['background-color'] = ParserColour;
 ParserLookUp['-webkit-filter'] = ParserFilter;
