@@ -53,6 +53,8 @@ var EffectTimeline = new Class({
 				}
 			}
 		}
+
+		return effect;
 	},
 	remove: function( effect ) {
 		//check if this is an effect effect or just a regular old effect
