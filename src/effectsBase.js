@@ -152,6 +152,8 @@ var Effect = new Class({
 		}
 	},
 	add: function(effect) {
+		console.log( 'here ');
+		console.log( effect instanceof EffectPercentage );
 		//check if this effect being added will effect this effect
 		//or if it will effect the itemToEffect
 		if ( effect instanceof EffectPercentage ) {
