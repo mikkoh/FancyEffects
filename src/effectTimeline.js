@@ -73,6 +73,8 @@ var EffectTimeline = new Class({
 			//for effect effects
 			this.parent( effect );
 		}
+
+		return effect;
 	},
 	setPercentage: function( value ) {
 		if( this.enabled ) {
