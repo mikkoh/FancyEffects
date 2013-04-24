@@ -66,10 +66,10 @@ var ItemProperties = new Class({
 		}
 	},
 	get: function( property ) {
-		return this._propertyValue[property];
+		return this._propertyValue[ property ];
 	},
 	getStart: function( property ) {
-		return this._propertyStartValue[property];
+		return this._propertyStartValue[ property ];
 	},
 	getEffectChange: function( effectID, property ) {
 		return this._changeAmountForEffect[ effectID ][ property ];
@@ -121,8 +121,14 @@ var ItemProperties = new Class({
 
 				var parser = new ParserClass( this._itemToEffect.css( property ) );
 
-				this._propertyStartValue[ property ] = parser.getValue();
-				this._propertyValue[ property ] = parser.getValue();
+				var startPropVal = this._propertyStartValue[ property ] = parser.getValue();
+				var propVal = this._propertyValue[ property ] = parser.getValue();
+
+				//the following is to make sure that the current property value gets "reset"
+				//if someone goes in and changes the start value
+				this._propertyStartValue[ property ].onPropertyChange.add( function(){ 
+					propVal.equals( startPropVal );
+				});
 			} else {
 				throw new Error('There is no parser defined for ' + property);
 			}

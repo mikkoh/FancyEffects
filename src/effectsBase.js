@@ -90,8 +90,8 @@ var Effect = new Class({
 			this._effects[ i ].enabled = value;
 		}
 	},
-	getStart: function(property) {
-		return this._itemProperties.getStart(property);
+	getStart: function( property ) {
+		return this._itemProperties.getStart( property );
 	},
 	getEffects: function() {
 		return this._effects;
@@ -275,23 +275,23 @@ var EffectChangeProp = new Class({
 
 		this._itemProperties.setupEffect(this, this._propertyToEffect);
 
+		var itemToEffectStartVal = this._itemProperties.getStart( this._propertyToEffect );
+
 		if (this._startValue == null) {
 			this._startValueNotDefined = true;
-			this._startValue = this._itemProperties.getStart( this._propertyToEffect ).clone();
-			this._itemProperties.getStart( this._propertyToEffect ).onPropertyChange.add( this._onStartValueChange.bind(this) );
+			this._startValue = itemToEffectStartVal.clone();
+			itemToEffectStartVal.onPropertyChange.add( this._onStartValueChange.bind(this) );
 		}
 
 		if (this._endValue == null) {
-			this._endValue = this._itemProperties.getStart(this._propertyToEffect).clone();
+			this._endValue = itemToEffectStartVal.clone();
 		}
 
-
-		var itemToEffectStartVal = this._itemProperties.getStart( this._propertyToEffect );
 		this._modifiedStart.equals( this._startValue ).sub( itemToEffectStartVal );
 		this._modifiedEnd.equals( this._endValue ).sub( itemToEffectStartVal );
 	
-		this._startValue.onPropertyChange.add(this._onPropertyChange.bind(this));
-		this._endValue.onPropertyChange.add(this._onPropertyChange.bind(this));
+		this._startValue.onPropertyChange.add( this._onPropertyChange.bind(this) );
+		this._endValue.onPropertyChange.add( this._onPropertyChange.bind(this) );
 	},
 	getStartValue: function() {
 		return this._startValue;
@@ -325,13 +325,18 @@ var EffectChangeProp = new Class({
 	},
 	_onPropertyChange: function() {
 		var itemToEffectStartVal = this._itemProperties.getStart( this._propertyToEffect );
+
 		this._modifiedStart.equals( this._startValue ).sub( itemToEffectStartVal );
 		this._modifiedEnd.equals( this._endValue ).sub( itemToEffectStartVal );
 
 		this.setPercentage( this.percentage );
 	},
+
 	_onStartValueChange: function() {
-		this._startValue.equals(this._itemProperties.getStart(this._propertyToEffect));
+		var itemToEffectStartVal = this._itemProperties.getStart( this._propertyToEffect );
+
+		this._startValue.equals( itemToEffectStartVal );
+
 		this._onPropertyChange();
 	},
 });
