@@ -1,8 +1,108 @@
+var KeyFrame = new Class({
+	initialize: function( track, time, percentage ) {
+		this._track = track;
+		this._time = time;
+		this._percentage = percentage;
+	},
+
+	_nextKeyframe: null,
+	_prevKeyframe: null,
+	_track: null,
+	_time: 0,
+	_percentage: 0,
+
+	setPrev: function( keyframe ) {
+		if( this._prevKeyframe ) {
+			this._prevKeyframe._nextKeyframe = keyframe;
+		} else if( this == this._track.rootKeyFrame ) {
+			this._track.rootKeyFrame = keyframe;
+		}
+
+		this._prevKeyframe = keyframe;
+	},
+
+	setNext: function( keyframe ) {
+		if( this._nextKeyframe ) {
+			this._nextKeyframe._prevKeyframe = keyframe;
+		} else if( this == this._track.lastKeyFrame ) {
+			this._track.lastKeyFrame = keyframe;
+		} 
+
+		this._nextKeyframe = keyframe;
+	}
+});
+
+
+
+var Track = new Class({
+	initialize: function( effectType, itemToEffect ) {
+		this.effect = new effectType( itemToEffect );
+	},
+
+	effect: null,
+	rootKeyFrame: null,
+	lastKeyFrame: null,
+	curKeyFrame: null,
+	_curIdx: 0,
+
+	add: function( time, percentage ) {
+		var nKeyFrame = new KeyFrame( this, time, percentage );
+
+		if( this.rootKeyFrame ) {
+			console.log( this.lastKeyFrame._time, time );
+
+			if( this.lastKeyFrame._time < time ) {
+				this.lastKeyFrame.setNext( nKeyFrame );
+			} else {
+				throw new Error( 'Key frames should be in chronological order' );
+			}
+
+		} else {
+			this.rootKeyFrame = this.lastKeyFrame = this.curKeyFrame = nKeyFrame;
+		}
+
+		return this;
+	},
+
+	setPercentage: function( percentage ) {
+		var startKeyFrame = this.curKeyFrame;
+		var nextKeyFrame = this.curKeyFrame._nextKeyframe;
+
+		//check if we need to move forward in the linked list
+		while( nextKeyFrame && nextKeyFrame._time < percentage ) {
+			startKeyFrame = nextKeyFrame;
+			nextKeyFrame = startKeyFrame._nextKeyframe;
+		}
+
+		//check if we need to move backward in the linked list
+		while( startKeyFrame && startKeyFrame._time > percentage ) {
+			nextKeyFrame = startKeyFrame;
+			startKeyFrame = startKeyFrame._prevKeyframe;
+		}
+
+		this.effect.enabled = nextKeyFrame && startKeyFrame;
+
+		//if we're enabed we want to calculate the effects percentage
+		if( this.effect.enabled ) {
+			var curTime = ( percentage - startKeyFrame._time ) / ( nextKeyFrame._time - startKeyFrame._time );
+
+			this.effect.percentage = ( nextKeyFrame._percentage - startKeyFrame._percentage ) * curTime + startKeyFrame._percentage;
+		}
+	},
+
+	getEffect: function() {
+		return this.effect;
+	}
+});
+
+
 var EffectTimeline = new Class({
 	Extends: Effect,
 
 	initialize: function( itemToEffect ) {
 		this._type = 'EffectTimeline';
+		this._tracksById = {};
+		this._tracks = [];
 		this._effectStart = {};
 		this._effectEnd = {};
 		this._effectDuration = {};
@@ -10,110 +110,37 @@ var EffectTimeline = new Class({
 		this.parent( itemToEffect );
 	},
 
+	_tracksById: null,
+	_tracks: null,
 	_effectStart: null,
 	_effectEnd: null,
 	_effectDuration: null,
 
-	add: function( effect, startPerc, endPerc ) {
-		//check if this effect being added will effect this effect
-		//or if it will effect the itemToEffect
-		if ( effect instanceof EffectPercentage ) {
-			//we'll just use the parent functionality cause it should be the exact same
-			this.parent( effect );
-		} else {
-			//check to see if this effect has already been added
-			if( this._effectIdx[effect.id] === undefined ) {
-				this._effectStart[ effect.id ] = startPerc == undefined ? 0 : startPerc;
-				this._effectEnd[ effect.id ] = endPerc == undefined ? 1 : endPerc;
-				this._effectDuration[ effect.id ] = endPerc - startPerc;
-
-				this._effectIdx[effect.id] = this._effects.length;
-				this._effects.push( effect );
-
-				if( this._itemToEffect )
-					effect.setItemToEffect( this._itemToEffect, this._itemProperties );
-
-			
-				
-				//we don't want it to effect this timeline unless
-				//it should effect it otherwise we just add it straight up
-				if( this._percentageToApply < this._effectStart[ effect.id ] ) {
-					//effect.setPercentage( 0 );
-					effect.enabled = false;
-				} else if( this._percentageToApply >= this._effectEnd[ effect.id ] && this._effectEnd[ effect.id ] != 1 ) {
-					//effect.setPercentage( 1 );
-					effect.enabled = false;
-				} else {
-					var startTime = this._effectStart[ effect.id ];
-					var duration = this._effectDuration[ effect.id ];
-					var curTime = ( this._percentageToApply - startTime ) / duration;
-
-					effect.enabled = true;
-					effect.setPercentage( curTime );
-				}
-			}
+	createTrack: function( effectType, itemToEffect, id ) {
+		if( itemToEffect === undefined ) {
+			itemToEffect = this.itemToEffect;
 		}
 
-		return effect;
-	},
-	remove: function( effect ) {
-		//check if this is an effect effect or just a regular old effect
-		//if this first if statement has an index then this is a regular effect
-		if ( this._effectIdx[effect.id] !== undefined ) {
-			//we'll just use the parent functionality cause it should be the exact same
-			//for effect effects
-			this.parent( effect );
+		var nTrack = new Track( effectType, itemToEffect );
 
-			//delete it from the start and end time lookups
-			delete this._effectStart[ effect.id ];
-			delete this._effectEnd[ effect.id ];
-
-		} else if( this._effectEffectIdx[effect.id] !== undefined ) {
-			//we'll just use the parent functionality cause it should be the exact same
-			//for effect effects
-			this.parent( effect );
+		if( id === undefined ) {
+			this._tracksById[ id ] = nTrack;
 		}
 
-		return effect;
+		this._tracks.push( nTrack );
+
+		return nTrack;
 	},
+
+	getTrack: function( id ) {
+		return this._tracksById[ id ];
+	},
+
 	setPercentage: function( value ) {
-		if( this.enabled ) {
-			this._percentage = value;
-
-			if( this._effectEffects.length>0 ) {
-				this._percentageToApply = 0;
-
-				for(var i = 0; i < this._effectEffects.length; i++ ) {
-					this._effectEffects[i].setPercentage( this._percentage );
-				}
-
-				this._percentageToApply /= this._effectEffects.length;
-			} else {
-				this._percentageToApply = this._percentage;
-			}
-
-			for (var i = 0; i < this._effects.length; i++) {
-				//check whether this effect should effect
-				//is it in a position in the timeline where it should be doing stuff
-				if( this._percentageToApply < this._effectStart[ this._effects[i].id ] ) {
-					this._effects[i].setPercentage( 0 );
-					this._effects[i].enabled = false;
-				} else if( this._percentageToApply >= this._effectEnd[ this._effects[i].id ] && this._effectEnd[ this._effects[i].id ] != 1 ) {
-					this._effects[i].setPercentage( 1 );
-					this._effects[i].enabled = false;
-				} else {
-					var startTime = this._effectStart[ this._effects[i].id ];
-					var duration = this._effectDuration[ this._effects[i].id ];
-					var curTime = ( this._percentageToApply - startTime ) / duration;
-
-					this._effects[i].enabled = true;
-					this._effects[i].setPercentage( curTime );
-				}
-			}
+		for( var i = 0, len = this._tracks.length; i < len; i++ ) {
+			this._tracks[ i ].setPercentage( value );
 		}
-	},
-	_isEffectEffecting: function( effect ) {
-		return this._percentageToApply >= this._effectStart[ effect.id ] && 
-			   this._percentageToApply <= this._effectEnd[ effect.id ];
+
+		this.parent( value );
 	}
 });
