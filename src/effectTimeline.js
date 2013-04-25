@@ -1,8 +1,9 @@
 var KeyFrame = new Class({
-	initialize: function( track, time, percentage ) {
+	initialize: function( track, time, percentage, easing ) {
 		this._track = track;
 		this._time = time;
 		this._percentage = percentage;
+		this._easing = easing;
 	},
 
 	_nextKeyframe: null,
@@ -10,6 +11,7 @@ var KeyFrame = new Class({
 	_track: null,
 	_time: 0,
 	_percentage: 0,
+	_easing: null,
 
 	setPrev: function( keyframe ) {
 		if( this._prevKeyframe ) {
@@ -45,12 +47,10 @@ var Track = new Class({
 	curKeyFrame: null,
 	_curIdx: 0,
 
-	add: function( time, percentage ) {
-		var nKeyFrame = new KeyFrame( this, time, percentage );
+	add: function( time, percentage, easing ) {
+		var nKeyFrame = new KeyFrame( this, time, percentage, easing );
 
 		if( this.rootKeyFrame ) {
-			console.log( this.lastKeyFrame._time, time );
-
 			if( this.lastKeyFrame._time < time ) {
 				this.lastKeyFrame.setNext( nKeyFrame );
 			} else {
@@ -85,8 +85,13 @@ var Track = new Class({
 		//if we're enabed we want to calculate the effects percentage
 		if( this.effect.enabled ) {
 			var curTime = ( percentage - startKeyFrame._time ) / ( nextKeyFrame._time - startKeyFrame._time );
+			var easing = startKeyFrame._easing;
 
-			this.effect.percentage = ( nextKeyFrame._percentage - startKeyFrame._percentage ) * curTime + startKeyFrame._percentage;
+			if( easing == null ) {
+				this.effect.percentage = ( nextKeyFrame._percentage - startKeyFrame._percentage ) * curTime + startKeyFrame._percentage;
+			} else {
+				this.effect.percentage = easing( curTime, startKeyFrame._percentage, nextKeyFrame._percentage - startKeyFrame._percentage, 1 );
+			}
 		}
 	},
 
