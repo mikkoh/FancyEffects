@@ -37,8 +37,8 @@ var KeyFrame = new Class({
 
 
 var Track = new Class({
-	initialize: function( effectType, itemToEffect ) {
-		this.effect = new effectType( itemToEffect );
+	initialize: function( effect ) {
+		this.effect = effect;
 	},
 
 	effect: null,
@@ -104,7 +104,7 @@ var Track = new Class({
 var EffectTimeline = new Class({
 	Extends: Effect,
 
-	initialize: function( itemToEffect ) {
+	initialize: function( ) {
 		this._type = 'EffectTimeline';
 		this._tracksById = {};
 		this._tracks = [];
@@ -112,7 +112,7 @@ var EffectTimeline = new Class({
 		this._effectEnd = {};
 		this._effectDuration = {};
 
-		this.parent( itemToEffect );
+		this.parent();
 	},
 
 	_tracksById: null,
@@ -121,12 +121,8 @@ var EffectTimeline = new Class({
 	_effectEnd: null,
 	_effectDuration: null,
 
-	createTrack: function( effectType, itemToEffect, id ) {
-		if( itemToEffect === undefined ) {
-			itemToEffect = this.itemToEffect;
-		}
-
-		var nTrack = new Track( effectType, itemToEffect );
+	createTrack: function( effect, id ) {
+		var nTrack = new Track( effect );
 
 		if( id === undefined ) {
 			this._tracksById[ id ] = nTrack;
