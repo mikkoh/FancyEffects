@@ -83,6 +83,8 @@ define(['Class',
 		_setupProperty: function( effectID, property ) {
 			var ParserClass = Parsers[property];
 
+			console.log('property: ', property);
+
 			console.log('ParserClass: ', ParserClass);
 
 			if (!this._propertiesWatching[property]) {

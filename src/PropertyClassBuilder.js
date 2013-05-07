@@ -154,7 +154,8 @@ define( ['Class', 'lib/FancyEffects/src/Signal'], function(Class, Signal){
 		_getGetZeroStr: function() {
 			var rVal = '\getZero: function() {\n';
 
-			rVal += '\t\treturn new ' + this._className + '('
+			//rVal += '\t\treturn new ' + this._className + '('
+			rVal += '\t\treturn new Cloneable('
 
 			for(var i = 0, len = this._properties.length - 1; i < len; i++ ) {
 				rVal += '0, ';	
@@ -183,7 +184,8 @@ define( ['Class', 'lib/FancyEffects/src/Signal'], function(Class, Signal){
 		_getCloneStr: function() {
 			var rVal = '\tclone: function() {\n';
 
-			rVal += '\t\treturn new ' + this._className + '('
+			//rVal += '\t\treturn new ' + this._className + '('
+			rVal += '\t\treturn new Cloneable('
 
 			for(var i = 0, len = this._properties.length - 1; i < len; i++ ) {
 				rVal += 'this._' + this._properties[ i ] + ', ';	

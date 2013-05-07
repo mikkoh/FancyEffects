@@ -6,8 +6,9 @@ define(['Class', 'lib/FancyEffects/src/PropertyClassBuilder'], function(Class, P
 		return Math.round( this.value );
 	});
 
-
+	var Cloneable = null;
 	var PropertyNumberWhole = new Class( builder.build() );
+	Cloneable = PropertyNumberWhole;
 
 	return PropertyNumberWhole;
 
