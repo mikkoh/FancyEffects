@@ -35,9 +35,7 @@ define(['Class',
 		
 
 		getValue: function() {
-			//console.log('this._value: ', this._value);
 			return this._value.clone();
-			//return this._clone( );
 		},
 
 		_clone: function(obj) {

@@ -83,9 +83,6 @@ define(['Class',
 		_setupProperty: function( effectID, property ) {
 			var ParserClass = Parsers[property];
 
-			console.log('property: ', property);
-
-			console.log('ParserClass: ', ParserClass);
 
 			if (!this._propertiesWatching[property]) {
 				if (ParserClass) {
@@ -93,14 +90,8 @@ define(['Class',
 
 					var parser = new ParserClass( this._itemToEffect.css( property ) );
 
-					console.log('parser: ', parser);
-
-					//console.log('parser._value.clone(): ', parser._value.clone());
-
 					var startPropVal = this._propertyStartValue[ property ] = parser.getValue(); //new ParserClass( parser._value ); //
 					var propVal = this._propertyValue[ property ] = parser.getValue(); // ew ParserClass( parser._value );
-
-					console.log('this._propertyStartValue[ property ]: ', this._propertyStartValue[ property ]);
 
 					//the following is to make sure that the current property value gets "reset"
 					//if someone goes in and changes the start value
