@@ -1,180 +1,185 @@
+define(['Class', 'lib/FancyEffects/src/PropertyNumber'], function(Class, PropertyNumber){
 
-var SpriteSheet = new Class({
-	initialize: function( bgImageURL, data ) {
-		this.__defineSetter__( 'totalFrames', this.getTotalFrames );
+	var SpriteSheet = new Class({
+		initialize: function( bgImageURL, data ) {
+			this.__defineSetter__( 'totalFrames', this.getTotalFrames );
 
-		this._parseData( data );
-	},
+			this._parseData( data );
+		},
 
-	getTotalFrames: function() {
-		return this._totalFrames;
-	},
+		getTotalFrames: function() {
+			return this._totalFrames;
+		},
 
-	getFrameX: function( frame ) {
-		throw new Error('You should override this function')
-	},
+		getFrameX: function( frame ) {
+			throw new Error('You should override this function')
+		},
 
-	getFrameY: function( frame ) {
-		throw new Error('You should override this function')
-	},
+		getFrameY: function( frame ) {
+			throw new Error('You should override this function')
+		},
 
-	getFrameWidth: function( frame ) {
-		throw new Error('You should override this function')
-	},
+		getFrameWidth: function( frame ) {
+			throw new Error('You should override this function')
+		},
 
-	getFrameHeight: function( frame ) {
-		throw new Error('You should override this function')
-	},
+		getFrameHeight: function( frame ) {
+			throw new Error('You should override this function')
+		},
 
-	_parseData: function( data ) {
-		throw new Error('You should override this function')
-	}
-});
+		_parseData: function( data ) {
+			throw new Error('You should override this function')
+		}
+	});
 
 
-var SpriteSheetAdobeJSONArray = new Class({
-	Extends: SpriteSheet,
+	var SpriteSheetAdobeJSONArray = new Class({
+		Extends: SpriteSheet,
 
-	_frames: null,
+		_frames: null,
 
-	getOffX: function( frame ) {
-		return this._frames[ frame ].spriteSourceSize.x;
-	},
+		getOffX: function( frame ) {
+			return this._frames[ frame ].spriteSourceSize.x;
+		},
 
-	getOffY: function( frame ) {
-		return this._frames[ frame ].spriteSourceSize.y;
-	},
+		getOffY: function( frame ) {
+			return this._frames[ frame ].spriteSourceSize.y;
+		},
 
-	getFrameX: function( frame ) {
-		return this._frames[ frame ].frame.x;
-	},
+		getFrameX: function( frame ) {
+			return this._frames[ frame ].frame.x;
+		},
 
-	getFrameY: function( frame ) {
-		return this._frames[ frame ].frame.y;
-	},
+		getFrameY: function( frame ) {
+			return this._frames[ frame ].frame.y;
+		},
 
-	getFrameWidth: function( frame ) {
-		return this._frames[ frame ].frame.w;
-	},
+		getFrameWidth: function( frame ) {
+			return this._frames[ frame ].frame.w;
+		},
 
-	getFrameHeight: function( frame ) {
-		return this._frames[ frame ].frame.h;
-	},
+		getFrameHeight: function( frame ) {
+			return this._frames[ frame ].frame.h;
+		},
 
-	_parseData: function( data ) {
-		this._frames = data.frames;
-		this._totalFrames = this._frames.length;
-	}
-});
+		_parseData: function( data ) {
+			this._frames = data.frames;
+			this._totalFrames = this._frames.length;
+		}
+	});
 
-var EffectSpriteSheet = new Class({
-	Extends: Effect,
+	var EffectSpriteSheet = new Class({
+		Extends: Effect,
 
-	initialize: function() {
-		this._type =  'EffectSprite';
-		this._temp = new PropertyNumber( 0 );
+		initialize: function() {
+			this._type =  'EffectSprite';
+			this._temp = new PropertyNumber( 0 );
 
-			if( arguments[ 0 ] instanceof jQuery && 
-				typeof arguments[ 1 ] == 'string' &&
-				typeof arguments[ 2 ] == 'object') {
+				if( arguments[ 0 ] instanceof jQuery && 
+					typeof arguments[ 1 ] == 'string' &&
+					typeof arguments[ 2 ] == 'object') {
 
-				this._spriteSheetURL = arguments[ 1 ];
-				this._spriteSheetData = arguments[ 2 ];
+					this._spriteSheetURL = arguments[ 1 ];
+					this._spriteSheetData = arguments[ 2 ];
 
-				//if a parser was passed in
-				if( typeof arguments[ 3 ] == 'function' ) {
-					this._parserType = arguments[ 3 ];
+					//if a parser was passed in
+					if( typeof arguments[ 3 ] == 'function' ) {
+						this._parserType = arguments[ 3 ];
+					} else {
+						this._parserType = SpriteSheetAdobeJSONArray;
+					}
+
+					this.parent( arguments[0] );
+				} else if( typeof arguments[ 0 ] == 'string' &&
+						   typeof arguments[ 1 ] == 'object') {
+
+					this._spriteSheetURL = arguments[ 0 ];
+					this._spriteSheetData = arguments[ 1 ];
+
+					//if a parser was passed in
+					if( typeof arguments[ 2 ] == 'function' ) {
+						this._parserType = arguments[ 2 ];
+					} else {
+						this._parserType = SpriteSheetAdobeJSONArray;
+					}
+
+					this.parent();
 				} else {
-					this._parserType = SpriteSheetAdobeJSONArray;
+					this._displayInstantiationError();
 				}
+		},
 
-				this.parent( arguments[0] );
-			} else if( typeof arguments[ 0 ] == 'string' &&
-					   typeof arguments[ 1 ] == 'object') {
+		_spriteSheetURL: null,
+		_spriteSheetData: null,
+		_spriteSheetAnimation: null,
+		_temp: null,
+		_parserType: null,
+		_startBGPosition: '0% 0%',
+		_startBGRepeate: 'repeat',
+		_startBGRImage: 'none',
 
-				this._spriteSheetURL = arguments[ 0 ];
-				this._spriteSheetData = arguments[ 1 ];
+		setPercentage: function( value ) {
+			this.parent( value );
 
-				//if a parser was passed in
-				if( typeof arguments[ 2 ] == 'function' ) {
-					this._parserType = arguments[ 2 ];
-				} else {
-					this._parserType = SpriteSheetAdobeJSONArray;
-				}
+			var frame = Math.floor( value * (this._spriteSheetAnimation.getTotalFrames() - 1) );
 
-				this.parent();
-			} else {
-				this._displayInstantiationError();
-			}
-	},
+			this._itemToEffect.css('background-position', -this._spriteSheetAnimation.getFrameX( frame ) + 'px ' +
+													      -this._spriteSheetAnimation.getFrameY( frame ) + 'px');
 
-	_spriteSheetURL: null,
-	_spriteSheetData: null,
-	_spriteSheetAnimation: null,
-	_temp: null,
-	_parserType: null,
-	_startBGPosition: '0% 0%',
-	_startBGRepeate: 'repeat',
-	_startBGRImage: 'none',
+			var cWidth = this._itemProperties.getEffectChange( this.id, 'width' );
+			var cHeight = this._itemProperties.getEffectChange( this.id, 'height' );
+			var cLeft = this._itemProperties.getEffectChange( this.id, 'left' );
+			var cTop = this._itemProperties.getEffectChange( this.id, 'top' );
+			
+			this._temp.value = this._spriteSheetAnimation.getFrameWidth( frame );
+			this._temp.sub( cWidth );
+			this._itemProperties.change( this.id, 'width', this._temp );
 
-	setPercentage: function( value ) {
-		this.parent( value );
+			this._temp.value = this._spriteSheetAnimation.getFrameHeight( frame );
+			this._temp.sub( cHeight );
+			this._itemProperties.change( this.id, 'height', this._temp );
 
-		var frame = Math.floor( value * (this._spriteSheetAnimation.getTotalFrames() - 1) );
+			this._temp.value = this._spriteSheetAnimation.getOffX( frame );
+			this._temp.sub( cLeft );
+			this._itemProperties.change( this.id, 'left', this._temp );
 
-		this._itemToEffect.css('background-position', -this._spriteSheetAnimation.getFrameX( frame ) + 'px ' +
-												      -this._spriteSheetAnimation.getFrameY( frame ) + 'px');
+			this._temp.value = this._spriteSheetAnimation.getOffY( frame );
+			this._temp.sub( cTop );
+			this._itemProperties.change( this.id, 'top', this._temp );
+		},
 
-		var cWidth = this._itemProperties.getEffectChange( this.id, 'width' );
-		var cHeight = this._itemProperties.getEffectChange( this.id, 'height' );
-		var cLeft = this._itemProperties.getEffectChange( this.id, 'left' );
-		var cTop = this._itemProperties.getEffectChange( this.id, 'top' );
-		
-		this._temp.value = this._spriteSheetAnimation.getFrameWidth( frame );
-		this._temp.sub( cWidth );
-		this._itemProperties.change( this.id, 'width', this._temp );
+		setItemToEffect: function( itemToEffect, itemProperties ) {
+			this.parent( itemToEffect, itemProperties );
 
-		this._temp.value = this._spriteSheetAnimation.getFrameHeight( frame );
-		this._temp.sub( cHeight );
-		this._itemProperties.change( this.id, 'height', this._temp );
+			this._startBGPosition = this._itemToEffect.css( 'background-position' );
+			this._startBGRepeate = this._itemToEffect.css( 'background-repeat' );
+			this._startBGRImage = this._itemToEffect.css( 'background-image' );
 
-		this._temp.value = this._spriteSheetAnimation.getOffX( frame );
-		this._temp.sub( cLeft );
-		this._itemProperties.change( this.id, 'left', this._temp );
+			this._spriteSheetAnimation = new SpriteSheetAdobeJSONArray( this._spriteSheetURL,
+																		this._spriteSheetData );
 
-		this._temp.value = this._spriteSheetAnimation.getOffY( frame );
-		this._temp.sub( cTop );
-		this._itemProperties.change( this.id, 'top', this._temp );
-	},
+			this._itemToEffect.css( 'background-image', 'url(' + this._spriteSheetURL + ')' );
+			this._itemToEffect.css( 'background-repeat', 'no-repeat' );
 
-	setItemToEffect: function( itemToEffect, itemProperties ) {
-		this.parent( itemToEffect, itemProperties );
+			this._itemProperties.setupEffect(this, 'width', 'height', 'left', 'top');
+		},
 
-		this._startBGPosition = this._itemToEffect.css( 'background-position' );
-		this._startBGRepeate = this._itemToEffect.css( 'background-repeat' );
-		this._startBGRImage = this._itemToEffect.css( 'background-image' );
+		_displayInstantiationError: function() {
+			throw new Error( 'When EffectSpriteSheet is intantiated you should pass in either: \n' +
+							 'itemToEffect, spriteSheetURL, spriteSheetJSON\n' +
+							 'or\n' +
+							 'spriteSheetURL, spriteSheetJSON');
+		},
 
-		this._spriteSheetAnimation = new SpriteSheetAdobeJSONArray( this._spriteSheetURL,
-																	this._spriteSheetData );
+		destroy: function() {
+			this.parent();
 
-		this._itemToEffect.css( 'background-image', 'url(' + this._spriteSheetURL + ')' );
-		this._itemToEffect.css( 'background-repeat', 'no-repeat' );
+			this._itemToEffect.css( 'background-image', this._startBGRImage );
+			this._itemToEffect.css( 'background-repeat', this._startBGRepeate );
+			this._itemToEffect.css( 'background-position', this._startBGPosition );
+		}
+	});
 
-		this._itemProperties.setupEffect(this, 'width', 'height', 'left', 'top');
-	},
+	return SpriteSheet;
 
-	_displayInstantiationError: function() {
-		throw new Error( 'When EffectSpriteSheet is intantiated you should pass in either: \n' +
-						 'itemToEffect, spriteSheetURL, spriteSheetJSON\n' +
-						 'or\n' +
-						 'spriteSheetURL, spriteSheetJSON');
-	},
-
-	destroy: function() {
-		this.parent();
-
-		this._itemToEffect.css( 'background-image', this._startBGRImage );
-		this._itemToEffect.css( 'background-repeat', this._startBGRepeate );
-		this._itemToEffect.css( 'background-position', this._startBGPosition );
-	}
 });
