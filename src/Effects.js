@@ -1,4 +1,4 @@
-define(['Class', 'lib/src/FancyEffects/EffectPercentage'], function(Class, EffectPercentage){
+define(['Class', 'lib/FancyEffects/src/EffectPercentage'], function(Class, EffectPercentage) {
 
 	var Effects = {};
 

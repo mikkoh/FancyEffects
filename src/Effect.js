@@ -1,5 +1,11 @@
-define(['Class', 'lib/FancyEffects/src/EffectIds', 'lib/FancyEffects/src/ItemPropertiesBank'],
-	function(Class, EffectIds, ItemPropertiesBank){
+define(['Class', 'lib/FancyEffects/src/EffectIds', 'lib/FancyEffects/src/ItemPropertiesBank', 'lib/FancyEffects/src/Animator'], function(Class, EffectIds, ItemPropertiesBank, Animator) {
+
+    /*
+    *    Module list
+    *
+    *    Animator            lib/FancyEffects/src/Animator.js
+    *
+    */
 
 	var Effect = new Class({
 		initialize: function( itemToEffect ) {

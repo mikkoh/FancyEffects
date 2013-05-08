@@ -1,4 +1,5 @@
-define([], function(){
+define(['lib/FancyEffects/src/Time', 'Class'], function(Time, Class) {
+
 
 	var Animator = {};
 	Animator.animations = [];

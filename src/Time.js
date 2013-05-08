@@ -52,4 +52,4 @@ define(['lib/FancyEffects/src/Signal'], function(Signal){
 
 	return Time;
 
-)};
+});
