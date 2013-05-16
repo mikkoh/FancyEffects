@@ -1,4 +1,4 @@
-define(['lib/FancyEffects/src/ItemProperties'], function(ItemProperties){
+define(['lib/FancyEffects/src/itemProperties'], function(ItemProperties){
 
 	var ItemPropertiesBank = {};
 	ItemPropertiesBank.curKey = 0;

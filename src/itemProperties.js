@@ -1,5 +1,5 @@
 define(['Class',
-	'lib/FancyEffects/src/Parsers',
+	'lib/FancyEffects/src/parsers',
 	'lib/FancyEffects/src/PropertyNumberWhole'
 	], function(Class, Parsers, PropertyNumberWhole){
 

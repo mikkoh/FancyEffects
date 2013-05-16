@@ -1,9 +1,9 @@
-define(['Class', 'lib/FancyEffects/src/EffectIds', 'lib/FancyEffects/src/ItemPropertiesBank', 'lib/FancyEffects/src/Animator'], function(Class, EffectIds, ItemPropertiesBank, Animator) {
+define(['Class', 'lib/FancyEffects/src/EffectIds', 'lib/FancyEffects/src/ItemPropertiesBank', 'lib/FancyEffects/src/animator'], function(Class, EffectIds, ItemPropertiesBank, Animator) {
 
     /*
     *    Module list
     *
-    *    Animator            lib/FancyEffects/src/Animator.js
+    *    Animator            lib/FancyEffects/src/animator.js
     *
     */
 
