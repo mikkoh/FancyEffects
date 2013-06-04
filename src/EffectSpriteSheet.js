@@ -1,73 +1,5 @@
-define(['Class', 'lib/FancyEffects/src/PropertyNumber'], function(Class, PropertyNumber){
-
-	var SpriteSheet = new Class({
-		initialize: function( bgImageURL, data ) {
-			this.__defineSetter__( 'totalFrames', this.getTotalFrames );
-
-			this._parseData( data );
-		},
-
-		getTotalFrames: function() {
-			return this._totalFrames;
-		},
-
-		getFrameX: function( frame ) {
-			throw new Error('You should override this function')
-		},
-
-		getFrameY: function( frame ) {
-			throw new Error('You should override this function')
-		},
-
-		getFrameWidth: function( frame ) {
-			throw new Error('You should override this function')
-		},
-
-		getFrameHeight: function( frame ) {
-			throw new Error('You should override this function')
-		},
-
-		_parseData: function( data ) {
-			throw new Error('You should override this function')
-		}
-	});
-
-
-	var SpriteSheetAdobeJSONArray = new Class({
-		Extends: SpriteSheet,
-
-		_frames: null,
-
-		getOffX: function( frame ) {
-			return this._frames[ frame ].spriteSourceSize.x;
-		},
-
-		getOffY: function( frame ) {
-			return this._frames[ frame ].spriteSourceSize.y;
-		},
-
-		getFrameX: function( frame ) {
-			return this._frames[ frame ].frame.x;
-		},
-
-		getFrameY: function( frame ) {
-			return this._frames[ frame ].frame.y;
-		},
-
-		getFrameWidth: function( frame ) {
-			return this._frames[ frame ].frame.w;
-		},
-
-		getFrameHeight: function( frame ) {
-			return this._frames[ frame ].frame.h;
-		},
-
-		_parseData: function( data ) {
-			this._frames = data.frames;
-			this._totalFrames = this._frames.length;
-		}
-	});
-
+define(['Class', 'lib/FancyEffects/src/PropertyNumber', 'lib/FancyEffects/src/Effect', 'lib/FancyEffects/src/spriteSheetParsers/SpriteSheetAdobeJSONArray' ], 
+function(Class, PropertyNumber, Effect, SpriteSheetAdobeJSONArray ){
 	var EffectSpriteSheet = new Class({
 		Extends: Effect,
 
@@ -75,38 +7,38 @@ define(['Class', 'lib/FancyEffects/src/PropertyNumber'], function(Class, Propert
 			this._type =  'EffectSprite';
 			this._temp = new PropertyNumber( 0 );
 
-				if( arguments[ 0 ] instanceof jQuery && 
-					typeof arguments[ 1 ] == 'string' &&
-					typeof arguments[ 2 ] == 'object') {
+			if( arguments[ 0 ] instanceof jQuery && 
+				typeof arguments[ 1 ] == 'string' &&
+				typeof arguments[ 2 ] == 'object') {
 
-					this._spriteSheetURL = arguments[ 1 ];
-					this._spriteSheetData = arguments[ 2 ];
+				this._spriteSheetURL = arguments[ 1 ];
+				this._spriteSheetData = arguments[ 2 ];
 
-					//if a parser was passed in
-					if( typeof arguments[ 3 ] == 'function' ) {
-						this._parserType = arguments[ 3 ];
-					} else {
-						this._parserType = SpriteSheetAdobeJSONArray;
-					}
-
-					this.parent( arguments[0] );
-				} else if( typeof arguments[ 0 ] == 'string' &&
-						   typeof arguments[ 1 ] == 'object') {
-
-					this._spriteSheetURL = arguments[ 0 ];
-					this._spriteSheetData = arguments[ 1 ];
-
-					//if a parser was passed in
-					if( typeof arguments[ 2 ] == 'function' ) {
-						this._parserType = arguments[ 2 ];
-					} else {
-						this._parserType = SpriteSheetAdobeJSONArray;
-					}
-
-					this.parent();
+				//if a parser was passed in
+				if( typeof arguments[ 3 ] == 'function' ) {
+					this._parserType = arguments[ 3 ];
 				} else {
-					this._displayInstantiationError();
+					this._parserType = SpriteSheetAdobeJSONArray;
 				}
+
+				this.parent( arguments[0] );
+			} else if( typeof arguments[ 0 ] == 'string' &&
+					   typeof arguments[ 1 ] == 'object') {
+
+				this._spriteSheetURL = arguments[ 0 ];
+				this._spriteSheetData = arguments[ 1 ];
+
+				//if a parser was passed in
+				if( typeof arguments[ 2 ] == 'function' ) {
+					this._parserType = arguments[ 2 ];
+				} else {
+					this._parserType = SpriteSheetAdobeJSONArray;
+				}
+
+				this.parent();
+			} else {
+				this._displayInstantiationError();
+			}
 		},
 
 		_spriteSheetURL: null,
@@ -117,6 +49,8 @@ define(['Class', 'lib/FancyEffects/src/PropertyNumber'], function(Class, Propert
 		_startBGPosition: '0% 0%',
 		_startBGRepeate: 'repeat',
 		_startBGRImage: 'none',
+		_startWidth: 0,
+		_startHeight: 0,
 
 		setPercentage: function( value ) {
 			this.parent( value );
@@ -130,12 +64,12 @@ define(['Class', 'lib/FancyEffects/src/PropertyNumber'], function(Class, Propert
 			var cHeight = this._itemProperties.getEffectChange( this.id, 'height' );
 			var cLeft = this._itemProperties.getEffectChange( this.id, 'left' );
 			var cTop = this._itemProperties.getEffectChange( this.id, 'top' );
-			
-			this._temp.value = this._spriteSheetAnimation.getFrameWidth( frame );
+		
+			this._temp.value = -this._startWidth + this._spriteSheetAnimation.getFrameWidth( frame );
 			this._temp.sub( cWidth );
 			this._itemProperties.change( this.id, 'width', this._temp );
 
-			this._temp.value = this._spriteSheetAnimation.getFrameHeight( frame );
+			this._temp.value = -this._startHeight + this._spriteSheetAnimation.getFrameHeight( frame );
 			this._temp.sub( cHeight );
 			this._itemProperties.change( this.id, 'height', this._temp );
 
@@ -154,6 +88,8 @@ define(['Class', 'lib/FancyEffects/src/PropertyNumber'], function(Class, Propert
 			this._startBGPosition = this._itemToEffect.css( 'background-position' );
 			this._startBGRepeate = this._itemToEffect.css( 'background-repeat' );
 			this._startBGRImage = this._itemToEffect.css( 'background-image' );
+			this._startWidth = itemToEffect.width();
+			this._startHeight = itemToEffect.height();
 
 			this._spriteSheetAnimation = new SpriteSheetAdobeJSONArray( this._spriteSheetURL,
 																		this._spriteSheetData );
@@ -180,6 +116,5 @@ define(['Class', 'lib/FancyEffects/src/PropertyNumber'], function(Class, Propert
 		}
 	});
 
-	return SpriteSheet;
-
+	return EffectSpriteSheet;
 });
