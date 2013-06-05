@@ -88,16 +88,16 @@ function(Class, PropertyNumber, Effect, SpriteSheetAdobeJSONArray ){
 			return this._spriteSheetAnimation.getTotalFrames() / frameRate;
 		},
 
-		playToStart: function( frameRate ) {
+		playToStart: function( frameRate, onComplete ) {
 			var duration = this.getDuration( frameRate );
 
-			this.animate( 0, duration );
+			this.animate( 0, duration, onComplete );
 		},
 
-		playToEnd: function( frameRate ) {
+		playToEnd: function( frameRate, onComplete ) {
 			var duration = this.getDuration( frameRate );
 
-			this.animate( 1, duration );
+			this.animate( 1, duration, onComplete );
 		},
 
 		setItemToEffect: function( itemToEffect, itemProperties ) {
