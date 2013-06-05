@@ -82,6 +82,24 @@ function(Class, PropertyNumber, Effect, SpriteSheetAdobeJSONArray ){
 			this._itemProperties.change( this.id, 'top', this._temp );
 		},
 
+		getDuration: function( frameRate ) {
+			frameRate = frameRate == undefined ? 30 : frameRate;
+
+			return this._spriteSheetAnimation.getTotalFrames() / frameRate;
+		},
+
+		playToStart: function( frameRate ) {
+			var duration = this.getDuration( frameRate );
+
+			this.animate( 0, duration );
+		},
+
+		playToEnd: function( frameRate ) {
+			var duration = this.getDuration( frameRate );
+
+			this.animate( 1, duration );
+		},
+
 		setItemToEffect: function( itemToEffect, itemProperties ) {
 			this.parent( itemToEffect, itemProperties );
 
