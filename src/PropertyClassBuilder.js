@@ -55,8 +55,11 @@ define( ['Class', 'lib/FancyEffects/src/Signal'], function(Class, Signal){
 				var curProp = this._properties[ i ];
 
 				rVal += 'this._' + curProp + ' = arguments[ ' + i + ' ] === undefined ? ' + this._defaultValues[ i ] + ' : arguments[ ' + i + ' ];\n';
-				rVal += 'this.__defineGetter__("' + curProp + '", this.get' + curProp + ');\n';
-				rVal += 'this.__defineSetter__("' + curProp + '", this.set' + curProp + ');\n\n';
+
+				rVal += 'Object.defineProperty( this, "' + curProp + '", {' +
+				'	get: this.get' + curProp + ',\n' +
+				'	set: this.set' + curProp + '\n' +
+				'});\n';
 			}
 
 			rVal += '},\n'
