@@ -261,13 +261,18 @@ EffectIds.getId = function( effectType ) {
 
 var Effect = new Class({
 	initialize: function( itemToEffect ) {
-		this.__defineSetter__( 'percentage', this.setPercentage );
-		this.__defineGetter__( 'percentage', this.getPercentage );
-		this.__defineGetter__( 'enabled', this.getEnabled );
-		this.__defineSetter__( 'enabled', this.setEnabled );
-		this.__defineGetter__( 'id', this.getId );
+		Object.defineProperty( this, 'percentage', {
+			set: this.setPercentage,
+			get: this.getPercentage
+		});
 
+		Object.defineProperty( this, 'enabled', {
+			set: this.setEnabled,
+			get: this.getEnabled
+		});
 
+		Object.defineProperty( this, 'id', this.getId );
+		
 		this._id = EffectIds.getId( this._type );
 
 		this._effectIdx = {};
@@ -474,11 +479,15 @@ var EffectChangeProp = new Class({
 			this.parent();
 		}
 
+		Object.defineProperty( this, 'start', {
+			get: this.getStartValue,
+			set: this.setStartValue
+		});
 
-		this.__defineGetter__('start', this.getStartValue);
-		this.__defineSetter__('start', this.setStartValue);
-		this.__defineGetter__('end', this.getEndValue);
-		this.__defineSetter__('end', this.setEndValue);
+		Object.defineProperty( this, 'end', {
+			get: this.getEndValue,
+			set: this.setEndValue
+		});
 	},
 
 	_tempChangeAmount: null,
@@ -965,8 +974,10 @@ var Property = new Class({
 			this.onPropertyChange.dispatch();
 		};
 
-		this.__defineGetter__( name, this[ getterName ] );
-		this.__defineSetter__( name, this[ setterName ] );
+		Object.defineProperty( name, {
+			get: this[ getterName ],
+			set: this[ setterName ]
+		});
 	}
 
 	add: function(otherItem) {
@@ -1086,8 +1097,10 @@ var PropertyNumber = new Class({
 	initialize: function(value) {
 		this.parent();
 
-		this.__defineGetter__('value', this.getValue);
-		this.__defineSetter__('value', this.setValue);
+		Object.defineProperty( this, 'value', {
+			get: this.getValue,
+			set: this.setValue
+		})
 
 		this._value = value == undefined ? 0 : value;
 	},
@@ -1149,15 +1162,25 @@ var PropertyColour = new Class({
 	initialize: function(r, g, b, a) {
 		this.parent();
 
-		this.__defineGetter__('r', this.getR);
-		this.__defineGetter__('g', this.getG);
-		this.__defineGetter__('b', this.getB);
-		this.__defineGetter__('a', this.getA);
+		Object.defineProperty( this, 'r', {
+			get: this.getR,
+			set: this.setR 
+		});
 
-		this.__defineSetter__('r', this.setR);
-		this.__defineSetter__('g', this.setG);
-		this.__defineSetter__('b', this.setB);
-		this.__defineSetter__('a', this.setA);
+		Object.defineProperty( this, 'g', {
+			get: this.getG,
+			set: this.setG 
+		});
+
+		Object.defineProperty( this, 'b', {
+			get: this.getB,
+			set: this.setB 
+		});
+
+		Object.defineProperty( this, 'a', {
+			get: this.getA,
+			set: this.setA
+		});
 
 		this._r = r == undefined ? 0 : parseFloat(r);
 		this._g = g == undefined ? 0 : parseFloat(g);
@@ -1281,27 +1304,50 @@ var PropertyFilter = new Class({
 	initialize: function(blur, brightness, contrast, dropR, dropG, dropB, dropA, dropOffX, dropOffY, dropBlur, dropSpread, dropInset, grayScale, hueRotation, invert, opacity, saturate, sepia) {
 		this.parent();
 
-		this.__defineGetter__('blur', this.getBlur);
-		this.__defineGetter__('brightness', this.getBrightness);
-		this.__defineGetter__('contrast', this.getContrast);
-		this.__defineGetter__('dropShadow', this.getDropShadow);
-		this.__defineGetter__('grayScale', this.getGrayScale);
-		this.__defineGetter__('hueRotation', this.getHueRotation);
-		this.__defineGetter__('invert', this.getInvert);
-		this.__defineGetter__('opacity', this.getOpacity);
-		this.__defineGetter__('saturate', this.getSaturate);
-		this.__defineGetter__('sepia', this.getSepia);
+		Object.defineProperty( this, 'blur', {
+			get: this.getBlur,
+			set: this.setBlur
+		});
 
-		this.__defineSetter__('blur', this.setBlur);
-		this.__defineSetter__('brightness', this.setBrightness);
-		this.__defineSetter__('contrast', this.setContrast);
-		this.__defineSetter__('dropShadow', this.setDropShadow);
-		this.__defineSetter__('grayScale', this.setGrayScale);
-		this.__defineSetter__('hueRotation', this.setHueRotation);
-		this.__defineSetter__('invert', this.setInvert);
-		this.__defineSetter__('opacity', this.setOpacity);
-		this.__defineSetter__('saturate', this.setSaturate);
-		this.__defineSetter__('sepia', this.setSepia);
+		Object.defineProperty( this, 'brightness', {
+			get: this.getBrightness,
+			set: this.setBrightness
+		});
+
+		Object.defineProperty( this, 'contrast', {
+			get: this.getContrast,
+			set: this.setContrast
+		});		
+
+		Object.defineProperty( this, 'dropShadow', {
+			get: this.getDropShadow,
+			set: this.setDropShadow
+		});		
+
+		Object.defineProperty( this, 'grayScale', {
+			get: this.getGrayScale,
+			set: this.setGrayScale
+		});		
+
+		Object.defineProperty( this, 'hueRotation', {
+			get: this.getHueRotation,
+			set: this.setHueRotation
+		});		
+
+		Object.defineProperty( this, 'invert', {
+			get: this.getInvert,
+			set: this.setInvert
+		});
+
+		Object.defineProperty( this, 'saturate', {
+			get: this.getSaturate,
+			set: this.setSaturate
+		});
+
+		Object.defineProperty( this, 'sepia', {
+			get: this.getSepia,
+			set: this.setSepia
+		});
 
 		this._blur = blur == undefined ? 0 : blur;
 		this._brightness = brightness == undefined ? 0 : brightness;
@@ -1572,16 +1618,30 @@ var PropertyBoxShadow = new Class({
 	Extends: PropertyColour,
 
 	initialize: function(r, g, b, a, offX, offY, blur, spread, inset) {
-		this.__defineGetter__('offX', this.getOffX);
-		this.__defineGetter__('offY', this.getOffY);
-		this.__defineGetter__('blur', this.getBlur);
-		this.__defineGetter__('spread', this.getSpread);
-		this.__defineGetter__('inset', this.getInset);
-		this.__defineSetter__('offX', this.setOffX);
-		this.__defineSetter__('offY', this.setOffY);
-		this.__defineSetter__('blur', this.setBlur);
-		this.__defineSetter__('spread', this.setSpread);
-		this.__defineSetter__('inset', this.setInset);
+		Object.defineProperty( this, 'offX', {
+			get: this.getOffX,
+			set: this.setOffX
+		});
+
+		Object.defineProperty( this, 'offY', {
+			get: this.getOffY,
+			set: this.setOffY
+		});
+
+		Object.defineProperty( this, 'blur', {
+			get: this.getBlur,
+			set: this.setBlur
+		});
+
+		Object.defineProperty( this, 'spread', {
+			get: this.getSpread,
+			set: this.setSpread
+		});
+
+		Object.defineProperty( this, 'inset', {
+			get: this.getInset,
+			set: this.setInset
+		});
 
 		this._offX = offX == undefined ? 0 : parseFloat(offX);
 		this._offY = offY == undefined ? 0 : parseFloat(offY);
@@ -2062,8 +2122,8 @@ Signal.nextListenerID=0;
 
 var SpriteSheet = new Class({
 	initialize: function( bgImageURL, data ) {
-		this.__defineSetter__( 'totalFrames', this.getTotalFrames );
-
+		Object.defineProperty( this, 'totalFrames', this.getTotalFrames );
+	
 		this._parseData( data );
 	},
 

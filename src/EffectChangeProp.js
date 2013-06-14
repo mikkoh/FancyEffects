@@ -39,11 +39,15 @@ define(['Class', 'lib/FancyEffects/src/Effect'], function(Class, Effect){
 				this.parent();
 			}
 
+			Object.defineProperty( this, 'start', {
+				set: this.setStartValue,
+				get: this.getStartValue
+			});
 
-			this.__defineGetter__('start', this.getStartValue);
-			this.__defineSetter__('start', this.setStartValue);
-			this.__defineGetter__('end', this.getEndValue);
-			this.__defineSetter__('end', this.setEndValue);
+			Object.defineProperty( this, 'end', {
+				set: this.setEndValue,
+				get: this.getEndValue
+			});
 		},
 
 		_tempChangeAmount: null,

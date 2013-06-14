@@ -9,13 +9,23 @@ define(['Class', 'lib/FancyEffects/src/EffectIds', 'lib/FancyEffects/src/ItemPro
 
 	var Effect = new Class({
 		initialize: function( itemToEffect ) {
-			this.__defineSetter__( 'percentage', this.setPercentage );
-			this.__defineGetter__( 'percentage', this.getPercentage );
-			this.__defineGetter__( 'enabled', this.getEnabled );
-			this.__defineSetter__( 'enabled', this.setEnabled );
-			this.__defineGetter__( 'id', this.getId );
-			this.__defineGetter__( 'effects', this.getEffects );
+			Object.defineProperty( this, 'percentage', {
+				set: this.setPercentage,
+				get: this.getPercentage
+			});
 
+			Object.defineProperty( this, 'enabled', {
+				set: this.setEnabled,
+				get: this.getEnabled
+			});
+
+			Object.defineProperty( this, 'id', {
+				get: this.getId
+			});
+
+			Object.defineProperty( this, 'effects', {
+				get: this.getEffects
+			});
 
 			this._id = EffectIds.getId( this._type );
 

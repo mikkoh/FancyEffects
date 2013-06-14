@@ -2,7 +2,9 @@ define([ 'Class' ], function( Class ){
 
 	var SpriteSheet = new Class({
 		initialize: function( bgImageURL, data ) {
-			this.__defineSetter__( 'totalFrames', this.getTotalFrames );
+			Object.defineProperty( this, 'totalFrames', {
+				get: this.getTotalFrames 
+			});
 
 			this._parseData( data );
 		},
