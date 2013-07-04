@@ -95,8 +95,8 @@ define(['Class',
 					if( regexValues != undefined ) {
 						var curVal = regexValues[ props[i].idx ];
 
-						if( curVal == undefined && props[ i ].default !== undefined ) {
-							curVal = props[ i ].default;
+						if( curVal == undefined && props[ i ]["default"] !== undefined ) {
+							curVal = props[ i ]["default"];
 						}
 
 						propNames.push( props[ i ].name );
@@ -158,7 +158,7 @@ define(['Class',
 			{ name: 'r', idx: 1, type: Number},
 			{ name: 'b', idx: 2, type: Number},
 			{ name: 'g', idx: 3, type: Number},
-			{ name: 'a', idx: 5, type: Number, default: 1 }
+			{ name: 'a', idx: 5, type: Number, "default": 1 }
 		]
 	};
 
@@ -168,11 +168,11 @@ define(['Class',
 			{ name: 'r', idx: 1, type: Number},
 			{ name: 'b', idx: 2, type: Number},
 			{ name: 'g', idx: 3, type: Number},
-			{ name: 'a', idx: 5, type: Number, default: 1 },
-			{ name: 'offX', idx: 6, type: Number, default: 0 },
-			{ name: 'offY', idx: 7, type: Number, default: 0 },
-			{ name: 'blur', idx: 7, type: Number, default: 0 },
-			{ name: 'spread', idx: 10, type: Number, default: 0 },
+			{ name: 'a', idx: 5, type: Number, "default": 1 },
+			{ name: 'offX', idx: 6, type: Number, "default": 0 },
+			{ name: 'offY', idx: 7, type: Number, "default": 0 },
+			{ name: 'blur', idx: 7, type: Number, "default": 0 },
+			{ name: 'spread', idx: 10, type: Number, "default": 0 },
 			{ name: 'inset', idx: 11, type: Boolean}
 		]
 	};
@@ -180,13 +180,13 @@ define(['Class',
 	var definitionFilter = {
 		props: [
 			{ regex: REGEX_VALUE_FILTER_BLUR, 
-			  props: [ {name: 'blur', idx: 1, type: Number, default: 0 } ] },
+			  props: [ {name: 'blur', idx: 1, type: Number, "default": 0 } ] },
 
 			{ regex: REGEX_VALUE_FILTER_BRIGHTNESS, 
-			  props: [ {name: 'brightness', idx: 1, type: Number, default: 0 } ] },
+			  props: [ {name: 'brightness', idx: 1, type: Number, "default": 0 } ] },
 
 			{ regex: REGEX_VALUE_FILTER_CONTRAST, 
-			  props: [ {name: 'contrast', idx: 1, type: Number, default: 1 } ] },
+			  props: [ {name: 'contrast', idx: 1, type: Number, "default": 1 } ] },
 
 			//note that currently spread and inset are not supported for filter
 			{
@@ -195,30 +195,30 @@ define(['Class',
 					{ name: 'r', idx: 1, type: Number},
 					{ name: 'b', idx: 2, type: Number},
 					{ name: 'g', idx: 3, type: Number},
-					{ name: 'a', idx: 5, type: Number, default: 1 },
-					{ name: 'offX', idx: 6, type: Number, default: 0 },
-					{ name: 'offY', idx: 7, type: Number, default: 0 },
-					{ name: 'blur', idx: 7, type: Number, default: 0 }
+					{ name: 'a', idx: 5, type: Number, "default": 1 },
+					{ name: 'offX', idx: 6, type: Number, "default": 0 },
+					{ name: 'offY', idx: 7, type: Number, "default": 0 },
+					{ name: 'blur', idx: 7, type: Number, "default": 0 }
 				]
 			},
 
 			{ regex: REGEX_VALUE_FILTER_GRAY_SCALE, 
-			  props: [ {name: 'grayScale', idx: 1, type: Number, default: 0 } ] },
+			  props: [ {name: 'grayScale', idx: 1, type: Number, "default": 0 } ] },
 
 			{ regex: REGEX_VALUE_FILTER_HUE_ROTATION, 
-			  props: [ {name: 'hueRotation', idx: 1, type: Number, default: 0 } ] },
+			  props: [ {name: 'hueRotation', idx: 1, type: Number, "default": 0 } ] },
 
 			{ regex: REGEX_VALUE_FILTER_INVERT, 
-			  props: [ {name: 'invert', idx: 1, type: Number, default: 0 } ] },
+			  props: [ {name: 'invert', idx: 1, type: Number, "default": 0 } ] },
 
 			{ regex: REGEX_VALUE_FILTER_OPACITY, 
-			  props: [ {name: 'opacity', idx: 1, type: Number, default: 1 } ] },
+			  props: [ {name: 'opacity', idx: 1, type: Number, "default": 1 } ] },
 
 			{ regex: REGEX_VALUE_FILTER_SATURATE, 
-			  props: [ {name: 'saturate', idx: 1, type: Number, default: 1 } ] },
+			  props: [ {name: 'saturate', idx: 1, type: Number, "default": 1 } ] },
 
 			{ regex: REGEX_VALUE_FILTER_SEPIA, 
-			  props: [ {name: 'sepia', idx: 1, type: Number, default: 0 } ] }
+			  props: [ {name: 'sepia', idx: 1, type: Number, "default": 0 } ] }
 		]
 	};
 
